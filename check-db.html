@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cek Database WIT-ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 20px; background: #1a1a1a; color: #00ff00; }
+    h1 { color: #00ff00; }
+    .error { color: #ff4444; }
+    .success { color: #44ff44; }
+    .warning { color: #ffaa00; }
+    pre { background: #000; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    button { background: #00ff00; color: #000; padding: 10px 20px; border: none; cursor: pointer; }
+    button:hover { background: #00aa00; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Cek Database InsForge</h1>
+  
+  <div id="config">
+    <h3>Konfigurasi:</h3>
+    <p><strong>URL:</strong> https://27qy8cr6.ap-southeast.insforge.app</p>
+    <p><strong>Region:</strong> ap-southeast (Singapore)</p>
+  </div>
+
+  <div id="actions">
+    <h3>Aksi:</h3>
+    <button onclick="checkTables()">📋 Cek Semua Tabel</button>
+    <button onclick="testConnection()">🔗 Test Koneksi</button>
+    <button onclick="checkHealth()">🏥 Health Check</button>
+  </div>
+
+  <div id="result">
+    <h3>Hasil:</h3>
+    <pre id="output">Klik tombol di atas untuk memeriksa database...</pre>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://27qy8cr6.ap-southeast.insforge.app';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3OC0xMjM0LTU2NzgtOTBhYi1jZGVmMTIzNDU2NzgiLCJlbWFpbCI6ImFub25AaW5zZm9yZ2UuY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyODE3Mjl9.07dajYiFh2DdncF8qKmWLiIk_waKxPvetyFMJgVRKrY';
+
+    const TABLES = [
+      'entities', 'departments', 'divisions', 'positions', 'job_grades',
+      'salary_components', 'bopp_formulas', 'employees', 'attendance', 
+      'leave_requests', 'payroll_periods', 'payroll_items',
+      'leads', 'opportunities', 'activities',
+      'projects', 'tasks', 'time_entries',
+      'bopp_distributions', 'invoices', 'expenses'
+    ];
+
+    function log(msg) {
+      document.getElementById('output').textContent += msg + '\n';
+    }
+
+    async function checkTables() {
+      document.getElementById('output').textContent = '';
+      log('📋 Memeriksa ' + TABLES.length + ' tabel...\n');
+      
+      for (const table of TABLES) {
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id&limit=1`, {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+          });
+          
+          if (response.status === 200) {
+            const data = await response.json();
+            log(`✅ ${table}: OK (${data.length} rows)`);
+          } else if (response.status === 404) {
+            log(`❌ ${table}: TIDAK ADA (404)`);
+          } else {
+            log(`⚠️  ${table}: Status ${response.status}`);
+          }
+        } catch (err) {
+          log(`❌ ${table}: ERROR - ${err.message}`);
+        }
+      }
+    }
+
+    async function testConnection() {
+      document.getElementById('output').textContent = '';
+      log('🔗 Testing koneksi ke InsForge...\n');
+      
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        
+        log(`Status: ${response.status} ${response.statusText}`);
+        log(`Headers: ${JSON.stringify([...response.headers], null, 2)}`);
+        
+        const text = await response.text();
+        log(`Response: ${text.substring(0, 500)}`);
+      } catch (err) {
+        log(`❌ ERROR: ${err.message}`);
+        log('\n🔍 Mungkin penyebab:');
+        log('   1. Project URL salah');
+        log('   2. Project sudah expired (trial 24 jam)');
+        log('   3. API key tidak valid');
+        log('   4. Network error');
+      }
+    }
+
+    async function checkHealth() {
+      document.getElementById('output').textContent = '';
+      log('🏥 Health Check...\n');
+      
+      // Test dengan fetch ke root
+      try {
+        const response = await fetch(SUPABASE_URL, { method: 'GET' });
+        log(`Root URL: ${response.status}`);
+      } catch (err) {
+        log(`Root URL: ERROR - ${err.message}`);
+      }
+      
+      // Test dengan OPTIONS
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+          method: 'OPTIONS',
+          headers: { 'apikey': SUPABASE_ANON_KEY }
+        });
+        log(`OPTIONS /rest/v1/: ${response.status}`);
+      } catch (err) {
+        log(`OPTIONS /rest/v1/: ERROR - ${err.message}`);
+      }
+    }
+  </script>
+</body>
+</html>

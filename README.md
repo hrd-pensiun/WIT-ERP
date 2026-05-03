@@ -1,36 +1,144 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WIT-ERP
 
-## Getting Started
+> **WIT.ID ERP System** — Digital Agency Management dengan Multi-Entitas, Talent Pooling, dan Payroll BOPP/TOPP.
 
-First, run the development server:
+---
+
+## 🚀 Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Setup environment
+cp .env.local.example .env.local
+# Edit .env.local dengan credentials InsForge Anda
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+my-app/
+├── app/
+│   ├── (dashboard)/           # Dashboard routes with layout
+│   │   ├── master-data/       # Master data configuration
+│   │   │   └── entity/        # Entity management
+│   │   ├── hr/                # HR module
+│   │   ├── crm/               # CRM module
+│   │   ├── project/           # Project module
+│   │   ├── finance/           # Finance module
+│   │   ├── page.tsx           # Dashboard home
+│   │   └── layout.tsx         # Dashboard layout
+│   ├── page.tsx               # Root redirect
+│   ├── layout.tsx             # Root layout
+│   └── globals.css            # Design system (dark mode default)
+├── components/
+│   ├── ui/                    # shadcn/ui components
+│   └── layout/                # Layout components
+│       ├── sidebar.tsx        # Navigation sidebar
+│       └── header.tsx         # Top header
+├── lib/
+│   ├── insforge.ts            # InsForge client
+│   └── utils.ts               # Utility functions
+├── hooks/                     # Custom React hooks
+├── types/                     # TypeScript types
+└── docs/                      # Symlink to Obsidian documentation
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🎨 Design System
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Dark Mode Default**
+- Background: `slate-950` (#020617)
+- Surface: `slate-900` (#0f172a)
+- Primary: `emerald-600` (#059669)
+- Accent: `cyan-400` (#22d3ee)
+- Text: `slate-100` / `slate-400`
+- Border: `slate-800`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Font**: Geist Sans (via shadcn/ui Nova preset)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🗄️ Database Schema
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dokumentasi lengkap: `docs/14-PRD-Data-Model.md`
+
+**Core Tables:**
+- `tenants` — Multi-tenant root
+- `entities` — Cabang/unit bisnis
+- `departments` — Struktur organisasi
+- `user_profiles` — Data karyawan
+- `payroll_slips` — Payroll bulanan
+- `projects` — Project management
+- `crm_leads` — CRM pipeline
+
+---
+
+## 🔄 Sprint Plan
+
+| Sprint | Fokus | Status |
+|--------|-------|--------|
+| **0** | Setup & Foundation | ✅ Complete |
+| **1** | Master Data (Entity, Org, Calendar) | 🔄 Ready |
+| **2** | Employee Management | ⏳ Pending |
+| **3** | Attendance & Leave | ⏳ Pending |
+| **4** | Payroll Core | ⏳ Pending |
+| **5** | BOPP/TOPP | ⏳ Pending |
+| **6** | CRM | ⏳ Pending |
+| **7** | Project & Time Tracking | ⏳ Pending |
+| **8** | Finance | ⏳ Pending |
+
+---
+
+## 🔧 Environment Variables
+
+```bash
+# Required
+NEXT_PUBLIC_INSFORGE_URL=https://your-project.insforge.app
+NEXT_PUBLIC_INSFORGE_ANON_KEY=your-anon-key
+
+# Optional (server-side only)
+INSFORGE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+---
+
+## 📚 Documentation
+
+Semua PRD tersedia di Obsidian vault via symlink:
+
+```bash
+cd docs/
+ls -la  # Menampilkan semua file .md dari Obsidian
+```
+
+**Key Documents:**
+- `13-PRD-Arsitektur.md` — Tech stack & architecture
+- `14-PRD-Data-Model.md` — Database schema
+- `15-PRD-Modul-HR.md` — HR business logic
+- `SYSTEM-PROMPT-ERP.md` — Coding guidelines
+
+---
+
+## 🤝 Contributing
+
+1. Pastikan fitur ada landasan di PRD
+2. Ikuti pattern layer: DB → Types → Hooks → Components → Pages
+3. Selalu gunakan TypeScript types dari schema
+4. Tidak boleh ada data dummy/hardcode
+5. Error handling wajib di setiap DB operation
+
+---
+
+## 📄 License
+
+Private — WIT.ID Internal Use Only

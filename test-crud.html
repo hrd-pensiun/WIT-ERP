@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test CRUD WIT-ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 20px; background: #0f172a; color: #e2e8f0; }
+    h1, h2 { color: #10b981; }
+    .card { background: #1e293b; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #334155; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { color: #94a3b8; font-weight: 600; }
+    tr:hover { background: #334155; }
+    input, button { padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin: 5px; }
+    button { cursor: pointer; background: #10b981; border: none; }
+    button:hover { background: #059669; }
+    button.delete { background: #ef4444; }
+    button.delete:hover { background: #dc2626; }
+    .actions { display: flex; gap: 8px; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; background: #10b981; color: white; }
+    .badge.inactive { background: #64748b; }
+    #log { background: #0f172a; padding: 15px; border-radius: 8px; font-size: 12px; max-height: 200px; overflow-y: auto; margin-top: 20px; font-variant-numeric: tabular-nums; }
+    .success { color: #10b981; }
+    .error { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <h1>🔧 Test CRUD WIT-ERP (Mock Mode)</h1>
+
+  <div class="card">
+    <h2>📊 Entities (Tabel Master Data)</h2>
+    <div id="table-container">
+      <div class="error">JavaScript belum aktif. Harus dibuka di browser.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>➕ Tambah Entity Baru</h2>
+    <form id="add-form">
+      <input type="text" id="new-code" placeholder="Kode (e.g. JKT)" required>
+      <input type="text" id="new-name" placeholder="Nama Entity" required>
+      <select id="new-type" style="padding:10px;background:#0f172a;color:white;border-radius:6px;border:1px solid #475569;">
+        <option value="branch">Branch</option>
+        <option value="main_office">Main Office</option>
+        <option value="project_site">Project Site</option>
+      </select>
+      <input type="text" id="new-city" placeholder="Kota" required>
+      <button type="submit">Tambah</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>📝 Log CRUD Operations</h2>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    // Simulasi CRUD (sama seperti hook useEntities)
+    let entities = [
+      { id: '1', code: 'HQ', name: 'Headquarters', type: 'main_office', city: 'Jakarta', status: 'active', tenant_id: 'demo', created_at: '2026-01-01' },
+      { id: '2', code: 'BDG', name: 'Bandung Branch', type: 'branch', city: 'Bandung', status: 'active', tenant_id: 'demo', created_at: '2026-01-15' },
+      { id: '3', code: 'SBY', name: 'Surabaya Branch', type: 'branch', city: 'Surabaya', status: 'active', tenant_id: 'demo', created_at: '2026-02-01' },
+    ];
+
+    function log(msg, type = 'info') {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString('id-ID');
+      const color = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+      logEl.innerHTML += `[${time}] <span class="${color}">${msg}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function renderTable() {
+      const container = document.getElementById('table-container');
+      
+      if (entities.length === 0) {
+        container.innerHTML = '<p class="error">Tidak ada data</p>';
+        return;
+      }
+      
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Kode</th>
+              <th>Nama</th>
+              <th>Tipe</th>
+              <th>Kota</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      entities.forEach(e => {
+        html += `
+          <tr data-id="${e.id}">
+            <td>${e.code}</td>
+            <td>${e.name}</td>
+            <td>${e.type}</td>
+            <td>${e.city}</td>
+            <td><span class="badge ${e.status === 'inactive' ? 'inactive' : ''}">${e.status}</span></td>
+            <td class="actions">
+              <button onclick="editEntity('${e.id}')">Edit</button>
+              <button class="delete" onclick="deleteEntity('${e.id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function createEntity(data) {
+      const newEntity = {
+        ...data,
+        id: String(Date.now()),
+        status: 'active',
+        tenant_id: 'demo',
+        created_at: new Date().toISOString().split('T')[0]
+      };
+      entities.unshift(newEntity);
+      log(`CREATE: Entity "${newEntity.name}" (${newEntity.code})`, 'success');
+      renderTable();
+      return newEntity;
+    }
+
+    function updateEntity(id, data) {
+      const index = entities.findIndex(e => e.id === id);
+      if (index === -1) {
+        log(`ERROR: Entity ${id} tidak ditemukan`, 'error');
+        return null;
+      }
+      entities[index] = { ...entities[index], ...data };
+      log(`UPDATE: Entity "${entities[index].name}"`, 'success');
+      renderTable();
+      return entities[index];
+    }
+
+    function deleteEntity(id) {
+      const entity = entities.find(e => e.id === id);
+      if (!entity) {
+        log(`ERROR: Entity ${id} tidak ditemukan`, 'error');
+        return false;
+      }
+      entities = entities.filter(e => e.id !== id);
+      log(`DELETE: Entity "${entity.name}"`, 'success');
+      renderTable();
+      return true;
+    }
+
+    function editEntity(id) {
+      const entity = entities.find(e => e.id === id);
+      if (!entity) return;
+      
+      const newName = prompt('Nama baru:', entity.name);
+      if (newName && newName !== entity.name) {
+        updateEntity(id, { name: newName });
+      }
+    }
+
+    // Form submit
+    document.getElementById('add-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const data = {
+        code: document.getElementById('new-code').value,
+        name: document.getElementById('new-name').value,
+        type: document.getElementById('new-type').value,
+        city: document.getElementById('new-city').value,
+      };
+      
+      createEntity(data);
+      e.target.reset();
+    });
+
+    // Init
+    log('✅ CRUD Test initialized dengan ' + entities.length + ' entities');
+    renderTable();
+  </script>
+</body>
+</html>

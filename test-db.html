@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Database Connection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 24px; }
+  </style>
+</head>
+<body>
+  <h1>Database Connection Test</h1>
+  <div id="status">Testing...</div>
+  <script>
+    const SUPABASE_URL = 'https://27qy8cr6.ap-southeast.insforge.app';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3OC0xMjM0LTU2NzgtOTBhYi1jZGVmMTIzNDU2NzgiLCJlbWFpbCI6ImFub25AaW5zZm9yZ2UuY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyODE3Mjl9.07dajYiFh2DdncF8qKmWLiIk_waKxPvetyFMJgVRKrY';
+    
+    async function testConnection() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/entities?select=*&limit=1`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('status').innerHTML = `
+            <span style="color: green">✅ Database Connected!</span><br>
+            Response: ${JSON.stringify(data)}
+          `;
+        } else {
+          document.getElementById('status').innerHTML = `
+            <span style="color: red">❌ Database Error: ${response.status}</span><br>
+            ${await response.text()}
+          `;
+        }
+      } catch (err) {
+        document.getElementById('status').innerHTML = `
+          <span style="color: red">❌ Connection Failed</span><br>
+          ${err.message}
+        `;
+      }
+    }
+    
+    testConnection();
+  </script>
+</body>
+</html>
