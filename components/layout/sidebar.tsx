@@ -14,6 +14,7 @@ import {
   ChevronDown,
   BarChart3,
   ChevronRight,
+  LineChart,
   LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -79,6 +80,18 @@ const navigation: NavItem[] = [
     ],
   },
   {
+    name: "Performance",
+    href: "/performance",
+    icon: LineChart,
+    children: [
+      { name: "Dashboard", href: "/performance/360/dashboard" },
+      { name: "Template penilaian", href: "/performance/360/template" },
+      { name: "Mapping Penilaian", href: "/performance/360/mapping-penilaian" },
+      { name: "Konfigurasi", href: "/performance/360/konfigurasi" },
+      { name: "Pratinjau 360", href: "/performance/360-feedback" },
+    ],
+  },
+  {
     name: "Reports",
     href: "/reports",
     icon: BarChart3,
@@ -92,7 +105,15 @@ const navigation: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [expanded, setExpanded] = useState<string[]>(["Master Data", "HR", "CRM", "Projects", "Finance", "Reports"])
+  const [expanded, setExpanded] = useState<string[]>([
+    "Master Data",
+    "HR",
+    "CRM",
+    "Projects",
+    "Finance",
+    "Performance",
+    "Reports",
+  ])
 
   const toggleExpand = (name: string) => {
     setExpanded((prev) =>
@@ -145,7 +166,9 @@ export function Sidebar() {
               {item.children && isExpanded && (
                 <div className="ml-9 mt-1 space-y-1">
                   {item.children.map((child) => {
-                    const isChildActive = pathname === child.href
+                    const isChildActive =
+                      pathname === child.href ||
+                      pathname.startsWith(`${child.href}/`)
                     return (
                       <Link
                         key={child.name}

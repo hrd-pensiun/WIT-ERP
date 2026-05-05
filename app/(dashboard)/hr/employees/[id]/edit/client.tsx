@@ -124,7 +124,7 @@ const EMPTY_PORTFOLIO_ITEM: PortfolioItem = {
 
 export default function EmployeeEditClient({ id }: { id: string }) {
   const router = useRouter()
-  const { employees, update, loading: hookLoading } = useEmployees()
+  const { employees, update, loading: hookLoading, fetchEmployees } = useEmployees()
   const { departments } = useDepartments()
   const { divisions } = useDivisions()
   const { positions } = usePositions()
@@ -536,6 +536,7 @@ export default function EmployeeEditClient({ id }: { id: string }) {
             description: item.description || null,
           })),
       })
+      await fetchEmployees()
       router.push(`/hr/employees/${id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update employee")

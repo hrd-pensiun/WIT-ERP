@@ -4,6 +4,30 @@ const nextConfig: NextConfig = {
   // output: 'export' breaks dynamic routes that rely on runtime data (e.g. UUID params)
   // because Next requires generateStaticParams() to include every possible param value.
   distDir: 'dist',
+  async redirects() {
+    return [
+      {
+        source: "/performance/360/matrix",
+        destination: "/performance/360/dashboard/",
+        permanent: true,
+      },
+      {
+        source: "/performance/360/matrix/",
+        destination: "/performance/360/dashboard/",
+        permanent: true,
+      },
+      {
+        source: "/performance/360/struktur-organisasi",
+        destination: "/performance/360/mapping-penilaian/",
+        permanent: true,
+      },
+      {
+        source: "/performance/360/struktur-organisasi/",
+        destination: "/performance/360/mapping-penilaian/",
+        permanent: true,
+      },
+    ]
+  },
   images: {
     unoptimized: true,
   },

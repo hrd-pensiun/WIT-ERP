@@ -13,6 +13,10 @@ interface EmployeeFilters {
   search?: string
 }
 
+/** Select sama untuk list, detail single, dan hasil update — agar FK + embed konsisten di UI. */
+const EMPLOYEE_WITH_RELATIONS =
+  `*, divisions:division_id(name), departments:department_id(name, entity_id), hr_positions:position_id(name), hr_job_grades:job_grade_id(name, level)`
+
 export function useEmployees(tenantId: string = getTenantId(), options?: { pollInterval?: number }) {
   const [employees, setEmployees] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -30,7 +34,7 @@ export function useEmployees(tenantId: string = getTenantId(), options?: { pollI
     try {
       let query = insForge
         .from('user_profiles')
-        .select(`*, departments:department_id(name), hr_positions:position_id(name), hr_job_grades:job_grade_id(name)`)
+        .select(EMPLOYEE_WITH_RELATIONS)
         .eq('tenant_id', tenantId)
       
       if (filters?.status) query = query.eq('status', filters.status)
@@ -59,14 +63,14 @@ export function useEmployees(tenantId: string = getTenantId(), options?: { pollI
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [tenantId])
 
   const getEmployee = useCallback(async (id: string) => {
     if (!insForge) throw new Error('Database not connected')
     
     const { data, error } = await insForge
       .from('user_profiles')
-      .select(`*, departments:department_id(name), hr_positions:position_id(name), hr_job_grades:job_grade_id(name)`)
+      .select(EMPLOYEE_WITH_RELATIONS)
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .single()
@@ -94,9 +98,18 @@ export function useEmployees(tenantId: string = getTenantId(), options?: { pollI
       .update(data)
       .eq('id', id)
       .eq('tenant_id', tenantId)
-      .select()
+      .select(EMPLOYEE_WITH_RELATIONS)
       .single()
     if (error) throw error
+    if (result) {
+      setEmployees((prev) => {
+        const idx = prev.findIndex((e: { id: string }) => e.id === id)
+        if (idx === -1) return [result as any, ...prev]
+        const next = [...prev]
+        next[idx] = result as any
+        return next
+      })
+    }
     return result
   }, [tenantId])
 

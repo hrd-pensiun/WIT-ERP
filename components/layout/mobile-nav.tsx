@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { 
   Menu, X, LayoutDashboard, Building2, Users, 
-  Wallet, Briefcase, PieChart, Settings 
+  Wallet, Briefcase, PieChart, Settings, LineChart 
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -16,6 +16,7 @@ const mobileNavItems = [
   { name: "CRM", href: "/crm", icon: Briefcase },
   { name: "Projects", href: "/projects", icon: PieChart },
   { name: "Finance", href: "/finance", icon: Wallet },
+  { name: "Performance", href: "/performance/360/dashboard", icon: LineChart },
 ]
 
 export function MobileNav() {
@@ -56,7 +57,10 @@ export function MobileNav() {
       `}>
         <nav className="p-4 space-y-1">
           {mobileNavItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+            const isActive =
+              item.name === "Performance"
+                ? pathname.startsWith("/performance")
+                : pathname === item.href || pathname.startsWith(item.href + "/")
             
             return (
               <Link

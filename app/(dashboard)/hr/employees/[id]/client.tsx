@@ -21,9 +21,11 @@ import { useEmployees } from "@/hooks/useEmployees"
 import { useEmployeeProfileDetails } from "@/hooks/useEmployeeProfileDetails"
 
 export default function EmployeeDetailClient({ id }: { id: string }) {
-  const { employees, loading } = useEmployees()
+  const { getEmployee } = useEmployees()
   const { getProfileDetails } = useEmployeeProfileDetails()
   const [employee, setEmployee] = useState<any>(null)
+  const [detailLoading, setDetailLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [history, setHistory] = useState({
     familyMembers: [] as Record<string, unknown>[],
     educationHistories: [] as Record<string, unknown>[],
@@ -34,10 +36,25 @@ export default function EmployeeDetailClient({ id }: { id: string }) {
   })
 
   useEffect(() => {
-    const emp = employees.find((e) => e.id === id)
-    if (!emp) return
     let cancelled = false
-    setEmployee(emp)
+    setDetailLoading(true)
+    setLoadError(null)
+    setEmployee(null)
+
+    getEmployee(id)
+      .then((row) => {
+        if (!cancelled && row) setEmployee(row)
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : "Gagal memuat karyawan")
+          setEmployee(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false)
+      })
+
     getProfileDetails(id)
       .then((detail) => {
         if (cancelled) return
@@ -51,12 +68,13 @@ export default function EmployeeDetailClient({ id }: { id: string }) {
         })
       })
       .catch(() => {})
+
     return () => {
       cancelled = true
     }
-  }, [employees, id, getProfileDetails])
+  }, [id, getEmployee, getProfileDetails])
 
-  if (loading && !employee) {
+  if (detailLoading) {
     return <div className="flex items-center justify-center h-96"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>
   }
 
@@ -64,7 +82,7 @@ export default function EmployeeDetailClient({ id }: { id: string }) {
     return (
       <div className="p-6">
         <div className="text-center py-12">
-          <p className="text-slate-400">Karyawan tidak ditemukan</p>
+          <p className="text-slate-400">{loadError || "Karyawan tidak ditemukan"}</p>
           <Link href="/hr/employees"><Button variant="outline" className="mt-4 border-slate-700">Kembali</Button></Link>
         </div>
       </div>
