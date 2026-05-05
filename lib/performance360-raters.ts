@@ -10,22 +10,19 @@ export function getJobGradeLevel(e: { hr_job_grades?: { level?: number | null } 
 
 export function suggestPeerRaters(
   ratee: Record<string, unknown>,
-  pool: Record<string, unknown>[],
-  options?: { maxLevelDelta?: number }
+  pool: Record<string, unknown>[]
 ): Record<string, unknown>[] {
-  const delta = options?.maxLevelDelta ?? 1
   const rl = getJobGradeLevel(ratee as { hr_job_grades?: { level?: number } })
   if (rl == null) return []
+  const isUpperLevelPeerRule = rl >= 7 && rl <= 9
 
   return pool.filter((o) => {
     if (o.id === ratee.id) return false
-    const sameUnit =
-      (ratee.division_id && o.division_id === ratee.division_id) ||
-      (!ratee.division_id && o.department_id === ratee.department_id)
-    if (!sameUnit) return false
     const ol = getJobGradeLevel(o as { hr_job_grades?: { level?: number } })
     if (ol == null) return false
-    return Math.abs(ol - rl) <= delta
+    if (ol !== rl) return false
+    if (isUpperLevelPeerRule) return true
+    return o.department_id === ratee.department_id
   })
 }
 

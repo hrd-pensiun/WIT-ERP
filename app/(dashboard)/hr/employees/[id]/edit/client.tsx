@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Loader2, Plus, Save, Trash2, User } from "lucide-react"
@@ -17,6 +17,8 @@ import { useDepartments } from "@/hooks/useDepartments"
 import { useDivisions } from "@/hooks/useDivisions"
 import { usePositions } from "@/hooks/usePositions"
 import { useJobGrades } from "@/hooks/useJobGrades"
+
+const DEPARTMENT_OPTIONAL_MIN_LEVEL = 9
 
 type FamilyMember = {
   name: string
@@ -164,10 +166,12 @@ export default function EmployeeEditClient({ id }: { id: string }) {
     address: "",
     city: "",
     department_id: "",
+    reports_to_profile_id: "",
     division_id: "",
     position_id: "",
     job_grade_id: "",
     employment_type: "permanent",
+    app_role: "employee",
     status: "active",
     join_date: "",
     end_date: "",
@@ -183,6 +187,35 @@ export default function EmployeeEditClient({ id }: { id: string }) {
     ptkp_status: "TK/0",
     tax_position: "staff",
   })
+
+  const selectedGradeLevel = useMemo(() => {
+    const byGrade = jobGrades.find((g) => String(g.id) === formData.job_grade_id)
+    if (byGrade?.level != null && Number.isFinite(Number(byGrade.level))) {
+      return Number(byGrade.level)
+    }
+    const byPosition = positions.find((p) => String(p.id) === formData.position_id) as
+      | (Record<string, unknown> & { hr_job_grades?: { level?: number | null } | null })
+      | undefined
+    const lvl = byPosition?.hr_job_grades?.level
+    return lvl != null && Number.isFinite(Number(lvl)) ? Number(lvl) : null
+  }, [formData.job_grade_id, formData.position_id, jobGrades, positions])
+
+  const eligibleManagers = useMemo(() => {
+    return employees.filter((emp) => {
+      if (emp.status !== "active" || emp.id === id) return false
+      const managerLevel = (emp as any)?.hr_job_grades?.level
+      if (managerLevel == null || selectedGradeLevel == null) return false
+      return Number(managerLevel) > selectedGradeLevel
+    })
+  }, [employees, id, selectedGradeLevel])
+
+  useEffect(() => {
+    if (!formData.reports_to_profile_id) return
+    const stillEligible = eligibleManagers.some((emp) => emp.id === formData.reports_to_profile_id)
+    if (!stillEligible) {
+      setFormData((prev) => ({ ...prev, reports_to_profile_id: "" }))
+    }
+  }, [eligibleManagers, formData.reports_to_profile_id])
 
   useEffect(() => {
     const emp = employees.find((e) => e.id === id)
@@ -282,10 +315,12 @@ export default function EmployeeEditClient({ id }: { id: string }) {
         address: emp.address || "",
         city: emp.city || "",
         department_id: emp.department_id || "",
+        reports_to_profile_id: (emp as any).reports_to_profile_id || "",
         division_id: emp.division_id || "",
         position_id: emp.position_id || "",
         job_grade_id: emp.job_grade_id || "",
         employment_type: emp.employment_type || "permanent",
+        app_role: (emp as any).app_role || "employee",
         status: emp.status || "active",
         join_date: emp.join_date || "",
         end_date: emp.end_date || "",
@@ -447,9 +482,21 @@ export default function EmployeeEditClient({ id }: { id: string }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    const allowNoDepartment =
+      selectedGradeLevel != null && selectedGradeLevel >= DEPARTMENT_OPTIONAL_MIN_LEVEL
+
+    const deptId = formData.department_id?.trim() ? formData.department_id : null
+    if (!deptId && !allowNoDepartment) {
+      setError(
+        `Departemen wajib diisi untuk job level di bawah ${DEPARTMENT_OPTIONAL_MIN_LEVEL}.`
+      )
+      return
+    }
+
     setSaving(true)
     try {
-      await update(id, {
+      const updated = await update(id, {
         full_name: formData.full_name,
         employee_number: formData.employee_number || null,
         email: formData.email || null,
@@ -460,11 +507,16 @@ export default function EmployeeEditClient({ id }: { id: string }) {
         marital_status: formData.marital_status || null,
         address: formData.address || null,
         city: formData.city || null,
-        department_id: formData.department_id || null,
+        department_id: deptId,
+        reports_to_profile_id:
+          formData.reports_to_profile_id && formData.reports_to_profile_id !== id
+            ? formData.reports_to_profile_id
+            : null,
         division_id: formData.division_id || null,
         position_id: formData.position_id || null,
         job_grade_id: formData.job_grade_id || null,
         employment_type: formData.employment_type,
+        app_role: formData.app_role,
         status: formData.status,
         join_date: formData.join_date,
         end_date: formData.end_date || null,
@@ -487,6 +539,22 @@ export default function EmployeeEditClient({ id }: { id: string }) {
           },
         },
       })
+      try {
+        await fetch("/api/auth/sync-role", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            employeeId: id,
+            userId: (updated as any)?.user_id ?? null,
+            email: (updated as any)?.email ?? formData.email ?? null,
+            fullName: (updated as any)?.full_name ?? formData.full_name ?? null,
+            role: formData.app_role,
+            password: "wit12345",
+          }),
+        })
+      } catch {
+        // Keep profile update successful even if metadata sync is unavailable.
+      }
       await replaceProfileDetails(id, {
         familyMembers: familyMembers
           .filter((item) => item.name || item.relation || item.phone)
@@ -627,6 +695,34 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label className="text-slate-200">Atasan (Reports To)</Label>
+                    <Select
+                      value={formData.reports_to_profile_id || "__none__"}
+                      disabled={selectedGradeLevel == null}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          reports_to_profile_id: value === "__none__" ? "" : value,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue placeholder="Pilih atasan" /></SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-slate-800">
+                        <SelectItem value="__none__">-</SelectItem>
+                        {eligibleManagers
+                          .map((emp) => (
+                            <SelectItem key={emp.id} value={emp.id}>
+                              {emp.full_name}
+                              {emp.employee_number ? ` (${emp.employee_number})` : ""}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedGradeLevel == null ? (
+                      <p className="text-xs text-slate-500">Pilih jabatan/grade dulu agar daftar atasan akurat.</p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-2">
                     <Label className="text-slate-200">Jabatan</Label>
                     <Select
                       value={formData.position_id || "__none__"}
@@ -661,6 +757,18 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                     <Select value={formData.employment_type} onValueChange={(value) => setFormData({ ...formData, employment_type: value })}>
                       <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="permanent">Tetap</SelectItem><SelectItem value="contract">Kontrak</SelectItem><SelectItem value="freelance">Freelance</SelectItem><SelectItem value="intern">Magang</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-200">Role Aplikasi</Label>
+                    <Select value={formData.app_role} onValueChange={(value) => setFormData({ ...formData, app_role: value })}>
+                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-slate-800">
+                        <SelectItem value="employee">Employee</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="hr_admin">HR Admin</SelectItem>
+                        <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
+                      </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">

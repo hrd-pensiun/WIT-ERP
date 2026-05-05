@@ -1,7 +1,9 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useEffect, useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -110,7 +112,23 @@ export function useOrgScopeFilters(): OrgScopeFilterState {
   }
 }
 
-export function OrgScopeFilterFields({ scope }: { scope: OrgScopeFilterState }) {
+export function OrgScopeFilterFields({
+  scope,
+  trailing,
+  title = "Filter organisasi",
+  hideEntity = false,
+  hideHeader = false,
+}: {
+  scope: OrgScopeFilterState
+  /** Sisipkan kontrol lain di baris/kolom yang sama (mis. karyawan, periode). */
+  trailing?: ReactNode
+  /** Judul blok filter */
+  title?: string
+  /** Sembunyikan filter entitas (mis. dashboard 360: hanya dept + divisi). */
+  hideEntity?: boolean
+  /** Sembunyikan baris judul + indikator loading (mis. judul ada di Accordion trigger). */
+  hideHeader?: boolean
+}) {
   const F = ORG_SCOPE_FILTER_ALL
   const {
     entityId,
@@ -130,41 +148,56 @@ export function OrgScopeFilterFields({ scope }: { scope: OrgScopeFilterState }) 
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <h3 className="text-slate-200 font-medium">Filter organisasi</h3>
-        {filtersLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" aria-hidden />
-        ) : null}
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="space-y-2">
-          <Label className="text-slate-400 text-xs">Entitas</Label>
-          <Select
-            value={entityId || F}
-            onValueChange={(v) => setEntityId(v === F ? "" : v)}
-            disabled={loadingEntities}
-          >
-            <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
-              <SelectValue placeholder="Pilih entitas" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800">
-              <SelectItem value={F}>Semua entitas</SelectItem>
-              {entities.map((e) => (
-                <SelectItem key={e.id} value={e.id}>
-                  {e.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {!hideHeader ? (
+        <div className="flex items-center justify-between gap-2 mb-3 pb-0.5">
+          <h3 className="text-slate-200 font-medium">{title}</h3>
+          {filtersLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" aria-hidden />
+          ) : null}
         </div>
-        <div className="space-y-2">
+      ) : null}
+      <div
+        className={cn(
+          "w-full items-end",
+          trailing
+            ? hideEntity
+              ? "grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 xl:grid-cols-none xl:[grid-template-columns:repeat(4,minmax(0,1fr))] xl:gap-x-3"
+              : "grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-none xl:[grid-template-columns:repeat(5,minmax(0,1fr))] xl:gap-x-3"
+            : hideEntity
+              ? "grid grid-cols-1 gap-4 md:grid-cols-none md:[grid-template-columns:repeat(2,minmax(0,1fr))]"
+              : "grid grid-cols-1 gap-4 md:grid-cols-none md:[grid-template-columns:repeat(3,minmax(0,1fr))]"
+        )}
+      >
+        {!hideEntity ? (
+          <div className="min-w-0 space-y-2">
+            <Label className="text-slate-400 text-xs">Entitas</Label>
+            <Select
+              value={entityId || F}
+              onValueChange={(v) => setEntityId(v === F ? "" : v)}
+              disabled={loadingEntities}
+            >
+              <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
+                <SelectValue placeholder="Pilih entitas" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-800">
+                <SelectItem value={F}>Semua entitas</SelectItem>
+                {entities.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+        <div className="min-w-0 space-y-2">
           <Label className="text-slate-400 text-xs">Departemen</Label>
           <Select
             value={departmentId || F}
             onValueChange={(v) => setDepartmentId(v === F ? "" : v)}
             disabled={loadingDepts}
           >
-            <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+            <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
               <SelectValue placeholder="Pilih departemen" />
             </SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-800">
@@ -177,14 +210,14 @@ export function OrgScopeFilterFields({ scope }: { scope: OrgScopeFilterState }) 
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label className="text-slate-400 text-xs">Divisi</Label>
           <Select
             value={divisionId || F}
             onValueChange={(v) => setDivisionId(v === F ? "" : v)}
             disabled={loadingDivs}
           >
-            <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+            <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
               <SelectValue placeholder={divisionsFiltered.length ? "Pilih divisi" : "Tidak ada divisi"} />
             </SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-800">
@@ -200,6 +233,7 @@ export function OrgScopeFilterFields({ scope }: { scope: OrgScopeFilterState }) 
             </SelectContent>
           </Select>
         </div>
+        {trailing}
       </div>
     </div>
   )

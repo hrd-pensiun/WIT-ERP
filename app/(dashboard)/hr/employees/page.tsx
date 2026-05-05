@@ -7,6 +7,7 @@ import {
   Plus,
   Search,
   Download,
+  Loader2,
   MoreHorizontal,
   UserCheck,
   UserX,
@@ -46,6 +47,7 @@ type EmployeeRow = {
   full_name?: string
   employee_number?: string
   employment_type?: string
+  app_role?: string | null
   status?: string
   join_date?: string
   department_id?: string | null
@@ -62,6 +64,8 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [deptFilter, setDeptFilter] = useState("all")
+  const [syncingAuth, setSyncingAuth] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   const deptNameById = useMemo(
     () => new Map(departments.map((d) => [d.id, d.name])),
@@ -125,6 +129,43 @@ export default function EmployeesPage() {
     return labels[type] || type
   }
 
+  const handleBulkSyncAuth = async () => {
+    setSyncingAuth(true)
+    setSyncMessage(null)
+    try {
+      const response = await fetch("/api/auth/sync-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bulk: true }),
+      })
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean
+            message?: string
+            report?: { total?: number; processed?: number; skipped?: number; failed?: number }
+          }
+        | null
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.message || "Gagal sinkronkan login karyawan.")
+      }
+
+      const report = result.report
+      setSyncMessage(
+        `Sinkron selesai. Total ${report?.total ?? 0}, berhasil ${report?.processed ?? 0}, skip ${report?.skipped ?? 0}, gagal ${report?.failed ?? 0}.`
+      )
+      await fetchEmployees({
+        search: search.trim() || undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        department_id: deptFilter !== "all" ? deptFilter : undefined,
+      })
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : "Gagal sinkronkan login karyawan.")
+    } finally {
+      setSyncingAuth(false)
+    }
+  }
+
   return (
     <div className="w-full min-w-0 space-y-6">
       {/* Header — padding halaman dari layout parent (main) */}
@@ -138,13 +179,34 @@ export default function EmployeesPage() {
             Kelola data karyawan dan informasi SDM
           </p>
         </div>
-        <Link href="/hr/employees/new">
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Tambah Karyawan
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-slate-700 text-slate-200"
+            onClick={handleBulkSyncAuth}
+            disabled={syncingAuth}
+          >
+            {syncingAuth ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sinkronisasi...
+              </>
+            ) : (
+              "Set Password Default Semua Karyawan"
+            )}
           </Button>
-        </Link>
+          <Link href="/hr/employees/new">
+            <Button className="bg-emerald-600 hover:bg-emerald-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Tambah Karyawan
+            </Button>
+          </Link>
+        </div>
       </div>
+      {syncMessage ? (
+        <div className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-300">{syncMessage}</div>
+      ) : null}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -270,6 +332,9 @@ export default function EmployeesPage() {
                     Bergabung
                   </TableHead>
                   <TableHead className="w-[12%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Role
+                  </TableHead>
+                  <TableHead className="w-[12%] text-xs font-medium uppercase tracking-wide text-slate-500">
                     Status
                   </TableHead>
                   <TableHead className="w-12 pr-4 sm:pr-6 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -330,6 +395,9 @@ export default function EmployeesPage() {
                       {emp.join_date
                         ? new Date(emp.join_date).toLocaleDateString("id-ID")
                         : "—"}
+                    </TableCell>
+                    <TableCell className="py-4 align-middle text-slate-300">
+                      {(emp as EmployeeRow).app_role || "employee"}
                     </TableCell>
                     <TableCell className="py-4 align-middle">
                       <Badge

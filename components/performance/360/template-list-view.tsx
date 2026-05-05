@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { Eye, FileStack, LayoutTemplate, ListChecks, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import { Copy, Eye, FileStack, LayoutTemplate, ListChecks, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
 import { Performance360Shell } from "@/components/performance/360/shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -29,7 +30,8 @@ function statusBadge(status: "active" | "draft") {
 }
 
 export function Template360ListView() {
-  const { templates, loading, error, deleteTemplate } = usePerformance360Templates()
+  const { templates, loading, error, deleteTemplate, duplicateTemplate } = usePerformance360Templates()
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const total = templates.length
   const aktif = templates.filter((t) => t.status === "active").length
 
@@ -39,6 +41,17 @@ export function Template360ListView() {
       await deleteTemplate(id)
     } catch {
       /* error ditampilkan dari hook state */
+    }
+  }
+
+  const handleDuplicate = async (id: string) => {
+    setDuplicatingId(id)
+    try {
+      await duplicateTemplate(id)
+    } catch {
+      /* error dari hook */
+    } finally {
+      setDuplicatingId(null)
     }
   }
 
@@ -151,6 +164,22 @@ export function Template360ListView() {
                               <Pencil className="mr-1 h-4 w-4" />
                               Edit
                             </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-cyan-400/90 hover:text-cyan-300"
+                            type="button"
+                            disabled={duplicatingId !== null}
+                            title="Buat salinan template baru (draft)"
+                            onClick={() => void handleDuplicate(row.id)}
+                          >
+                            {duplicatingId === row.id ? (
+                              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Copy className="mr-1 h-4 w-4" />
+                            )}
+                            Duplikat
                           </Button>
                           <Button
                             variant="ghost"

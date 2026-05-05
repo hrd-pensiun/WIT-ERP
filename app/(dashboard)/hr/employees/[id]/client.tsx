@@ -166,6 +166,7 @@ export default function EmployeeDetailClient({ id }: { id: string }) {
                 <div className="flex items-center gap-3"><Calendar className="w-4 h-4 text-slate-500" /><span className="text-slate-300">Join: {employee.join_date || "-"}</span></div>
                 <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-slate-500" /><span className="text-slate-300">{employee.address || "-"}</span></div>
                 <div className="text-slate-300">NPWP: {employee.npwp || "-"}</div>
+                <div className="text-slate-300">Role Aplikasi: {String((employee as any).app_role || "-")}</div>
                 <div className="text-slate-300">PTKP: {String((employee as any).ptkp_status || tax.ptkp_status || "-")}</div>
                 <div className="text-slate-300">BPJS TK: {employee.bpjs_tk_number || "-"}</div>
                 <div className="text-slate-300">BPJS Kesehatan: {employee.bpjs_kes_number || "-"}</div>

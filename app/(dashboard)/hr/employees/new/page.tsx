@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { 
@@ -26,24 +26,30 @@ import { useDivisions } from "@/hooks/useDivisions"
 import { usePositions } from "@/hooks/usePositions"
 import { useJobGrades } from "@/hooks/useJobGrades"
 
+const DEPARTMENT_OPTIONAL_MIN_LEVEL = 9
+
 export default function NewEmployeePage() {
   const router = useRouter()
-  const { createEmployee, generateEmployeeNumber, loading } = useEmployees()
+  const { createEmployee, generateEmployeeNumber, loading, employees } = useEmployees()
   const { departments } = useDepartments()
   const { divisions } = useDivisions()
   const { positions } = usePositions()
   const { jobGrades } = useJobGrades()
   
+  const [error, setError] = useState<string | null>(null)
+
   const [formData, setFormData] = useState({
     full_name: "",
     employee_number: "",
     email: "",
     phone: "",
     department_id: "",
+    reports_to_profile_id: "",
     division_id: "",
     position_id: "",
     job_grade_id: "",
     employment_type: "permanent",
+    app_role: "employee",
     join_date: new Date().toISOString().split('T')[0],
     status: "active",
     address: "",
@@ -60,8 +66,38 @@ export default function NewEmployeePage() {
     emergency_contact_phone: ""
   })
 
+  const selectedGradeLevel = useMemo(() => {
+    const byGrade = jobGrades.find((g) => String(g.id) === formData.job_grade_id)
+    if (byGrade?.level != null && Number.isFinite(Number(byGrade.level))) {
+      return Number(byGrade.level)
+    }
+    const byPosition = positions.find((p) => String(p.id) === formData.position_id) as
+      | (Record<string, unknown> & { hr_job_grades?: { level?: number | null } | null })
+      | undefined
+    const lvl = byPosition?.hr_job_grades?.level
+    return lvl != null && Number.isFinite(Number(lvl)) ? Number(lvl) : null
+  }, [formData.job_grade_id, formData.position_id, jobGrades, positions])
+
+  const eligibleManagers = useMemo(() => {
+    return employees.filter((emp) => {
+      if (emp.status !== "active") return false
+      const managerLevel = (emp as any)?.hr_job_grades?.level
+      if (managerLevel == null || selectedGradeLevel == null) return false
+      return Number(managerLevel) > selectedGradeLevel
+    })
+  }, [employees, selectedGradeLevel])
+
+  useEffect(() => {
+    if (!formData.reports_to_profile_id) return
+    const stillEligible = eligibleManagers.some((emp) => emp.id === formData.reports_to_profile_id)
+    if (!stillEligible) {
+      setFormData((prev) => ({ ...prev, reports_to_profile_id: "" }))
+    }
+  }, [eligibleManagers, formData.reports_to_profile_id])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     
     // Generate employee number if empty
     let empNumber = formData.employee_number
@@ -69,16 +105,52 @@ export default function NewEmployeePage() {
       empNumber = await generateEmployeeNumber()
     }
 
-    const employee = await createEmployee({
-      ...formData,
-      employee_number: empNumber,
-      status: 'active',
-      user_id: null,
-      entity_id: null,
-      work_shift_id: null
-    } as any)
+    const allowNoDepartment =
+      selectedGradeLevel != null && selectedGradeLevel >= DEPARTMENT_OPTIONAL_MIN_LEVEL
+
+    const deptId = formData.department_id?.trim() ? formData.department_id : null
+    if (!deptId && !allowNoDepartment) {
+      setError(
+        `Departemen wajib diisi untuk job level di bawah ${DEPARTMENT_OPTIONAL_MIN_LEVEL}.`
+      )
+      return
+    }
+
+    let employee: any = null
+    try {
+      employee = await createEmployee({
+        ...formData,
+        // Postgres UUID tidak menerima "" -> pakai null kalau kosong
+        department_id: deptId,
+        reports_to_profile_id: formData.reports_to_profile_id || null,
+        employee_number: empNumber,
+        status: "active",
+        user_id: null,
+        entity_id: null,
+        work_shift_id: null,
+      } as any)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create employee")
+      return
+    }
 
     if (employee) {
+      try {
+        await fetch("/api/auth/sync-role", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            employeeId: (employee as any).id ?? null,
+            userId: (employee as any).user_id ?? null,
+            email: (employee as any).email ?? null,
+            fullName: (employee as any).full_name ?? formData.full_name ?? null,
+            role: (employee as any).app_role ?? formData.app_role,
+            password: "wit12345",
+          }),
+        })
+      } catch {
+        // Keep employee save successful even if metadata sync is unavailable.
+      }
       router.push('/hr/employees')
     }
   }
@@ -100,6 +172,12 @@ export default function NewEmployeePage() {
           <p className="text-slate-400">Isi data karyawan baru</p>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Tabs defaultValue="personal" className="w-full">
@@ -216,11 +294,15 @@ export default function NewEmployeePage() {
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Departemen</Label>
-                  <Select value={formData.department_id} onValueChange={(v) => setFormData({...formData, department_id: v})}>
+                  <Select
+                    value={formData.department_id || "__none__"}
+                    onValueChange={(v) => setFormData({ ...formData, department_id: v === "__none__" ? "" : v })}
+                  >
                     <SelectTrigger className="bg-slate-950 border-slate-800">
                       <SelectValue placeholder="Pilih departemen" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectItem value="__none__">-</SelectItem>
                       {departments.map(d => (
                         <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                       ))}
@@ -240,6 +322,37 @@ export default function NewEmployeePage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Atasan (Reports To)</Label>
+                  <Select
+                    value={formData.reports_to_profile_id || "__none__"}
+                    disabled={selectedGradeLevel == null}
+                    onValueChange={(v) =>
+                      setFormData({
+                        ...formData,
+                        reports_to_profile_id: v === "__none__" ? "" : v,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                      <SelectValue placeholder="Pilih atasan" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectItem value="__none__">-</SelectItem>
+                      {eligibleManagers
+                        .map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.full_name}
+                            {emp.employee_number ? ` (${emp.employee_number})` : ""}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedGradeLevel == null ? (
+                    <p className="text-xs text-slate-500">Pilih jabatan/grade dulu agar daftar atasan akurat.</p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -299,6 +412,21 @@ export default function NewEmployeePage() {
                       <SelectItem value="contract">Kontrak</SelectItem>
                       <SelectItem value="freelance">Freelance</SelectItem>
                       <SelectItem value="intern">Magang</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Role Aplikasi</Label>
+                  <Select value={formData.app_role} onValueChange={(v) => setFormData({...formData, app_role: v})}>
+                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                      <SelectValue placeholder="Pilih role" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="hr_admin">HR Admin</SelectItem>
+                      <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

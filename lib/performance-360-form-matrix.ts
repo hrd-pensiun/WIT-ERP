@@ -10,7 +10,14 @@ export type Perf360MinimalProfile = {
   full_name: string | null
   department_id: string | null
   department_name?: string | null
+  position_name?: string | null
   reports_to_profile_id: string | null | undefined
+  /** Level jabatan efektif (profil `job_grade_id`, fallback ke grade jabatan). */
+  job_grade_level: number | null
+  /** Untuk menghubungkan auth login → profil karyawan. */
+  user_id?: string | null
+  email?: string | null
+  app_role?: string | null
 }
 
 export type Perf360RaterSettingsMinimal = {
@@ -25,7 +32,8 @@ export type Perf360RaterSettingsMinimal = {
 export type Perf360FormEstimateRow = {
   profile_id: string
   full_name: string
-  department_label: string
+  position_label: string
+  job_grade_level: number | null
   inbound_total: number | null
   inbound_self: number | null
   inbound_manager: number | null
@@ -37,6 +45,13 @@ export type Perf360FormEstimateRow = {
   outbound_as_subordinate: number
   outbound_as_self: number
   configured_as_ratee: boolean
+}
+
+/** Minimal penilai (estimasi form masuk) per `docs/6-05-360.md` — CEO tier kecuali lainnya min 4. */
+export function perf360MinRatersRequired(jobLevel: number | null): number | null {
+  if (jobLevel == null || !Number.isFinite(jobLevel)) return null
+  if (jobLevel >= 10) return 3
+  return 4
 }
 
 function effectiveManager(
@@ -63,39 +78,38 @@ function buildDirectsMap(profiles: Perf360MinimalProfile[]): Map<string, string[
   return m
 }
 
-function countPeersApprox(
+/**
+ * Jumlah perkiraan peer — selaras `lib/performance360-raters.ts` suggestPeerRaters:
+ * level sama; untuk level 7–9 boleh lintas departemen; selain itu harus dept sama.
+ */
+function countPeersHeuristic(
   ratee: Perf360MinimalProfile,
   mgrId: string | null,
   directIds: Set<string>,
-  idsInSameDept: Set<string>,
-  rosterIds: Set<string>
+  rosterIds: Set<string>,
+  roster: Perf360MinimalProfile[]
 ): number {
-  if (!ratee.department_id) return 0
+  const rl = ratee.job_grade_level
+  if (rl == null) return 0
+  const isUpperLevelPeerRule = rl >= 7 && rl <= 9
+
   let n = 0
-  for (const pid of idsInSameDept) {
-    if (!rosterIds.has(pid)) continue
-    if (pid === ratee.id) continue
-    if (mgrId && pid === mgrId) continue
-    if (directIds.has(pid)) continue
+  for (const o of roster) {
+    if (o.id === ratee.id) continue
+    if (!rosterIds.has(o.id)) continue
+    const ol = o.job_grade_level
+    if (ol == null || ol !== rl) continue
+    if (!isUpperLevelPeerRule && ratee.department_id !== o.department_id) continue
+    if (mgrId && o.id === mgrId) continue
+    if (directIds.has(o.id)) continue
     n++
   }
   return n
 }
 
-/** Baris dept → set profile id (hanya pembanding primitif untuk peer). */
 function buildDeptRosterMaps(profiles: Perf360MinimalProfile[]) {
-  const deptToMembers = new Map<string, Set<string>>()
   const roster = new Set(profiles.map((p) => p.id))
-  for (const p of profiles) {
-    if (!p.department_id) continue
-    let s = deptToMembers.get(p.department_id)
-    if (!s) {
-      s = new Set()
-      deptToMembers.set(p.department_id, s)
-    }
-    s.add(p.id)
-  }
-  return { deptToMembers, roster }
+  return { roster }
 }
 
 /**
@@ -110,7 +124,7 @@ export function buildPerf360FormEstimates(
   const profById = new Map(roster.map((p) => [p.id, p]))
   const rsByRatee = new Map(settings.map((s) => [s.ratee_user_profile_id, s]))
   const directsMap = buildDirectsMap(roster)
-  const { deptToMembers, roster: rosterIds } = buildDeptRosterMaps(roster)
+  const { roster: rosterIds } = buildDeptRosterMaps(roster)
 
   type OutboundBucket = { manager: number; peer: number; subordinate: number; self: number }
   const emptyBucket = (): OutboundBucket => ({ manager: 0, peer: 0, subordinate: 0, self: 0 })
@@ -127,12 +141,6 @@ export function buildPerf360FormEstimates(
     if (!D) continue
     const effMgr = effectiveManager(D, rs)
     const directIds = new Set(directsMap.get(D.id) ?? [])
-    const sameDeptMembers = deptToMembers.get(D.department_id ?? "") ?? new Set<string>()
-    const peersApprox = rs.allow_peer
-      ? countPeersApprox(D, effMgr, directIds, sameDeptMembers, rosterIds)
-      : 0
-    const subCount = rs.allow_subordinate ? directIds.size : 0
-
     /** Penilai-pembentuk formulir outbound. */
     const selfAdds = rs.allow_self && rosterIds.has(D.id)
     const mgrAdds =
@@ -150,16 +158,19 @@ export function buildPerf360FormEstimates(
       b.manager += 1
     }
     if (rs.allow_peer) {
-      /** Hitung konkret mana peer IDs */
       const peerTargets: string[] = []
-      if (D.department_id) {
-        for (const pid of sameDeptMembers) {
-          if (!rosterIds.has(pid)) continue
-          if (pid === D.id) continue
-          if (effMgr && pid === effMgr) continue
-          if (directIds.has(pid)) continue
-          peerTargets.push(pid)
-        }
+      const rl = D.job_grade_level
+      const isUpperLevelPeerRule = rl != null && rl >= 7 && rl <= 9
+      for (const op of roster) {
+        const pid = op.id
+        if (!rosterIds.has(pid)) continue
+        if (pid === D.id) continue
+        const ol = op.job_grade_level
+        if (rl == null || ol == null || ol !== rl) continue
+        if (!isUpperLevelPeerRule && D.department_id !== op.department_id) continue
+        if (effMgr && pid === effMgr) continue
+        if (directIds.has(pid)) continue
+        peerTargets.push(pid)
       }
       for (const vid of peerTargets) {
         const b = outboundDetail.get(vid)
@@ -175,11 +186,7 @@ export function buildPerf360FormEstimates(
   }
 
   return roster.map((p) => {
-    const deptLabel = p.department_name?.trim()
-      ? p.department_name
-      : p.department_id
-        ? `#${String(p.department_id).slice(0, 8)}…`
-        : "—"
+    const positionLabel = p.position_name?.trim() ? p.position_name : "—"
     const rs = rsByRatee.get(p.id)
     let inbound_self: number | null = null
     let inbound_manager: number | null = null
@@ -193,8 +200,7 @@ export function buildPerf360FormEstimates(
       const directsSet = new Set(directs)
       inbound_self = rs.allow_self ? 1 : 0
       inbound_manager = rs.allow_manager && effMgr ? 1 : 0
-      const sameDept = deptToMembers.get(p.department_id ?? "") ?? new Set()
-      inbound_peer = rs.allow_peer ? countPeersApprox(p, effMgr, directsSet, sameDept, rosterIds) : 0
+      inbound_peer = rs.allow_peer ? countPeersHeuristic(p, effMgr, directsSet, rosterIds, roster) : 0
       inbound_subordinate = rs.allow_subordinate ? directs.length : 0
       inbound_total =
         inbound_self +
@@ -209,7 +215,8 @@ export function buildPerf360FormEstimates(
     return {
       profile_id: p.id,
       full_name: p.full_name || "Tanpa nama",
-      department_label: deptLabel,
+      position_label: positionLabel,
+      job_grade_level: p.job_grade_level,
       inbound_total,
       inbound_self,
       inbound_manager,
@@ -234,7 +241,9 @@ export async function fetchPerf360FormMatrixData(tenantId: string): Promise<{
 
   const { data: profData, error: pErr } = await insForge
     .from("user_profiles")
-    .select("id, full_name, department_id, reports_to_profile_id, departments:department_id(name)")
+    .select(
+      "id, user_id, email, app_role, full_name, department_id, reports_to_profile_id, job_grade_id, position_id, departments:department_id(name), hr_positions:position_id(name, hr_job_grades:job_grade_id(level)), hr_job_grades:job_grade_id(level)"
+    )
     .eq("tenant_id", tenantId)
     .eq("status", "active")
     .order("full_name", { ascending: true })
@@ -250,17 +259,45 @@ export async function fetchPerf360FormMatrixData(tenantId: string): Promise<{
 
   if (sErr) throw sErr
 
-  const profiles: Perf360MinimalProfile[] = (profData as any[] | null | undefined)?.map((row) => {
-    const dept = row.departments
-    const deptName = Array.isArray(dept) ? dept[0]?.name : dept?.name
-    return {
-      id: row.id,
-      full_name: row.full_name,
-      department_id: row.department_id,
-      department_name: deptName ?? null,
-      reports_to_profile_id: row.reports_to_profile_id,
-    }
-  }) ?? []
+  const profiles: Perf360MinimalProfile[] =
+    (profData as Record<string, unknown>[] | null | undefined)?.map((row) => {
+      const dept = row.departments
+      const deptName = Array.isArray(dept) ? (dept[0] as { name?: string })?.name : (dept as { name?: string })?.name
+      const position = row.hr_positions
+      const posRow = Array.isArray(position) ? position[0] : position
+      const positionName = posRow && typeof posRow === "object" && "name" in posRow ? String((posRow as { name?: string }).name ?? "") : ""
+      const directGrade =
+        row.hr_job_grades && typeof row.hr_job_grades === "object"
+          ? (row.hr_job_grades as { level?: number | null }).level
+          : null
+      const posGrade =
+        posRow &&
+        typeof posRow === "object" &&
+        "hr_job_grades" in posRow &&
+        posRow.hr_job_grades &&
+        typeof posRow.hr_job_grades === "object"
+          ? (posRow.hr_job_grades as { level?: number | null }).level
+          : null
+      const rawLevel =
+        typeof directGrade === "number" && Number.isFinite(directGrade)
+          ? directGrade
+          : typeof posGrade === "number" && Number.isFinite(posGrade)
+            ? posGrade
+            : null
+
+      return {
+        id: String(row.id),
+        user_id: (row.user_id as string | null) ?? null,
+        email: typeof row.email === "string" ? row.email.trim().toLowerCase() : null,
+        app_role: (row.app_role as string | null) ?? null,
+        full_name: (row.full_name as string | null) ?? null,
+        department_id: (row.department_id as string | null) ?? null,
+        department_name: deptName ?? null,
+        position_name: positionName?.trim() ? positionName : null,
+        reports_to_profile_id: (row.reports_to_profile_id as string | null) ?? null,
+        job_grade_level: rawLevel,
+      }
+    }) ?? []
 
   const settings: Perf360RaterSettingsMinimal[] =
     (setData as Perf360RaterSettingsMinimal[] | null | undefined) ?? []

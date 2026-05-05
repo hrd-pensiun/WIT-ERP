@@ -38,6 +38,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   "mapping-penilaian": "Mapping Penilaian",
   konfigurasi: "Konfigurasi",
+  settings: "Settings",
   new: "New",
   edit: "Edit",
   generate: "Generate",

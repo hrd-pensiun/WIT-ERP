@@ -22,12 +22,21 @@ import {
   type Performance360TemplateDetail,
   type Performance360TemplateQuestionRow,
 } from "@/hooks/usePerformance360Templates"
-import { buildPerf360FormEstimates, fetchPerf360FormMatrixData, type Perf360FormEstimateRow } from "@/lib/performance-360-form-matrix"
+import {
+  buildPerf360FormEstimates,
+  fetchPerf360FormMatrixData,
+  perf360MinRatersRequired,
+  type Perf360FormEstimateRow,
+} from "@/lib/performance-360-form-matrix"
 import {
   coercePerf360ReasonMode,
   perf360ReasonAppliesToDbQuestionType,
   perf360ReasonModeLabel,
 } from "@/lib/performance-360-reason-mode"
+import {
+  coercePerf360RaterRole,
+  perf360RaterRoleLabel,
+} from "@/lib/performance-360-rater-role"
 import { getTenantId } from "@/lib/tenant"
 import { isMockMode } from "@/lib/insforge"
 
@@ -61,9 +70,32 @@ function groupTemplateQuestionsBySection(rows: Performance360TemplateQuestionRow
   return groups
 }
 
-function inboundBreakdownText(r: Perf360FormEstimateRow): string {
-  if (r.inbound_total === null) return ""
-  return `${r.inbound_self ?? 0} nilai diri · ${r.inbound_manager ?? 0} atasan · ~${r.inbound_peer ?? 0} peer · ${r.inbound_subordinate ?? 0} bawahan`
+/** Format `docs/6-05-360.md`: Diri | Atasan | Peer (~) | Bawahan */
+function inboundBreakdownDoc(r: Perf360FormEstimateRow): string {
+  if (r.inbound_total === null) return "—"
+  const s = r.inbound_self ?? 0
+  const m = r.inbound_manager ?? 0
+  const p = r.inbound_peer ?? 0
+  const b = r.inbound_subordinate ?? 0
+  return `${s} | ${m} | ~${p} | ${b}`
+}
+
+function estimationStatusForRow(r: Perf360FormEstimateRow): {
+  kind: "na" | "ok" | "warn" | "unknown_level"
+  label: string
+  min: number | null
+} {
+  if (r.inbound_total === null) {
+    return { kind: "na", label: "—", min: null }
+  }
+  const min = perf360MinRatersRequired(r.job_grade_level)
+  if (min == null) {
+    return { kind: "unknown_level", label: "Level?", min: null }
+  }
+  if (r.inbound_total >= min) {
+    return { kind: "ok", label: "OK", min }
+  }
+  return { kind: "warn", label: `MIN ${min}`, min }
 }
 
 function outboundBreakdownText(r: Perf360FormEstimateRow): string {
@@ -181,6 +213,15 @@ export function Template360DetailView({ id }: { id: string }) {
   const questions = detail.performance_360_template_questions ?? []
   const configuredRateeCount = matrixRows.filter((r) => r.configured_as_ratee).length
 
+  const configuredInboundRows = matrixRows.filter((r) => r.inbound_total !== null)
+  const totalFormsEstimate = configuredInboundRows.reduce((acc, r) => acc + (r.inbound_total ?? 0), 0)
+  const avgRaters =
+    configuredInboundRows.length > 0 ? totalFormsEstimate / configuredInboundRows.length : 0
+  const statusRows = configuredInboundRows.map((r) => ({ r, st: estimationStatusForRow(r) }))
+  const okCount = statusRows.filter((x) => x.st.kind === "ok").length
+  const warnRows = statusRows.filter((x) => x.st.kind === "warn")
+  const unknownLevelRows = statusRows.filter((x) => x.st.kind === "unknown_level")
+
   return (
     <Performance360Shell
       title={detail.name}
@@ -266,6 +307,7 @@ export function Template360DetailView({ id }: { id: string }) {
                       <TableHead className="text-slate-300">Pertanyaan</TableHead>
                       <TableHead className="text-slate-300">Kategori</TableHead>
                       <TableHead className="text-slate-300">Tipe input</TableHead>
+                      <TableHead className="min-w-[130px] text-slate-300">Untuk peran</TableHead>
                       <TableHead className="text-right text-slate-300">Bobot</TableHead>
                       <TableHead className="min-w-[120px] text-slate-300">Alasan</TableHead>
                       <TableHead className="text-slate-300">Cuplikan bagi penilai</TableHead>
@@ -282,7 +324,7 @@ export function Template360DetailView({ id }: { id: string }) {
                               className="border-slate-800 bg-slate-950/90 hover:bg-slate-950/90"
                             >
                               <TableCell
-                                colSpan={7}
+                                colSpan={8}
                                 className="py-2.5 text-sm font-semibold tracking-tight text-emerald-400/95"
                               >
                                 {group.label}
@@ -300,12 +342,14 @@ export function Template360DetailView({ id }: { id: string }) {
                           const reasonCell = perf360ReasonAppliesToDbQuestionType(q.question_type)
                             ? perf360ReasonModeLabel(coercePerf360ReasonMode(q.reason_mode))
                             : "—"
+                          const appliesRoleCell = perf360RaterRoleLabel(coercePerf360RaterRole(q.applies_to_role))
                           return (
                             <TableRow key={q.id} className="border-slate-800">
                               <TableCell className="text-slate-500">{rowNum}</TableCell>
                               <TableCell className="max-w-[280px] font-medium text-slate-200">{q.question_text}</TableCell>
                               <TableCell className="text-slate-400">{q.category}</TableCell>
                               <TableCell className="text-slate-400">{questionTypeLabel(q.question_type)}</TableCell>
+                              <TableCell className="text-xs text-slate-400">{appliesRoleCell}</TableCell>
                               <TableCell className="text-right text-slate-300">{String(q.weight)}</TableCell>
                               <TableCell className="text-xs text-slate-400">{reasonCell}</TableCell>
                               <TableCell className="text-xs text-slate-500">{caption}</TableCell>
@@ -328,19 +372,17 @@ export function Template360DetailView({ id }: { id: string }) {
               <CardTitle className="text-base text-slate-100">Estimasi penilaian 360</CardTitle>
               <CardDescription className="space-y-2 text-slate-500">
                 <p>
-                  <span className="font-medium text-slate-400">Penilaian yang Anda terima</span> — perkiraan berapa orang/posisi akan
-                  memberi umpan balik tentang Anda sebagai yang dinilai (ratee).
+                  Pratinjau mengikuti kolom dan aturan minimal penilai pada spesifikasi tabel estimasi 360 (level jabatan, estimasi form
+                  masuk, breakdown, status OK/peringatan).
                 </p>
                 <p>
-                  <span className="font-medium text-slate-400">Penilaian yang Anda lakukan</span> — perkiraan berapa kali Anda mengisi
-                  penilaian terhadap rekan/atasan/bawahan.
-                </p>
-                <p>
-                  Peer memakai perkiraan rekan satu departemen (tanda&nbsp;~). Atasan mengikuti{" "}
+                  Peer dihitung dengan heuristik yang sama seperti{" "}
                   <Link href="/performance/360/mapping-penilaian" className="text-cyan-400 hover:underline">
                     Mapping penilaian
-                  </Link>{" "}
-                  atau garis laporan <code className="text-slate-400">reports_to</code>.
+                  </Link>
+                  : level sama; untuk level <span className="text-slate-400">7–9</span> bisa lintas departemen; selain itu harus dept
+                  sama. Angka peer bersifat perkiraan (tanda&nbsp;~). Atasan dari mapping atau{" "}
+                  <code className="text-slate-400">reports_to</code>.
                 </p>
               </CardDescription>
             </CardHeader>
@@ -371,45 +413,176 @@ export function Template360DetailView({ id }: { id: string }) {
                   Tidak ada karyawan aktif untuk tenant ini.
                 </p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-slate-800">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-slate-800 hover:bg-transparent bg-slate-950/80">
-                        <TableHead className="text-slate-300">Karyawan</TableHead>
-                        <TableHead className="text-slate-300">Departemen</TableHead>
-                        <TableHead className="max-w-[140px] text-right text-slate-300 align-bottom">
-                          <span className="block text-xs leading-tight font-medium">Penilaian</span>
-                          <span className="block text-[11px] font-normal leading-tight text-slate-500">Anda terima (est.)</span>
-                        </TableHead>
-                        <TableHead className="min-w-[200px] text-slate-300 align-bottom">Rincian terima</TableHead>
-                        <TableHead className="max-w-[140px] text-right text-slate-300 align-bottom">
-                          <span className="block text-xs leading-tight font-medium">Penilaian</span>
-                          <span className="block text-[11px] font-normal leading-tight text-slate-500">Anda lakukan (est.)</span>
-                        </TableHead>
-                        <TableHead className="min-w-[220px] text-slate-300 align-bottom">Rincian lakukan</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {matrixRows.map((r) => (
-                        <TableRow key={r.profile_id} className="border-slate-800">
-                          <TableCell className="font-medium text-slate-200">{r.full_name}</TableCell>
-                          <TableCell className="text-slate-400">{r.department_label}</TableCell>
-                          <TableCell className="text-right tabular-nums text-slate-200">
-                            {r.inbound_total !== null ? r.inbound_total : "—"}
-                          </TableCell>
-                          <TableCell className="text-xs leading-relaxed text-slate-500">
-                            {r.inbound_total !== null ? (
-                              inboundBreakdownText(r)
-                            ) : (
-                              <span className="text-slate-600">Belum ada mapping — tidak bisa menghitung yang diterima</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums text-slate-200">{r.outbound_total}</TableCell>
-                          <TableCell className="text-xs leading-relaxed text-slate-500">{outboundBreakdownText(r)}</TableCell>
+                <div className="space-y-6">
+                  <div className="overflow-x-auto rounded-lg border border-slate-800">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-slate-800 bg-slate-950/80 hover:bg-transparent">
+                          <TableHead className="text-slate-300">Nama</TableHead>
+                          <TableHead className="text-slate-300">Jabatan</TableHead>
+                          <TableHead className="text-right tabular-nums text-slate-300">Level</TableHead>
+                          <TableHead className="text-right tabular-nums text-slate-300">
+                            <span className="block">Est.form</span>
+                            <span className="block text-[11px] font-normal text-slate-500">total masuk</span>
+                          </TableHead>
+                          <TableHead className="min-w-[200px] text-slate-300">
+                            Breakdown{" "}
+                            <span className="block text-[11px] font-normal text-slate-500">Diri | Atasan | Peer | Bawahan</span>
+                          </TableHead>
+                          <TableHead className="text-slate-300">Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {matrixRows.map((r) => {
+                          const st = estimationStatusForRow(r)
+                          return (
+                            <TableRow key={`in-${r.profile_id}`} className="border-slate-800">
+                              <TableCell className="font-medium text-slate-200">{r.full_name}</TableCell>
+                              <TableCell className="max-w-[200px] text-slate-400">{r.position_label}</TableCell>
+                              <TableCell className="text-right tabular-nums text-slate-300">
+                                {r.job_grade_level != null ? r.job_grade_level : "—"}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums text-slate-200">
+                                {r.inbound_total !== null ? r.inbound_total : "—"}
+                              </TableCell>
+                              <TableCell className="font-mono text-xs tabular-nums text-slate-400">
+                                {inboundBreakdownDoc(r)}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {st.kind === "na" ? (
+                                  <span className="text-slate-600">Belum mapping</span>
+                                ) : st.kind === "ok" ? (
+                                  <span className="text-emerald-400/95">✅ OK</span>
+                                ) : st.kind === "unknown_level" ? (
+                                  <span className="text-amber-200/90" title="Isi job grade / jabatan ber-level di HR">
+                                    ⚠️ level?
+                                  </span>
+                                ) : (
+                                  <span className="text-amber-200/90">⚠️ {st.label}</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                        <TableRow className="border-slate-800 bg-slate-950/50 font-medium hover:bg-slate-950/50">
+                          <TableCell colSpan={3} className="text-slate-400">
+                            Total
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-slate-200">{totalFormsEstimate}</TableCell>
+                          <TableCell colSpan={2} className="text-slate-600" />
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-4 text-sm">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Ringkasan</p>
+                    <ul className="mt-3 space-y-1.5 text-slate-300">
+                      <li>
+                        Total karyawan aktif (baris){": "}
+                        <span className="tabular-nums text-slate-100">{matrixRows.length}</span>
+                      </li>
+                      <li>
+                        Total formulir (estimasi, yang sudah mapping){": "}
+                        <span className="tabular-nums text-slate-100">{totalFormsEstimate}</span>
+                      </li>
+                      <li>
+                        Rata-rata penilai/orang (hanya yang ter-mapping){": "}
+                        <span className="tabular-nums text-slate-100">
+                          {configuredInboundRows.length ? avgRaters.toFixed(1) : "—"}
+                        </span>
+                      </li>
+                    </ul>
+                    <div className="mt-4 border-t border-slate-800 pt-3">
+                      <p className="text-xs font-medium text-slate-500">Ringkasan status</p>
+                      <p className="mt-2 text-slate-300">
+                        <span className="text-emerald-400/95">✅ OK</span>
+                        {": "}
+                        <span className="tabular-nums">{okCount}</span> orang
+                      </p>
+                      {warnRows.length > 0 ? (
+                        <p className="mt-1 text-amber-200/90">
+                          ⚠️ WARNING: {warnRows.length} orang ({warnRows.map(({ r }) => r.full_name).join(", ")}) — kurang dari minimal
+                          penilai untuk level mereka
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-slate-500">⚠️ WARNING: 0 orang</p>
+                      )}
+                      {unknownLevelRows.length > 0 ? (
+                        <p className="mt-2 text-xs text-slate-500">
+                          Tanpa angka level (set grade di master atau lengkapi pemetaan grade ke jabatan):{" "}
+                          {unknownLevelRows.map(({ r }) => r.full_name).join(", ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {(warnRows.length > 0 || unknownLevelRows.length > 0) && (
+                    <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.07] p-4 text-sm">
+                      <p className="font-medium text-amber-100/95">Disarankan</p>
+                      <ul className="mt-2 list-inside list-disc space-y-2 text-amber-100/85">
+                        {warnRows.map(({ r, st }) => {
+                          const min = st.min ?? 4
+                          const total = r.inbound_total ?? 0
+                          const need = Math.max(0, min - total)
+                          const isCeoTier = r.job_grade_level != null && r.job_grade_level >= 10
+                          return (
+                            <li key={`rec-${r.profile_id}`}>
+                              <span className="font-medium text-slate-100">{r.full_name}</span>
+                              {" — "}perlu sekira {need} penilai tambahan untuk memenuhi minimal {min}.
+                              {isCeoTier ? (
+                                <span className="text-slate-400">
+                                  {" "}
+                                  Opsi: tambahkan stakeholder eksternal (mis. dewan) atau konsultan.
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">
+                                  {" "}
+                                  Opsi: tambah mapping peer atau atasan di halaman Mapping; pastikan beberapa rekan satu level satu
+                                  departemen atau (level 7–9) nominasi lintas dept.
+                                </span>
+                              )}
+                            </li>
+                          )
+                        })}
+                        {unknownLevelRows.map(({ r }) => (
+                          <li key={`rec-lvl-${r.profile_id}`}>
+                            <span className="font-medium text-slate-100">{r.full_name}</span>
+                            {": "}
+                            lengkapi level jabatan di Master Data atau data karyawan agar bisa validasi MIN.
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <details className="rounded-lg border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm">
+                    <summary className="cursor-pointer text-slate-300 marker:text-slate-500">
+                      Penilaian yang Anda lakukan (estimasi beban outbound)
+                    </summary>
+                    <div className="mt-4 overflow-x-auto rounded-lg border border-slate-800">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-slate-800 hover:bg-transparent bg-slate-950/80">
+                            <TableHead className="text-slate-300">Nama</TableHead>
+                            <TableHead className="text-slate-300">Jabatan</TableHead>
+                            <TableHead className="text-right tabular-nums text-slate-300">Total keluar</TableHead>
+                            <TableHead className="min-w-[220px] text-slate-300">Rincian</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {matrixRows.map((r) => (
+                            <TableRow key={`out-${r.profile_id}`} className="border-slate-800">
+                              <TableCell className="font-medium text-slate-200">{r.full_name}</TableCell>
+                              <TableCell className="text-slate-400">{r.position_label}</TableCell>
+                              <TableCell className="text-right tabular-nums text-slate-200">{r.outbound_total}</TableCell>
+                              <TableCell className="text-xs leading-relaxed text-slate-500">{outboundBreakdownText(r)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </details>
                 </div>
               )}
               <p className="text-xs text-slate-600">

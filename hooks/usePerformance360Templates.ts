@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
 import { insForge } from "@/lib/insforge"
+import { coercePerf360RaterRole, type Perf360RaterRole } from "@/lib/performance-360-rater-role"
 import { coercePerf360ReasonMode, type Perf360ReasonMode } from "@/lib/performance-360-reason-mode"
 import { getTenantId } from "@/lib/tenant"
 
 export type { Perf360ReasonMode }
+export type { Perf360RaterRole }
 
 /** Baris pertanyaan dari DB (`select *`). */
 export type Performance360TemplateQuestionRow = {
@@ -16,6 +18,7 @@ export type Performance360TemplateQuestionRow = {
   weight: number | string
   section_title?: string | null
   reason_mode?: string | null
+  applies_to_role?: string | null
 }
 
 export type Performance360TemplateRow = {
@@ -70,6 +73,8 @@ export type TemplateQuestionInput = {
   section_title?: string | null
   /** Alasan tambahan untuk rating/multiple_choice; teks diabaikan di UI */
   reason_mode: Perf360ReasonMode
+  /** Visibilitas pertanyaan berdasarkan peran penilai pada assignment */
+  applies_to_role: Perf360RaterRole
 }
 
 export type CreatePerformance360TemplateInput = {
@@ -83,6 +88,46 @@ export type CreatePerformance360TemplateInput = {
   rating_scale_max: number
   status: "draft" | "active"
   questions: TemplateQuestionInput[]
+}
+
+function mapDbQuestionTypeToInput(db: string): TemplateQuestionInput["question_type"] {
+  if (db === "text") return "text"
+  if (db === "multiple_choice") return "multiple_choice"
+  return "rating"
+}
+
+/** Bentuk payload create dari detail template (untuk duplikat). */
+export function performance360DetailToCreateInput(
+  detail: Performance360TemplateDetail,
+  name: string
+): CreatePerformance360TemplateInput {
+  const parseWeight = (w: number | string) => {
+    const n = typeof w === "number" ? w : parseFloat(String(w))
+    return Number.isFinite(n) ? Math.min(2, Math.max(0, n)) : 1
+  }
+  const dateOnly = (v: string | null | undefined) =>
+    v ? String(v).slice(0, 10) : null
+
+  return {
+    name: name.trim(),
+    description: detail.description,
+    period_kind: detail.period_kind,
+    period_year: detail.period_year,
+    period_custom_label: detail.period_custom_label,
+    period_start: dateOnly(detail.period_start),
+    period_end: dateOnly(detail.period_end),
+    rating_scale_max: detail.rating_scale_max ?? 5,
+    status: "draft",
+    questions: detail.performance_360_template_questions.map((q) => ({
+      question_text: q.question_text,
+      category: q.category,
+      question_type: mapDbQuestionTypeToInput(q.question_type),
+      weight: parseWeight(q.weight),
+      section_title: q.section_title?.trim() ? q.section_title.trim() : null,
+      reason_mode: coercePerf360ReasonMode(q.reason_mode),
+      applies_to_role: coercePerf360RaterRole(q.applies_to_role),
+    })),
+  }
 }
 
 /** Label periode untuk tabel / ringkasan — tidak perlu tenant_id di pemanggil. */
@@ -205,6 +250,7 @@ export function usePerformance360Templates(
         sort_order: i + 1,
         section_title: q.section_title?.trim() ? q.section_title.trim() : null,
         reason_mode: coercePerf360ReasonMode(q.reason_mode),
+        applies_to_role: coercePerf360RaterRole(q.applies_to_role),
         question_text: q.question_text.trim(),
         category: q.category,
         question_type: q.question_type,
@@ -287,6 +333,7 @@ export function usePerformance360Templates(
         sort_order: i + 1,
         section_title: q.section_title?.trim() ? q.section_title.trim() : null,
         reason_mode: coercePerf360ReasonMode(q.reason_mode),
+        applies_to_role: coercePerf360RaterRole(q.applies_to_role),
         question_text: q.question_text.trim(),
         category: q.category,
         question_type: q.question_type,
@@ -325,6 +372,22 @@ export function usePerformance360Templates(
     [tenantId, fetchTemplates]
   )
 
+  const duplicateTemplate = useCallback(
+    async (sourceId: string, options?: { name?: string }): Promise<Performance360TemplateRow> => {
+      const detail = await getPerformance360TemplateDetail(sourceId, tenantId)
+      if (!detail) {
+        const e = new Error("Template sumber tidak ditemukan")
+        setError(e.message)
+        throw e
+      }
+      const base =
+        options?.name?.trim() || `${detail.name.trim()} (salinan)`
+      const input = performance360DetailToCreateInput(detail, base)
+      return await createTemplate(input)
+    },
+    [tenantId, createTemplate]
+  )
+
   return {
     templates,
     loading,
@@ -333,5 +396,6 @@ export function usePerformance360Templates(
     createTemplate,
     updateTemplate,
     deleteTemplate,
+    duplicateTemplate,
   }
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Plus, Trash2 } from "lucide-react"
+import { Copy, Loader2, Plus, Trash2 } from "lucide-react"
 import {
   DEFAULT_ASSESSMENT_CATEGORIES,
   ASSESSMENT_CATEGORIES_UPDATED_EVENT,
@@ -33,6 +33,11 @@ import {
   coercePerf360ReasonMode,
   perf360ReasonAppliesToDbQuestionType,
 } from "@/lib/performance-360-reason-mode"
+import {
+  PERF360_RATER_ROLE_OPTIONS,
+  coercePerf360RaterRole,
+  type Perf360RaterRole,
+} from "@/lib/performance-360-rater-role"
 
 const QUESTION_TYPES = ["Rating", "Text", "Multiple Choice"] as const
 
@@ -75,6 +80,7 @@ type QuestionRow = {
   weight: string
   /** Hanya untuk rating / pilihan ganda */
   reasonMode: Perf360ReasonMode
+  appliesToRole: Perf360RaterRole
 }
 
 type SectionBlock = {
@@ -113,6 +119,7 @@ function buildSectionsFromDetailQuestions(rows: Performance360TemplateQuestionRo
       reasonMode: perf360ReasonAppliesToDbQuestionType(q.question_type)
         ? coercePerf360ReasonMode(q.reason_mode)
         : "none",
+      appliesToRole: coercePerf360RaterRole(q.applies_to_role),
     })
   }
   return sections
@@ -129,6 +136,7 @@ function newQuestion(partial?: Partial<QuestionRow>, defaultCategory?: string): 
     questionType: partial?.questionType ?? "Rating",
     weight: partial?.weight ?? "1.0",
     reasonMode: partial?.reasonMode ?? "none",
+    appliesToRole: partial?.appliesToRole ?? "all",
   }
 }
 
@@ -276,6 +284,23 @@ export function Template360Form(props?: { templateId?: string }) {
     })
   }, [])
 
+  const duplicateQuestion = useCallback((sectionId: string, qid: string) => {
+    setSections((prev) =>
+      prev.map((s) => {
+        if (s.id !== sectionId) return s
+        const i = s.questions.findIndex((q) => q.id === qid)
+        if (i < 0) return s
+        const src = s.questions[i]
+        const row: QuestionRow = {
+          ...src,
+          id: crypto.randomUUID(),
+        }
+        const questions = [...s.questions.slice(0, i + 1), row, ...s.questions.slice(i + 1)]
+        return { ...s, questions }
+      })
+    )
+  }, [])
+
   const updateSectionTitle = useCallback((sectionId: string, title: string) => {
     setSections((secs) => secs.map((s) => (s.id === sectionId ? { ...s, title } : s)))
   }, [])
@@ -317,6 +342,7 @@ export function Template360Form(props?: { templateId?: string }) {
             section_title: sectionTitle,
             reason_mode:
               qt === "text" ? ("none" as const) : coercePerf360ReasonMode(q.reasonMode),
+            applies_to_role: coercePerf360RaterRole(q.appliesToRole),
           }
         })
       }),
@@ -615,19 +641,32 @@ export function Template360Form(props?: { templateId?: string }) {
                         "bg-slate-950/50"
                       )}
                     >
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-sm font-medium text-emerald-400">Pertanyaan {idx}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                          onClick={() => removeQuestion(sec.id, q.id)}
-                          disabled={totalQs <= 1}
-                        >
-                          <Trash2 className="mr-1 h-4 w-4" />
-                          Hapus
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300"
+                            onClick={() => duplicateQuestion(sec.id, q.id)}
+                            title="Duplikat pertanyaan (salin ke baris berikutnya di bagian ini)"
+                          >
+                            <Copy className="mr-1 h-4 w-4" />
+                            Duplikat
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                            onClick={() => removeQuestion(sec.id, q.id)}
+                            disabled={totalQs <= 1}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" />
+                            Hapus
+                          </Button>
+                        </div>
                       </div>
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2 md:col-span-2">
@@ -692,6 +731,34 @@ export function Template360Form(props?: { templateId?: string }) {
                             onChange={(e) => updateQuestion(sec.id, q.id, { weight: e.target.value })}
                             className="border-slate-800 bg-slate-950 text-slate-100"
                           />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label className="text-slate-200">Tampil untuk peran penilai</Label>
+                          <Select
+                            value={q.appliesToRole}
+                            onValueChange={(v) =>
+                              updateQuestion(sec.id, q.id, {
+                                appliesToRole: coercePerf360RaterRole(v),
+                              })
+                            }
+                          >
+                            <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border-slate-800 bg-slate-900">
+                              {PERF360_RATER_ROLE_OPTIONS.map((o) => (
+                                <SelectItem key={o.value} value={o.value}>
+                                  {o.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-slate-500">
+                            {
+                              PERF360_RATER_ROLE_OPTIONS.find((o) => o.value === q.appliesToRole)
+                                ?.description
+                            }
+                          </p>
                         </div>
                         <div className="space-y-2 md:col-span-2">
                           <Label className="text-slate-200">Alasan tambahan</Label>

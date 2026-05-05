@@ -550,14 +550,14 @@ export function Struktur360View() {
                 checked={perms.peer}
                 onCheckedChange={(v) => setPerms((p) => ({ ...p, peer: !!v }))}
                 title="Rekan kerja (peer)"
-                desc="Heuristik: divisi/dept sama & grade level ±1 vs yang dinilai"
+                desc="Heuristik: level sama. Untuk level 7-9, lintas departemen/divisi diizinkan; selain itu harus departemen sama."
                 badge="Peer"
                 badgeClass="bg-sky-500/15 text-sky-400 border-sky-500/30"
                 detail={
                   perms.peer ? (
                     <RaterNameList
                       people={peerPreview}
-                      emptyHint="Tidak ada rekan pada rentang level ±1 di unit yang sama (pastikan grade level terisi)."
+                      emptyHint="Tidak ada rekan sesuai aturan peer (level sama; level 7-9 bisa lintas departemen/divisi)."
                     />
                   ) : null
                 }
