@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // output: 'export' breaks dynamic routes that rely on runtime data (e.g. UUID params)
   // because Next requires generateStaticParams() to include every possible param value.
-  distDir: 'dist',
   async redirects() {
     return [
       {
