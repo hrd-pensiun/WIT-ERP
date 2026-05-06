@@ -8,6 +8,7 @@ import {
   Wallet, Briefcase, PieChart, Settings, LineChart 
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 
 const mobileNavItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -22,6 +23,14 @@ const mobileNavItems = [
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const { user } = useAuth()
+  const normalizedRole = (user?.profileRole ?? "").trim().toLowerCase()
+  const isStaffOrManager = normalizedRole === "employee" || normalizedRole === "manager"
+  const navItems = mobileNavItems.map((item) =>
+    item.name === "Performance" && isStaffOrManager
+      ? { ...item, href: "/performance/360-feedback" }
+      : item
+  )
 
   return (
     <>
@@ -31,7 +40,7 @@ export function MobileNav() {
           <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">W</span>
           </div>
-          <span className="text-lg font-semibold text-slate-100">WIT-ERP</span>
+          <span className="text-lg font-semibold text-slate-100">WeWok.dtk</span>
         </div>
         <button 
           onClick={() => setIsOpen(!isOpen)}
@@ -56,7 +65,7 @@ export function MobileNav() {
         ${isOpen ? 'translate-y-0' : '-translate-y-full'}
       `}>
         <nav className="p-4 space-y-1">
-          {mobileNavItems.map((item) => {
+          {navItems.map((item) => {
             const isActive =
               item.name === "Performance"
                 ? pathname.startsWith("/performance")
@@ -96,7 +105,7 @@ export function MobileNav() {
       {/* Bottom Tab Bar (for very small screens) */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 z-50">
         <nav className="flex justify-around">
-          {mobileNavItems.slice(0, 5).map((item) => {
+          {navItems.slice(0, 5).map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
             
             return (

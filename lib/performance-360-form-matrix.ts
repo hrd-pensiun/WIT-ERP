@@ -10,6 +10,7 @@ export type Perf360MinimalProfile = {
   full_name: string | null
   department_id: string | null
   department_name?: string | null
+  division_name?: string | null
   position_name?: string | null
   reports_to_profile_id: string | null | undefined
   /** Level jabatan efektif (profil `job_grade_id`, fallback ke grade jabatan). */
@@ -242,7 +243,7 @@ export async function fetchPerf360FormMatrixData(tenantId: string): Promise<{
   const { data: profData, error: pErr } = await insForge
     .from("user_profiles")
     .select(
-      "id, user_id, email, app_role, full_name, department_id, reports_to_profile_id, job_grade_id, position_id, departments:department_id(name), hr_positions:position_id(name, hr_job_grades:job_grade_id(level)), hr_job_grades:job_grade_id(level)"
+      "id, user_id, email, app_role, full_name, department_id, division_id, reports_to_profile_id, job_grade_id, position_id, departments:department_id(name), divisions:division_id(name), hr_positions:position_id(name, hr_job_grades:job_grade_id(level)), hr_job_grades:job_grade_id(level)"
     )
     .eq("tenant_id", tenantId)
     .eq("status", "active")
@@ -263,6 +264,8 @@ export async function fetchPerf360FormMatrixData(tenantId: string): Promise<{
     (profData as Record<string, unknown>[] | null | undefined)?.map((row) => {
       const dept = row.departments
       const deptName = Array.isArray(dept) ? (dept[0] as { name?: string })?.name : (dept as { name?: string })?.name
+      const div = row.divisions
+      const divName = Array.isArray(div) ? (div[0] as { name?: string })?.name : (div as { name?: string })?.name
       const position = row.hr_positions
       const posRow = Array.isArray(position) ? position[0] : position
       const positionName = posRow && typeof posRow === "object" && "name" in posRow ? String((posRow as { name?: string }).name ?? "") : ""
@@ -293,6 +296,7 @@ export async function fetchPerf360FormMatrixData(tenantId: string): Promise<{
         full_name: (row.full_name as string | null) ?? null,
         department_id: (row.department_id as string | null) ?? null,
         department_name: deptName ?? null,
+        division_name: divName ?? null,
         position_name: positionName?.trim() ? positionName : null,
         reports_to_profile_id: (row.reports_to_profile_id as string | null) ?? null,
         job_grade_level: rawLevel,

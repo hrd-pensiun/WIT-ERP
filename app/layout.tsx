@@ -12,7 +12,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "WIT-ERP | Digital Agency Management System",
+  title: "WeWok.dtk - Sistem Informasi Perusahaan",
   description: "ERP untuk digital agency dengan multi-entitas, talent pooling, dan payroll BOPP/TOPP",
 };
 

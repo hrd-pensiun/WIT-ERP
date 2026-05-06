@@ -23,6 +23,7 @@ type Props = {
   /** Baris pengenal penilai (mis. nama — peran dari roster), opsional */
   raterContextLine?: string | null
   templateName: string
+  hideSummary?: boolean
 }
 
 export function Perf360FormGuidance({
@@ -31,6 +32,7 @@ export function Perf360FormGuidance({
   raterRoleLabel,
   raterContextLine,
   templateName,
+  hideSummary = false,
 }: Props) {
   const formattedDate = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
@@ -46,32 +48,34 @@ export function Perf360FormGuidance({
         <span>{PERF360_CONFIDENTIAL_LINE}</span>
       </div>
 
-      <Card className="border-slate-800 bg-slate-950/50">
-        <CardHeader className="pb-2 pt-4">
-          <CardTitle className="text-base text-slate-100">Ringkasan form</CardTitle>
-          <CardDescription className="text-slate-500">
-            {templateName} — Anda mengisi sebagai <span className="text-slate-400">{raterRoleLabel}</span>.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 border-t border-slate-800/80 pb-4 pt-3 text-sm text-slate-400">
-          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-            <span className="text-slate-500">Yang dinilai</span>
-            <span className="font-medium text-slate-200">{assessedName}</span>
-          </div>
-          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-            <span className="text-slate-500">Konteks penilai</span>
-            <span className="text-right text-slate-300">{raterContextLine?.trim() || "—"}</span>
-          </div>
-          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-            <span className="text-slate-500">Tanggal pengisian</span>
-            <span className="text-slate-300">{formattedDate}</span>
-          </div>
-          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-            <span className="text-slate-500">Skala rating</span>
-            <span className="text-slate-300">1 sampai {scaleMax}</span>
-          </div>
-        </CardContent>
-      </Card>
+      {!hideSummary ? (
+        <Card className="border-slate-800 bg-slate-950/50">
+          <CardHeader className="pb-2 pt-4">
+            <CardTitle className="text-base text-slate-100">Ringkasan form</CardTitle>
+            <CardDescription className="text-slate-500">
+              {templateName} — Anda mengisi sebagai <span className="text-slate-400">{raterRoleLabel}</span>.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 border-t border-slate-800/80 pb-4 pt-3 text-sm text-slate-400">
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Yang dinilai</span>
+              <span className="font-medium text-slate-200">{assessedName}</span>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Konteks penilai</span>
+              <span className="text-right text-slate-300">{raterContextLine?.trim() || "—"}</span>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Tanggal pengisian</span>
+              <span className="text-slate-300">{formattedDate}</span>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Skala rating</span>
+              <span className="text-slate-300">1 sampai {scaleMax}</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Accordion
         type="multiple"

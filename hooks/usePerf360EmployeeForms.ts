@@ -32,6 +32,10 @@ export function perf360UnrestrictedFormList(
   profile: Perf360MinimalProfile | null,
   authProfileRole: string | null | undefined
 ): boolean {
+  const normalizedRole = (authProfileRole ?? profile?.app_role ?? "").trim().toLowerCase()
+  const isPrivilegedPreviewRole = normalizedRole === "hr_admin" || normalizedRole === "superadmin"
+  if (!isPrivilegedPreviewRole) return false
+
   if (!profile) return true
   const roleOk = !!(profile.app_role?.trim() || authProfileRole?.trim())
   const jobOk = profile.job_grade_level != null || !!profile.position_name?.trim()

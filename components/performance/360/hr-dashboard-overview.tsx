@@ -11,7 +11,6 @@ import {
 } from "@/components/performance/360/org-scope-filters"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import {
   Select,
@@ -29,6 +28,7 @@ import { fetchPerf360FormMatrixData, type Perf360MinimalProfile } from "@/lib/pe
 import { fetchPerf360SubmissionsForTemplate, type Perf360SubmissionRow } from "@/lib/perf360-submissions"
 import { getTenantId } from "@/lib/tenant"
 import { cn } from "@/lib/utils"
+import { loadPerf360RaterWeights } from "@/components/performance/360/assessment-weights-storage"
 
 type EmployeeRow = {
   id: string
@@ -76,6 +76,24 @@ function scoreColor(pct: number): string {
   return "bg-rose-500"
 }
 
+function templateSortTimestamp(t: {
+  period_end: string | null
+  period_start: string | null
+  period_year: number | null
+}): number {
+  const end = t.period_end ? new Date(t.period_end).getTime() : NaN
+  if (Number.isFinite(end)) return end
+  const start = t.period_start ? new Date(t.period_start).getTime() : NaN
+  if (Number.isFinite(start)) return start
+  return Number(t.period_year ?? 0)
+}
+
+function shortTemplateOptionLabel(t: { name: string; period_kind: string; period_year: number | null; period_custom_label: string | null; period_start: string | null; period_end: string | null }): string {
+  const compactName = t.name.trim().replace(/\s+/g, " ")
+  if (!compactName) return formatTemplatePeriodLabel(t)
+  return compactName.length > 36 ? `${compactName.slice(0, 36)}...` : compactName
+}
+
 export function Perf360HrDashboardOverview() {
   const searchParams = useSearchParams()
   const templateFromUrl = searchParams.get("template")
@@ -91,7 +109,6 @@ export function Perf360HrDashboardOverview() {
   const [rateeIds, setRateeIds] = useState<Set<string>>(new Set())
   const [rateeLoading, setRateeLoading] = useState(!mock)
   const [templateId, setTemplateId] = useState("")
-  const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "in_progress" | "not_started" | "overdue">(
     "all"
   )
@@ -102,7 +119,10 @@ export function Perf360HrDashboardOverview() {
 
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [submissions, setSubmissions] = useState<Perf360SubmissionRow[]>([])
-  const [avgTotalScore, setAvgTotalScore] = useState<number | null>(null)
+  const weights = loadPerf360RaterWeights()
+  const [kindAggByAssessed, setKindAggByAssessed] = useState<
+    Record<string, Partial<Record<Perf360AssignmentKind, { sum: number; wsum: number }>>>
+  >({})
 
   const loadRatees = useCallback(async () => {
     if (!insForge) {
@@ -159,7 +179,7 @@ export function Perf360HrDashboardOverview() {
     async (nextTemplateId: string) => {
       if (mock || !nextTemplateId) {
         setSubmissions([])
-        setAvgTotalScore(null)
+        setKindAggByAssessed({})
         setSubmissionsLoading(false)
         return
       }
@@ -168,25 +188,62 @@ export function Perf360HrDashboardOverview() {
         const subs = await fetchPerf360SubmissionsForTemplate(tenantId, nextTemplateId)
         setSubmissions(subs)
 
-        const submittedIds = subs.filter((s) => s.status === "submitted").map((s) => s.id)
+        const submittedSubs = subs.filter((s) => s.status === "submitted")
+        const submittedIds = submittedSubs.map((s) => s.id)
         if (!insForge || submittedIds.length === 0) {
-          setAvgTotalScore(null)
+          setKindAggByAssessed({})
           return
         }
-        const { data: answers, error } = await insForge
+
+        const { data: qrows, error: qerr } = await insForge
+          .from("performance_360_template_questions")
+          .select("id,weight")
+          .eq("template_id", nextTemplateId)
+        if (qerr) throw qerr
+        const weightByQuestion = new Map<string, number>(
+          (qrows ?? []).map((r: { id: string; weight: number | null }) => [
+            r.id,
+            r.weight == null ? 1 : Number(r.weight),
+          ])
+        )
+
+        const { data: answers, error: aerr } = await insForge
           .from("performance_360_submission_answers")
-          .select("submission_id,rating")
+          .select("submission_id,question_id,rating")
           .in("submission_id", submittedIds)
-        if (error) throw error
-        const ratings = (answers ?? [])
-          .map((r: { rating: number | null }) => (r.rating == null ? null : Number(r.rating)))
-          .filter((x: number | null): x is number => typeof x === "number" && Number.isFinite(x))
-        if (ratings.length === 0) {
-          setAvgTotalScore(null)
-          return
+        if (aerr) throw aerr
+
+        // submission_id -> meta
+        const metaBySubmission = new Map<string, { assessedId: string; kind: Perf360AssignmentKind }>(
+          submittedSubs.map((s) => [s.id, { assessedId: s.assessed_user_profile_id, kind: s.assignment_kind }])
+        )
+
+        // assessedId -> kind -> sum(rating*weight), sum(weight)
+        const agg = new Map<string, Map<Perf360AssignmentKind, { sum: number; wsum: number }>>()
+        for (const row of (answers ?? []) as {
+          submission_id: string
+          question_id: string
+          rating: number | null
+        }[]) {
+          if (row.rating == null) continue
+          const m = metaBySubmission.get(row.submission_id)
+          if (!m) continue
+          const w = weightByQuestion.get(row.question_id) ?? 1
+          const byKind = agg.get(m.assessedId) ?? new Map()
+          const cur = byKind.get(m.kind) ?? { sum: 0, wsum: 0 }
+          cur.sum += Number(row.rating) * w
+          cur.wsum += w
+          byKind.set(m.kind, cur)
+          agg.set(m.assessedId, byKind)
         }
-        const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length
-        setAvgTotalScore(avg)
+
+        const out: Record<string, Partial<Record<Perf360AssignmentKind, { sum: number; wsum: number }>>> = {}
+        for (const [assessedId, byKind] of agg.entries()) {
+          out[assessedId] = Object.fromEntries(byKind.entries()) as Partial<
+            Record<Perf360AssignmentKind, { sum: number; wsum: number }>
+          >
+        }
+        setKindAggByAssessed(out)
       } finally {
         setSubmissionsLoading(false)
       }
@@ -253,6 +310,10 @@ export function Perf360HrDashboardOverview() {
   }, [mock, rateeIds, filteredProfiles])
 
   const selectedTemplate = templates.find((t) => t.id === templateId)
+  const templatesForSelect = useMemo(
+    () => [...templates].sort((a, b) => templateSortTimestamp(b) - templateSortTimestamp(a)),
+    [templates]
+  )
   const qs = templateId ? `?template=${encodeURIComponent(templateId)}` : ""
   const filterSummary = `${scope.deptLabel} · ${scope.divLabel}`
 
@@ -314,6 +375,58 @@ export function Perf360HrDashboardOverview() {
       : 0
     return { totalForms, completed, pending, overdue }
   }, [computedAssignments, submissionByKey, templateIsOverdue])
+
+  const hasExpectedSubordinateByAssessed = useMemo(() => {
+    const m = new Map<string, boolean>()
+    for (const a of computedAssignments) {
+      if (a.kind !== "subordinate") continue
+      m.set(a.assessedId, true)
+    }
+    return m
+  }, [computedAssignments])
+
+  const overallByAssessed = useMemo(() => {
+    const out = new Map<string, number>()
+    for (const [assessedId, byKind] of Object.entries(kindAggByAssessed)) {
+      const score = (x?: { sum: number; wsum: number }) => (x && x.wsum > 0 ? x.sum / x.wsum : null)
+      const sSelf = score(byKind.self)
+      const sMgr = score(byKind.manager)
+      const sPeer = score(byKind.peer)
+      const sSub = score(byKind.subordinate)
+
+      let wSelf = weights.self
+      let wMgr = weights.manager
+      let wPeer = weights.peer
+      let wSub = weights.subordinate
+
+      // Rule requested: if assessed has NO subordinate raters structurally, shift subordinate weight to peer.
+      const expectedSub = hasExpectedSubordinateByAssessed.get(assessedId) === true
+      if (!expectedSub) {
+        wPeer += wSub
+        wSub = 0
+      }
+
+      const parts: { w: number; v: number }[] = []
+      if (sSelf != null) parts.push({ w: wSelf, v: sSelf })
+      if (sMgr != null) parts.push({ w: wMgr, v: sMgr })
+      if (sPeer != null) parts.push({ w: wPeer, v: sPeer })
+      if (sSub != null) parts.push({ w: wSub, v: sSub })
+
+      const wsum = parts.reduce((a, b) => a + b.w, 0)
+      if (wsum <= 0) continue
+      out.set(
+        assessedId,
+        parts.reduce((a, b) => a + (b.w / wsum) * b.v, 0)
+      )
+    }
+    return out
+  }, [kindAggByAssessed, weights.self, weights.manager, weights.peer, weights.subordinate, hasExpectedSubordinateByAssessed])
+
+  const avgTotalScore = useMemo(() => {
+    const vals = [...overallByAssessed.values()]
+    if (vals.length === 0) return null
+    return vals.reduce((a, b) => a + b, 0) / vals.length
+  }, [overallByAssessed])
 
   const byDept = useMemo(() => {
     const m = new Map<string, { dept: string; total: number; completed: number; employees: Set<string> }>()
@@ -420,7 +533,7 @@ export function Perf360HrDashboardOverview() {
         </CardHeader>
         <CardContent>
           <div className="-mx-1 overflow-x-auto px-1 pb-1">
-            <div className="grid min-w-[980px] grid-cols-5 gap-3">
+            <div className="grid min-w-[980px] grid-cols-4 gap-3">
               <Select
                 value={scope.departmentId || ORG_SCOPE_FILTER_ALL}
                 onValueChange={(v) => scope.setDepartmentId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
@@ -462,7 +575,7 @@ export function Perf360HrDashboardOverview() {
                 onValueChange={setTemplateId}
                 disabled={templatesLoading || templates.length === 0}
               >
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100 [&>span]:truncate">
                   <SelectValue
                     placeholder={
                       templatesLoading
@@ -474,31 +587,25 @@ export function Perf360HrDashboardOverview() {
                   />
                 </SelectTrigger>
                 <SelectContent className="border-slate-800 bg-slate-900">
-                  {templates.map((t) => (
+                  {templatesForSelect.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {formatTemplatePeriodLabel(t)} — {t.name}
+                      {shortTemplateOptionLabel(t)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari nama atau jabatan…"
-                className="border-slate-800 bg-slate-950 text-slate-100 placeholder:text-slate-600"
-              />
-
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={() => {
                   void fetchEmployees({ status: "active" })
                   void loadRatees()
                   void loadMatrix()
                   void loadTemplateStats(templateId)
                 }}
-                className="border-slate-800 bg-slate-950 text-slate-200 hover:bg-slate-900"
+                className="h-9 border-slate-800 bg-slate-950 px-3 text-slate-200 hover:bg-slate-900"
               >
                 <RefreshCcw className="mr-2 h-4 w-4" />
                 Refresh
@@ -688,7 +795,7 @@ export function Perf360HrDashboardOverview() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="-mx-1 overflow-x-auto px-1 pb-1">
-                <div className="grid min-w-[860px] grid-cols-3 gap-3">
+                <div className="grid min-w-[860px] grid-cols-2 gap-3">
                   <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
                     <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
                       <SelectValue placeholder="Status" />
@@ -716,12 +823,6 @@ export function Perf360HrDashboardOverview() {
                     </SelectContent>
                   </Select>
 
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Cari employee…"
-                    className="border-slate-800 bg-slate-950 text-slate-100 placeholder:text-slate-600"
-                  />
                 </div>
               </div>
 
@@ -745,13 +846,7 @@ export function Perf360HrDashboardOverview() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      tableRows
-                        .filter((r) => {
-                          const q = search.trim().toLowerCase()
-                          if (!q) return true
-                          return r.name.toLowerCase().includes(q)
-                        })
-                        .map((r) => {
+                      tableRows.map((r) => {
                           const pct = percent(r.completed, r.total)
                           const actionLabel = pct >= 100 ? "View" : templateIsOverdue ? "Remind" : "Follow-up"
                           return (

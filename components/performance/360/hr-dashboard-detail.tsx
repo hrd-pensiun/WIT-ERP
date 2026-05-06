@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { Perf360BehavioralCompetencies } from "@/components/performance/360/perf360-behavioral-competencies"
 import { Perf360ResultsScoreMatrix } from "@/components/performance/360/perf360-results-score-matrix"
 import { Performance360Shell } from "@/components/performance/360/shell"
@@ -19,7 +19,11 @@ import {
 } from "@/components/ui/select"
 import { useEmployees } from "@/hooks/useEmployees"
 import { formatTemplatePeriodLabel, usePerformance360Templates } from "@/hooks/usePerformance360Templates"
-import { isMockMode } from "@/lib/insforge"
+import { insForge, isMockMode } from "@/lib/insforge"
+import { loadPerf360RaterWeights } from "@/components/performance/360/assessment-weights-storage"
+import { computePerf360Assignments, type Perf360AssignmentKind } from "@/lib/perf360-assignments"
+import { fetchPerf360FormMatrixData } from "@/lib/performance-360-form-matrix"
+import { fetchPerf360SubmissionsForTemplate } from "@/lib/perf360-submissions"
 import { getTenantId } from "@/lib/tenant"
 
 const DEMO_NAMES: Record<string, string> = {
@@ -41,6 +45,23 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [templateId, setTemplateId] = useState(templateFromQuery ?? "")
+
+  const [scoreLoading, setScoreLoading] = useState(false)
+  const [scoreError, setScoreError] = useState<string | null>(null)
+  const [scoreData, setScoreData] = useState<{
+    cards: { label: string; valueText: string; subtitle: string; className: string }[]
+    rows: {
+      category: string
+      self: number | null
+      atasan: number | null
+      rekan: number | null
+      bawahan: number | null
+      total: number | null
+      avg: number | null
+      avgTone?: "neutral" | "warn"
+    }[]
+    totalRow: { self: number | null; atasan: number | null; rekan: number | null; bawahan: number | null; overall: number | null }
+  } | null>(null)
 
   useEffect(() => {
     setTemplateId((prev) => (templateFromQuery && templateFromQuery !== prev ? templateFromQuery : prev))
@@ -107,12 +128,222 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
     ? `${formatTemplatePeriodLabel(selectedTemplate)} — ${selectedTemplate.name}`
     : "Pilih template"
 
+  const weights = loadPerf360RaterWeights()
+
+  const behavioralRows = useMemo(() => {
+    if (!scoreData?.rows?.length) return undefined
+    return scoreData.rows
+      .map((r) => ({
+        key: r.category.toLowerCase().replace(/\s+/g, "_"),
+        subject: r.category,
+        score: r.avg ?? 0,
+      }))
+      .sort((a, b) => a.subject.localeCompare(b.subject))
+  }, [scoreData])
+
+  const loadScores = useCallback(async () => {
+    if (mock) {
+      setScoreData(null)
+      setScoreError(null)
+      setScoreLoading(false)
+      return
+    }
+    if (!insForge || !templateId) return
+    setScoreLoading(true)
+    setScoreError(null)
+    try {
+      const matrix = await fetchPerf360FormMatrixData(tenantId)
+      const profiles = matrix?.profiles ?? []
+      const settings = matrix?.settings ?? []
+
+      const assignments = settings.length
+        ? computePerf360Assignments(profiles, settings, null, { showAllForms: true })
+        : []
+      const expectedForAssessed = assignments.filter((a) => a.assessedId === profileId)
+      const expectedSubordinate = expectedForAssessed.some((a) => a.kind === "subordinate")
+
+      const submissions = await fetchPerf360SubmissionsForTemplate(tenantId, templateId)
+      const relevantSubs = submissions.filter(
+        (s) => s.assessed_user_profile_id === profileId && s.status === "submitted"
+      )
+      const submittedIds = relevantSubs.map((s) => s.id)
+
+      const { data: qrows, error: qerr } = await insForge
+        .from("performance_360_template_questions")
+        .select("id,category,weight")
+        .eq("template_id", templateId)
+      if (qerr) throw qerr
+
+      const questionMeta = new Map<string, { category: string; weight: number }>(
+        (qrows ?? []).map((r: { id: string; category: string; weight: number | null }) => [
+          r.id,
+          { category: r.category ?? "—", weight: r.weight == null ? 1 : Number(r.weight) },
+        ])
+      )
+
+      const { data: ansRows, error: aerr } = submittedIds.length
+        ? await insForge
+            .from("performance_360_submission_answers")
+            .select("submission_id,question_id,rating")
+            .in("submission_id", submittedIds)
+        : { data: [], error: null }
+      if (aerr) throw aerr
+
+      const kindBySubmission = new Map<string, Perf360AssignmentKind>(
+        relevantSubs.map((s) => [s.id, s.assignment_kind])
+      )
+
+      type Agg = { sum: number; wsum: number }
+      const kindAgg: Record<Perf360AssignmentKind, Agg> = {
+        self: { sum: 0, wsum: 0 },
+        manager: { sum: 0, wsum: 0 },
+        peer: { sum: 0, wsum: 0 },
+        subordinate: { sum: 0, wsum: 0 },
+      }
+      const kindCounts: Record<Perf360AssignmentKind, number> = { self: 0, manager: 0, peer: 0, subordinate: 0 }
+      for (const s of relevantSubs) kindCounts[s.assignment_kind] += 1
+
+      // category -> kind -> agg
+      const catAgg = new Map<string, Record<Perf360AssignmentKind, Agg>>()
+      const ensureCat = (cat: string) => {
+        const cur = catAgg.get(cat)
+        if (cur) return cur
+        const next: Record<Perf360AssignmentKind, Agg> = {
+          self: { sum: 0, wsum: 0 },
+          manager: { sum: 0, wsum: 0 },
+          peer: { sum: 0, wsum: 0 },
+          subordinate: { sum: 0, wsum: 0 },
+        }
+        catAgg.set(cat, next)
+        return next
+      }
+
+      for (const row of (ansRows ?? []) as {
+        submission_id: string
+        question_id: string
+        rating: number | null
+      }[]) {
+        if (row.rating == null) continue
+        const kind = kindBySubmission.get(row.submission_id)
+        if (!kind) continue
+        const qm = questionMeta.get(row.question_id)
+        if (!qm) continue
+        const w = qm.weight
+        kindAgg[kind].sum += Number(row.rating) * w
+        kindAgg[kind].wsum += w
+
+        const byKind = ensureCat(qm.category)
+        byKind[kind].sum += Number(row.rating) * w
+        byKind[kind].wsum += w
+      }
+
+      const score = (a: Agg) => (a.wsum > 0 ? a.sum / a.wsum : null)
+      const sSelf = score(kindAgg.self)
+      const sMgr = score(kindAgg.manager)
+      const sPeer = score(kindAgg.peer)
+      const sSub = score(kindAgg.subordinate)
+
+      // effective weights (subordinate -> peer if not expected)
+      let wSelf = weights.self
+      let wMgr = weights.manager
+      let wPeer = weights.peer
+      let wSub = weights.subordinate
+      if (!expectedSubordinate) {
+        wPeer += wSub
+        wSub = 0
+      }
+
+      const parts: { w: number; v: number }[] = []
+      if (sSelf != null) parts.push({ w: wSelf, v: sSelf })
+      if (sMgr != null) parts.push({ w: wMgr, v: sMgr })
+      if (sPeer != null) parts.push({ w: wPeer, v: sPeer })
+      if (sSub != null) parts.push({ w: wSub, v: sSub })
+
+      const wsum = parts.reduce((a, b) => a + b.w, 0)
+      const overall = wsum > 0 ? parts.reduce((a, b) => a + (b.w / wsum) * b.v, 0) : null
+
+      const categories = [...new Set((qrows ?? []).map((r: any) => String(r.category ?? "—")))].sort((a, b) =>
+        a.localeCompare(b)
+      )
+
+      const rows = categories.map((cat) => {
+        const a = catAgg.get(cat) ?? {
+          self: { sum: 0, wsum: 0 },
+          manager: { sum: 0, wsum: 0 },
+          peer: { sum: 0, wsum: 0 },
+          subordinate: { sum: 0, wsum: 0 },
+        }
+        const cSelf = score(a.self)
+        const cMgr = score(a.manager)
+        const cPeer = score(a.peer)
+        const cSub = score(a.subordinate)
+
+        const vals = [cSelf, cMgr, cPeer, cSub].filter((x): x is number => typeof x === "number" && Number.isFinite(x))
+        const avg = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : null
+
+        const total = vals.length ? vals.reduce((x, y) => x + y, 0) : null
+        return {
+          category: cat,
+          self: cSelf,
+          atasan: cMgr,
+          rekan: cPeer,
+          bawahan: cSub,
+          total,
+          avg,
+          avgTone: avg != null && avg < 3.8 ? "warn" : "neutral",
+        }
+      })
+
+      const cards = [
+        {
+          label: "Self Assessment",
+          valueText: sSelf == null ? "—" : sSelf.toFixed(1),
+          subtitle: `dari 5.0 (${kindCounts.self} response)`,
+          className: "from-emerald-600/90 to-cyan-600/80",
+        },
+        {
+          label: "Manager / Atasan",
+          valueText: sMgr == null ? "—" : sMgr.toFixed(1),
+          subtitle: `dari 5.0 (${kindCounts.manager} response)`,
+          className: "from-fuchsia-600/85 to-rose-600/75",
+        },
+        {
+          label: "Rekan / Peer",
+          valueText: sPeer == null ? "—" : sPeer.toFixed(1),
+          subtitle: `dari 5.0 (${kindCounts.peer} response)`,
+          className: "from-sky-600/85 to-cyan-500/75",
+        },
+        {
+          label: "Bawahan / Subordinate",
+          valueText: sSub == null ? "—" : sSub.toFixed(1),
+          subtitle: `dari 5.0 (${kindCounts.subordinate} response)`,
+          className: "from-green-600/85 to-emerald-500/75",
+        },
+      ]
+
+      setScoreData({
+        cards,
+        rows,
+        totalRow: { self: sSelf, atasan: sMgr, rekan: sPeer, bawahan: sSub, overall },
+      })
+    } catch (e) {
+      setScoreError(e instanceof Error ? e.message : "Gagal menghitung skor")
+      setScoreData(null)
+    } finally {
+      setScoreLoading(false)
+    }
+  }, [mock, profileId, templateId, tenantId, weights.manager, weights.peer, weights.self, weights.subordinate])
+
+  useEffect(() => {
+    void loadScores()
+  }, [loadScores])
+
   return (
     <Performance360Shell
       title={
         loadingProfile ? "Memuat profil…" : profileError ? "Detail hasil 360" : profileName ?? "Karyawan"
       }
-      subtitle={`Hasil penilaian aggregated (demo UI) · ${periodLine}`}
+      subtitle={`${scoreData ? "Hasil penilaian (real data)" : "Hasil penilaian (demo UI)"} · ${periodLine}`}
       action={
         <Button variant="outline" size="sm" className="border-slate-700 text-slate-300" asChild>
           <Link href={backHref}>
@@ -132,7 +363,7 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
         <CardHeader className="space-y-2 pb-4">
           <CardTitle className="text-base text-slate-100">Periode penilaian</CardTitle>
           <CardDescription className="text-slate-500">
-            Mengganti template memperbarui query string — angka hasil tetap ilustrasi hingga agregasi DB tersambung.
+            Mengganti template memperbarui query string; skor dihitung dari submission yang sudah submitted.
           </CardDescription>
           <Label className="text-xs text-slate-400">Template</Label>
           <Select
@@ -154,13 +385,19 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
         </CardHeader>
       </Card>
 
-      <p className="text-xs text-slate-600">
-        Radar dan matrix di bawah memakai data contoh. Nantinya bisa dihitung dari{" "}
-        <span className="font-mono">performance_360_submission_answers</span> per karyawan dan template.
-      </p>
+      {scoreLoading ? (
+        <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/80 px-4 py-4 text-sm text-slate-400">
+          <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+          Menghitung skor…
+        </div>
+      ) : scoreError ? (
+        <div className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          {scoreError}
+        </div>
+      ) : null}
 
-      <Perf360BehavioralCompetencies />
-      <Perf360ResultsScoreMatrix />
+      <Perf360BehavioralCompetencies rows={behavioralRows} />
+      <Perf360ResultsScoreMatrix data={scoreData} />
     </Performance360Shell>
   )
 }

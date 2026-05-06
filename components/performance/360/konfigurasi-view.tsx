@@ -8,6 +8,10 @@ import {
   loadAssessmentCategories,
   persistAssessmentCategories,
 } from "@/components/performance/360/assessment-categories-storage"
+import {
+  loadPerf360RaterWeights,
+  persistPerf360RaterWeights,
+} from "@/components/performance/360/assessment-weights-storage"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -39,10 +43,21 @@ export function Konfigurasi360View() {
 
   useEffect(() => {
     setCategories(loadAssessmentCategories())
+    const w = loadPerf360RaterWeights()
+    setWManager(String(w.manager))
+    setWPeer(String(w.peer))
+    setWSub(String(w.subordinate))
+    setWSelf(String(w.self))
   }, [])
 
   const saveAll = () => {
     persistAssessmentCategories(categories)
+    persistPerf360RaterWeights({
+      manager: Number(wManager),
+      peer: Number(wPeer),
+      subordinate: Number(wSub),
+      self: Number(wSelf),
+    })
     setSaving(true)
     window.setTimeout(() => setSaving(false), 700)
   }

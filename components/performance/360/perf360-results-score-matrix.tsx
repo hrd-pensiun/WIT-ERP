@@ -14,6 +14,33 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { loadPerf360RaterWeights } from "@/components/performance/360/assessment-weights-storage"
+
+export type Perf360ResultsScoreCard = {
+  label: string
+  valueText: string
+  subtitle: string
+  className: string
+}
+
+export type Perf360ResultsMatrixRow = {
+  category: string
+  self: number | null
+  atasan: number | null
+  rekan: number | null
+  bawahan: number | null
+  total: number | null
+  avg: number | null
+  avgTone?: "neutral" | "warn"
+}
+
+export type Perf360ResultsTotalRow = {
+  self: number | null
+  atasan: number | null
+  rekan: number | null
+  bawahan: number | null
+  overall: number | null
+}
 
 const SCORE_CARDS = [
   {
@@ -42,18 +69,7 @@ const SCORE_CARDS = [
   },
 ] as const
 
-type MatrixRow = {
-  category: string
-  self: number
-  atasan: number
-  rekan: number
-  bawahan: number
-  total: number
-  avg: number
-  avgTone?: "neutral" | "warn"
-}
-
-const MATRIX_ROWS: MatrixRow[] = [
+const MATRIX_ROWS: Perf360ResultsMatrixRow[] = [
   { category: "Kompetensi Teknis", self: 4.3, atasan: 4.1, rekan: 4.2, bawahan: 3.8, total: 16.4, avg: 4.1 },
   { category: "Kepemimpinan", self: 4.1, atasan: 3.9, rekan: 4.0, bawahan: 3.6, total: 15.6, avg: 3.9 },
   {
@@ -69,7 +85,7 @@ const MATRIX_ROWS: MatrixRow[] = [
   { category: "Teamwork", self: 4.2, atasan: 4.0, rekan: 4.1, bawahan: 3.9, total: 16.2, avg: 4.0 },
 ]
 
-const TOTAL_ROW = { self: 4.2, atasan: 3.9, rekan: 4.0, bawahan: 3.6, overall: 3.9 }
+const TOTAL_ROW: Perf360ResultsTotalRow = { self: 4.2, atasan: 3.9, rekan: 4.0, bawahan: 3.6, overall: 3.9 }
 
 function ScoreBar({ value, max = 5 }: { value: number; max?: number }) {
   const pct = Math.min(100, Math.round((value / max) * 100))
@@ -89,11 +105,37 @@ function CellScore({ value }: { value: number }) {
   )
 }
 
-export function Perf360ResultsScoreMatrix({ className }: { className?: string }) {
+function fmtScore(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return "—"
+  return v.toFixed(1)
+}
+
+function CellScoreMaybe({ value }: { value: number | null }) {
+  if (value == null || !Number.isFinite(value)) {
+    return <span className="text-sm text-slate-600">—</span>
+  }
+  return <CellScore value={value} />
+}
+
+export function Perf360ResultsScoreMatrix({
+  className,
+  data,
+}: {
+  className?: string
+  data?: {
+    cards: Perf360ResultsScoreCard[]
+    rows: Perf360ResultsMatrixRow[]
+    totalRow: Perf360ResultsTotalRow
+  } | null
+}) {
+  const weights = loadPerf360RaterWeights()
+  const cards = data?.cards ?? (SCORE_CARDS as unknown as Perf360ResultsScoreCard[])
+  const rows = data?.rows ?? MATRIX_ROWS
+  const totalRow = data?.totalRow ?? TOTAL_ROW
   return (
     <div className={cn("space-y-6", className)}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {SCORE_CARDS.map((c) => (
+        {cards.map((c) => (
           <div
             key={c.label}
             className={cn(
@@ -102,7 +144,7 @@ export function Perf360ResultsScoreMatrix({ className }: { className?: string })
             )}
           >
             <p className="text-sm opacity-90">{c.label}</p>
-            <p className="mt-2 text-3xl font-bold">{c.value}</p>
+            <p className="mt-2 text-3xl font-bold">{c.valueText}</p>
             <p className="mt-1 text-xs opacity-80">{c.subtitle}</p>
           </div>
         ))}
@@ -124,40 +166,40 @@ export function Perf360ResultsScoreMatrix({ className }: { className?: string })
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MATRIX_ROWS.map((row) => (
+              {rows.map((row) => (
                 <TableRow key={row.category} className="border-slate-800">
                   <TableCell className="font-medium text-slate-200">{row.category}</TableCell>
                   <TableCell>
-                    <CellScore value={row.self} />
+                    <CellScoreMaybe value={row.self} />
                   </TableCell>
                   <TableCell>
-                    <CellScore value={row.atasan} />
+                    <CellScoreMaybe value={row.atasan} />
                   </TableCell>
                   <TableCell>
-                    <CellScore value={row.rekan} />
+                    <CellScoreMaybe value={row.rekan} />
                   </TableCell>
                   <TableCell>
-                    <CellScore value={row.bawahan} />
+                    <CellScoreMaybe value={row.bawahan} />
                   </TableCell>
-                  <TableCell className="font-semibold text-slate-200">{row.total.toFixed(1)}</TableCell>
+                  <TableCell className="font-semibold text-slate-200">{fmtScore(row.total)}</TableCell>
                   <TableCell
                     className={cn(
                       "font-semibold",
                       row.avgTone === "warn" ? "text-amber-400" : "text-emerald-400"
                     )}
                   >
-                    {row.avg.toFixed(1)}
+                    {fmtScore(row.avg)}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow className="border-slate-800 bg-slate-950/80 font-semibold">
                 <TableCell className="text-slate-200">SKOR TOTAL</TableCell>
-                <TableCell className="text-emerald-400">{TOTAL_ROW.self.toFixed(1)}</TableCell>
-                <TableCell className="text-emerald-400">{TOTAL_ROW.atasan.toFixed(1)}</TableCell>
-                <TableCell className="text-emerald-400">{TOTAL_ROW.rekan.toFixed(1)}</TableCell>
-                <TableCell className="text-emerald-400">{TOTAL_ROW.bawahan.toFixed(1)}</TableCell>
+                <TableCell className="text-emerald-400">{fmtScore(totalRow.self)}</TableCell>
+                <TableCell className="text-emerald-400">{fmtScore(totalRow.atasan)}</TableCell>
+                <TableCell className="text-emerald-400">{fmtScore(totalRow.rekan)}</TableCell>
+                <TableCell className="text-emerald-400">{fmtScore(totalRow.bawahan)}</TableCell>
                 <TableCell className="text-slate-500">—</TableCell>
-                <TableCell className="text-lg text-emerald-400">{TOTAL_ROW.overall.toFixed(1)}</TableCell>
+                <TableCell className="text-lg text-emerald-400">{fmtScore(totalRow.overall)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -167,7 +209,10 @@ export function Perf360ResultsScoreMatrix({ className }: { className?: string })
       <Card className="border-l-4 border-l-cyan-500 border-slate-800 bg-slate-950/80">
         <CardContent className="space-y-2 pt-6 text-sm text-slate-400">
           <p className="font-medium text-slate-200">Formula perhitungan</p>
-          <p>Skor total = (Self × 20% + Atasan × 30% + Rekan × 25% + Bawahan × 25%)</p>
+          <p>
+            Skor total = (Self × {Math.round(weights.self)}% + Atasan × {Math.round(weights.manager)}% + Rekan ×{" "}
+            {Math.round(weights.peer)}% + Bawahan × {Math.round(weights.subordinate)}%)
+          </p>
           <p className="text-xs text-slate-500">Bobot dapat disesuaikan di halaman Konfigurasi.</p>
         </CardContent>
       </Card>

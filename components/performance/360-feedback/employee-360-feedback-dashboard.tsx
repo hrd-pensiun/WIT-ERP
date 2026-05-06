@@ -62,7 +62,11 @@ import { formatTemplatePeriodLabel } from "@/hooks/usePerformance360Templates"
 import { usePerf360EmployeeForms, type Perf360FormListRowModel } from "@/hooks/usePerf360EmployeeForms"
 import { perf360DraftStorageKey } from "@/lib/perf360-draft-storage"
 import type { Perf360AssignmentKind } from "@/lib/perf360-assignments"
-import { isMockMode } from "@/lib/insforge"
+import { computePerf360Assignments, type Perf360AssignmentKind as Perf360AssignmentKindLive } from "@/lib/perf360-assignments"
+import { fetchPerf360FormMatrixData } from "@/lib/performance-360-form-matrix"
+import { fetchPerf360SubmissionsForTemplate } from "@/lib/perf360-submissions"
+import { loadPerf360RaterWeights } from "@/components/performance/360/assessment-weights-storage"
+import { insForge, isMockMode } from "@/lib/insforge"
 import { getTenantId } from "@/lib/tenant"
 import { cn } from "@/lib/utils"
 
@@ -213,6 +217,22 @@ export function Employee360FeedbackDashboard() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [sheetPayload, setSheetPayload] = useState<SheetOpen | null>(null)
   const sheetCloseAfterSubmitRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [scoreLoading, setScoreLoading] = useState(false)
+  const [scoreError, setScoreError] = useState<string | null>(null)
+  const [scoreData, setScoreData] = useState<{
+    cards: { label: string; valueText: string; subtitle: string; className: string }[]
+    rows: {
+      category: string
+      self: number | null
+      atasan: number | null
+      rekan: number | null
+      bawahan: number | null
+      total: number | null
+      avg: number | null
+      avgTone?: "neutral" | "warn"
+    }[]
+    totalRow: { self: number | null; atasan: number | null; rekan: number | null; bawahan: number | null; overall: number | null }
+  } | null>(null)
 
   const pf360 = usePerf360EmployeeForms(mockMode ? undefined : templateId || undefined)
 
@@ -251,6 +271,211 @@ export function Employee360FeedbackDashboard() {
     return templateId ? (pf360.templates.find((t) => t.id === templateId) ?? null) : null
   }, [mockMode, templateId, pf360.templates])
 
+  const scoreWeights = useMemo(() => loadPerf360RaterWeights(), [])
+
+  useEffect(() => {
+    if (mockMode || !insForge || !templateId || !pf360.viewerProfileId) {
+      setScoreData(null)
+      setScoreError(null)
+      setScoreLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setScoreLoading(true)
+    setScoreError(null)
+
+    void (async () => {
+      try {
+        const matrix = await fetchPerf360FormMatrixData(tenantId)
+        const profiles = matrix?.profiles ?? []
+        const settings = matrix?.settings ?? []
+        const assignments = settings.length
+          ? computePerf360Assignments(profiles, settings, null, { showAllForms: true })
+          : []
+        const expectedForAssessed = assignments.filter((a) => a.assessedId === pf360.viewerProfileId)
+        const expectedSubordinate = expectedForAssessed.some((a) => a.kind === "subordinate")
+
+        const submissions = await fetchPerf360SubmissionsForTemplate(tenantId, templateId)
+        const relevantSubs = submissions.filter(
+          (s) => s.assessed_user_profile_id === pf360.viewerProfileId && s.status === "submitted"
+        )
+        const submittedIds = relevantSubs.map((s) => s.id)
+
+        const { data: qrows, error: qerr } = await insForge
+          .from("performance_360_template_questions")
+          .select("id,category,weight")
+          .eq("template_id", templateId)
+        if (qerr) throw qerr
+
+        const questionMeta = new Map<string, { category: string; weight: number }>(
+          (qrows ?? []).map((r: { id: string; category: string; weight: number | null }) => [
+            r.id,
+            { category: r.category ?? "—", weight: r.weight == null ? 1 : Number(r.weight) },
+          ])
+        )
+
+        const { data: ansRows, error: aerr } = submittedIds.length
+          ? await insForge
+              .from("performance_360_submission_answers")
+              .select("submission_id,question_id,rating")
+              .in("submission_id", submittedIds)
+          : { data: [], error: null }
+        if (aerr) throw aerr
+
+        const kindBySubmission = new Map<string, Perf360AssignmentKindLive>(
+          relevantSubs.map((s) => [s.id, s.assignment_kind as Perf360AssignmentKindLive])
+        )
+
+        type Agg = { sum: number; wsum: number }
+        const kindAgg: Record<Perf360AssignmentKindLive, Agg> = {
+          self: { sum: 0, wsum: 0 },
+          manager: { sum: 0, wsum: 0 },
+          peer: { sum: 0, wsum: 0 },
+          subordinate: { sum: 0, wsum: 0 },
+        }
+        const kindCounts: Record<Perf360AssignmentKindLive, number> = {
+          self: 0,
+          manager: 0,
+          peer: 0,
+          subordinate: 0,
+        }
+        for (const s of relevantSubs) {
+          const kind = s.assignment_kind as Perf360AssignmentKindLive
+          kindCounts[kind] += 1
+        }
+
+        const catAgg = new Map<string, Record<Perf360AssignmentKindLive, Agg>>()
+        const ensureCat = (cat: string) => {
+          const cur = catAgg.get(cat)
+          if (cur) return cur
+          const next: Record<Perf360AssignmentKindLive, Agg> = {
+            self: { sum: 0, wsum: 0 },
+            manager: { sum: 0, wsum: 0 },
+            peer: { sum: 0, wsum: 0 },
+            subordinate: { sum: 0, wsum: 0 },
+          }
+          catAgg.set(cat, next)
+          return next
+        }
+
+        for (const row of (ansRows ?? []) as { submission_id: string; question_id: string; rating: number | null }[]) {
+          if (row.rating == null) continue
+          const kind = kindBySubmission.get(row.submission_id)
+          if (!kind) continue
+          const qm = questionMeta.get(row.question_id)
+          if (!qm) continue
+          const w = qm.weight
+          kindAgg[kind].sum += Number(row.rating) * w
+          kindAgg[kind].wsum += w
+          const byKind = ensureCat(qm.category)
+          byKind[kind].sum += Number(row.rating) * w
+          byKind[kind].wsum += w
+        }
+
+        const score = (a: Agg) => (a.wsum > 0 ? a.sum / a.wsum : null)
+        const sSelf = score(kindAgg.self)
+        const sMgr = score(kindAgg.manager)
+        const sPeer = score(kindAgg.peer)
+        const sSub = score(kindAgg.subordinate)
+
+        let wSelf = scoreWeights.self
+        let wMgr = scoreWeights.manager
+        let wPeer = scoreWeights.peer
+        let wSub = scoreWeights.subordinate
+        if (!expectedSubordinate) {
+          wPeer += wSub
+          wSub = 0
+        }
+
+        const parts: { w: number; v: number }[] = []
+        if (sSelf != null) parts.push({ w: wSelf, v: sSelf })
+        if (sMgr != null) parts.push({ w: wMgr, v: sMgr })
+        if (sPeer != null) parts.push({ w: wPeer, v: sPeer })
+        if (sSub != null) parts.push({ w: wSub, v: sSub })
+        const wsum = parts.reduce((a, b) => a + b.w, 0)
+        const overall = wsum > 0 ? parts.reduce((a, b) => a + (b.w / wsum) * b.v, 0) : null
+
+        const categories = [...new Set((qrows ?? []).map((r: { category?: string | null }) => String(r.category ?? "—")))]
+          .sort((a, b) => a.localeCompare(b))
+
+        const rows = categories.map((cat) => {
+          const a = catAgg.get(cat) ?? {
+            self: { sum: 0, wsum: 0 },
+            manager: { sum: 0, wsum: 0 },
+            peer: { sum: 0, wsum: 0 },
+            subordinate: { sum: 0, wsum: 0 },
+          }
+          const cSelf = score(a.self)
+          const cMgr = score(a.manager)
+          const cPeer = score(a.peer)
+          const cSub = score(a.subordinate)
+          const vals = [cSelf, cMgr, cPeer, cSub].filter(
+            (x): x is number => typeof x === "number" && Number.isFinite(x)
+          )
+          const avg = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : null
+          const total = vals.length ? vals.reduce((x, y) => x + y, 0) : null
+          return {
+            category: cat,
+            self: cSelf,
+            atasan: cMgr,
+            rekan: cPeer,
+            bawahan: cSub,
+            total,
+            avg,
+            avgTone: avg != null && avg < 3.8 ? "warn" : "neutral" as const,
+          }
+        })
+
+        const cards = [
+          {
+            label: "Self Assessment",
+            valueText: sSelf == null ? "—" : sSelf.toFixed(1),
+            subtitle: `dari 5.0 (${kindCounts.self} response)`,
+            className: "from-emerald-600/90 to-cyan-600/80",
+          },
+          {
+            label: "Manager / Atasan",
+            valueText: sMgr == null ? "—" : sMgr.toFixed(1),
+            subtitle: `dari 5.0 (${kindCounts.manager} response)`,
+            className: "from-fuchsia-600/85 to-rose-600/75",
+          },
+          {
+            label: "Rekan / Peer",
+            valueText: sPeer == null ? "—" : sPeer.toFixed(1),
+            subtitle: `dari 5.0 (${kindCounts.peer} response)`,
+            className: "from-sky-600/85 to-cyan-500/75",
+          },
+          {
+            label: "Bawahan / Subordinate",
+            valueText: sSub == null ? "—" : sSub.toFixed(1),
+            subtitle: `dari 5.0 (${kindCounts.subordinate} response)`,
+            className: "from-green-600/85 to-emerald-500/75",
+          },
+        ]
+
+        if (!cancelled) {
+          setScoreData({
+            cards,
+            rows,
+            totalRow: { self: sSelf, atasan: sMgr, rekan: sPeer, bawahan: sSub, overall },
+          })
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setScoreError(e instanceof Error ? e.message : "Gagal memuat hasil terbaru.")
+          setScoreData(null)
+        }
+      } finally {
+        if (!cancelled) setScoreLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mockMode, pf360.viewerProfileId, scoreWeights.manager, scoreWeights.peer, scoreWeights.self, scoreWeights.subordinate, templateId, tenantId])
+
   const filteredRows = useMemo((): FormListUnion[] => {
     if (mockMode) {
       return FORM_LIST_SOURCE.filter((row) => {
@@ -260,6 +485,7 @@ export function Employee360FeedbackDashboard() {
       })
     }
     return pf360.rows.filter((row) => {
+      if (!row.canOpen) return false
       if (statusFilter !== "all" && row.status !== statusFilter) return false
       if (!liveKindMatchesFilter(row.kind, raterFilter)) return false
       return true
@@ -272,6 +498,17 @@ export function Employee360FeedbackDashboard() {
     const pct = total ? Math.round((completed / total) * 100) : 0
     return { completed, total, pct }
   }, [filteredRows])
+
+  const behavioralRows = useMemo(() => {
+    if (!scoreData?.rows?.length) return undefined
+    return scoreData.rows
+      .map((r) => ({
+        key: r.category.toLowerCase().replace(/\s+/g, "_"),
+        subject: r.category,
+        score: r.avg ?? 0,
+      }))
+      .sort((a, b) => a.subject.localeCompare(b.subject))
+  }, [scoreData])
 
   const deadlineStats = useMemo(() => {
     let soonest: number | null = null
@@ -337,11 +574,11 @@ export function Employee360FeedbackDashboard() {
           ) : (
             <>
               Pilih <span className="text-slate-400">periode</span> (template 360) untuk melihat form penilaian yang dihitung dari roster.
-              Dengan profil lengkap (role/jabatan), hanya form di mana Anda penilai yang dapat dibuka.
-              Tanpa role/jabatan di profil (atau profil tidak cocok dengan login), semua form periode tampil dan dapat dibuka untuk pratinjau.
+              Secara default hanya form di mana Anda penilai yang ditampilkan.
+              Mode pratinjau semua form hanya tersedia untuk role HR/Admin tertentu jika profil belum lengkap.
               {pf360.showAllForms ? (
                 <span className="mt-1 block text-amber-500/90">
-                  Mode pratinjau: profil Anda belum lengkap atau tidak tertaut — semua form periode dapat dibuka.
+                  Mode pratinjau aktif: profil belum lengkap/tidak tertaut, sehingga semua form periode bisa dibuka.
                 </span>
               ) : null}
             </>
@@ -538,15 +775,9 @@ export function Employee360FeedbackDashboard() {
                           key={row.assignmentKey}
                           className={cn(
                             "border-slate-800",
-                            row.canOpen &&
-                              row.status !== "completed" &&
-                              "cursor-pointer hover:bg-slate-950/80",
-                            !row.canOpen && "opacity-60"
+                            row.status !== "completed" && "cursor-pointer hover:bg-slate-950/80"
                           )}
                           onClick={() => openForm(row)}
-                          title={
-                            !row.canOpen ? "Anda tidak ditugaskan sebagai penilai untuk form ini" : undefined
-                          }
                         >
                           <TableCell className="font-medium text-slate-200">
                             <span className="block">{row.formLabel}</span>
@@ -586,7 +817,7 @@ export function Employee360FeedbackDashboard() {
             {mockMode
               ? "Klik baris (belum selesai) untuk membuka form isi demo. Baris selesai hanya untuk baca status."
               : pf360.showAllForms
-                ? "Profil tanpa role/jabatan: semua form untuk template ini ditampilkan dan dapat dibuka untuk diisi (pratinjau)."
+                ? "Role HR/Admin dalam mode pratinjau: semua form untuk template ini ditampilkan dan dapat dibuka."
                 : "Klik baris tugas Anda untuk mengisi atau membuka lagi jawaban yang sudah dikirim ke server."}
           </p>
         </TabsContent>
@@ -612,7 +843,7 @@ export function Employee360FeedbackDashboard() {
                 <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
                   <p className="text-[11px] uppercase tracking-wide text-slate-500">Divisi</p>
                   <p className="mt-1 text-sm font-medium text-slate-100">
-                    {mockMode ? "Product Engineering" : "—"}
+                    {mockMode ? "Product Engineering" : pf360.viewerProfile?.division_name ?? "—"}
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
@@ -664,8 +895,18 @@ export function Employee360FeedbackDashboard() {
             </CardHeader>
           </Card>
 
-          <Perf360BehavioralCompetencies />
-          <Perf360ResultsScoreMatrix />
+          {scoreLoading ? (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-4 py-4 text-sm text-slate-400">
+              Memuat ringkasan skor terbaru...
+            </div>
+          ) : null}
+          {!scoreLoading && scoreError ? (
+            <div className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+              {scoreError}
+            </div>
+          ) : null}
+          <Perf360BehavioralCompetencies rows={behavioralRows} />
+          <Perf360ResultsScoreMatrix data={scoreData} />
         </TabsContent>
 
         <TabsContent value="insights" className="mt-6 space-y-6">

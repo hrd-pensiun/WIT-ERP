@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { insForge } from "@/lib/insforge";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DashboardLayout({
   children,
@@ -14,6 +15,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { user } = useAuth();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
@@ -38,6 +41,16 @@ export default function DashboardLayout({
       mounted = false;
     };
   }, [router]);
+
+  useEffect(() => {
+    if (isCheckingAuth) return;
+    const normalizedRole = (user?.profileRole ?? "").trim().toLowerCase();
+    const isStaffOrManager = normalizedRole === "employee" || normalizedRole === "manager";
+    if (!isStaffOrManager) return;
+    if (pathname.startsWith("/performance") && !pathname.startsWith("/performance/360-feedback")) {
+      router.replace("/performance/360-feedback");
+    }
+  }, [isCheckingAuth, pathname, router, user?.profileRole]);
 
   if (isCheckingAuth) {
     return (

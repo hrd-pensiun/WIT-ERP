@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard,
   Building2,
@@ -18,6 +18,7 @@ import {
   LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 
 interface NavItem {
   name: string
@@ -88,7 +89,7 @@ const navigation: NavItem[] = [
       { name: "Template penilaian", href: "/performance/360/template" },
       { name: "Mapping Penilaian", href: "/performance/360/mapping-penilaian" },
       { name: "Konfigurasi", href: "/performance/360/konfigurasi" },
-      { name: "Pratinjau 360", href: "/performance/360-feedback" },
+      { name: "my Performance", href: "/performance/360-feedback" },
     ],
   },
   {
@@ -105,20 +106,31 @@ const navigation: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [expanded, setExpanded] = useState<string[]>([
-    "Master Data",
-    "HR",
-    "CRM",
-    "Projects",
-    "Finance",
-    "Performance",
-    "Reports",
-  ])
+  const router = useRouter()
+  const { signOut, user } = useAuth()
+  const [expanded, setExpanded] = useState<string[]>([])
+  const normalizedRole = (user?.profileRole ?? "").trim().toLowerCase()
+  const isStaffOrManager = normalizedRole === "employee" || normalizedRole === "manager"
+  const navItems = navigation.map((item) => {
+    if (item.name !== "Performance" || !item.children || !isStaffOrManager) return item
+    return {
+      ...item,
+      children: item.children.filter((child) => child.href === "/performance/360-feedback"),
+    }
+  })
 
   const toggleExpand = (name: string) => {
     setExpanded((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
     )
+  }
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+    } finally {
+      router.replace("/login")
+    }
   }
 
   return (
@@ -128,12 +140,12 @@ export function Sidebar() {
         <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center mr-3">
           <span className="text-white font-bold text-sm">W</span>
         </div>
-        <span className="text-lg font-bold text-slate-100">WIT-ERP</span>
+        <span className="text-lg font-bold text-slate-100">WeWok.dtk</span>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-        {navigation.map((item) => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
           const isExpanded = expanded.includes(item.name)
 
@@ -205,13 +217,16 @@ export function Sidebar() {
           <Settings className="w-5 h-5" />
           Settings
         </Link>
-        <Link
-          href="/login"
+        <button
+          type="button"
+          onClick={() => {
+            void handleLogout()
+          }}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
         >
           <LogOut className="w-5 h-5" />
           Logout
-        </Link>
+        </button>
       </div>
     </div>
   )

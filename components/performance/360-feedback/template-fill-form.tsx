@@ -131,6 +131,16 @@ export function Perf360TemplateFillForm({
   assessedUserProfileId,
 }: Props) {
   const activeRole = kindToActiveRaterRole(assignmentKind)
+  const formattedDate = useMemo(
+    () =>
+      new Date().toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    []
+  )
   const visibleQuestions = useMemo(
     () =>
       questions.filter(
@@ -282,7 +292,38 @@ export function Perf360TemplateFillForm({
         assessedName={assessedName}
         raterRoleLabel={perf360RaterRoleLabel(activeRole)}
         raterContextLine={raterContextLine}
+        hideSummary
       />
+
+      <div className="sticky top-0 z-20 rounded-xl border border-slate-800 bg-slate-900/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-slate-900/85">
+        <Card className="border-0 bg-transparent shadow-none">
+          <CardHeader className="pb-2 pt-4">
+            <CardTitle className="text-base text-slate-100">Ringkasan form</CardTitle>
+            <CardDescription className="text-slate-500">
+              {templateName} — Anda mengisi sebagai{" "}
+              <span className="text-slate-400">{perf360RaterRoleLabel(activeRole)}</span>.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 border-t border-slate-800/80 pb-4 pt-3 text-sm text-slate-400">
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Yang dinilai</span>
+              <span className="font-medium text-slate-200">{assessedName}</span>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Konteks penilai</span>
+              <span className="text-right text-slate-300">{raterContextLine?.trim() || "—"}</span>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Tanggal pengisian</span>
+              <span className="text-slate-300">{formattedDate}</span>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-slate-500">Skala rating</span>
+              <span className="text-slate-300">1 sampai {scaleMax}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div>
         <h2 className="text-base font-semibold text-slate-100">Penilaian</h2>
