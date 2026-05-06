@@ -168,7 +168,7 @@ Row 2: Projects    | Finance        | Performance
 **Hide:**
 - Project budgets
 - Specific client names (if confidential)
-- Internal strategies
+
 
 ### 2.5 Finance Card
 ```
@@ -411,7 +411,7 @@ LIMIT 5;
 
 ---
 
-## PERMISSIONS & VISIBILITY
+## PERMISSIONS & VISIBILITY  
 
 **Semua role melihat data yang sama (Summary Only)**
 - No permission filtering pada dashboard
