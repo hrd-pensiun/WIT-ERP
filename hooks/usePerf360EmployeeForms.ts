@@ -25,6 +25,7 @@ import {
   readPerf360Draft,
   type Perf360DraftBundle,
 } from "@/lib/perf360-draft-storage"
+import { fetchPerf360SubmissionsForTemplate } from "@/lib/perf360-submissions"
 
 /** Profil tidak punya role app / jabatan terukur → tampilkan semua form periode (tanpa filter penilai). */
 export function perf360UnrestrictedFormList(
@@ -91,8 +92,21 @@ export function usePerf360EmployeeForms(selectedTemplateId: string | undefined) 
     Record<string, Performance360TemplateQuestionRow[]>
   >({})
   const [draftTick, setDraftTick] = useState(0)
+  const [serverSubmittedKeys, setServerSubmittedKeys] = useState<Set<string>>(new Set())
 
   const bumpDrafts = useCallback(() => setDraftTick((t) => t + 1), [])
+
+  const refetchSubmissions = useCallback(async () => {
+    if (!selectedTemplateId || isMockMode()) return
+    try {
+      const subs = await fetchPerf360SubmissionsForTemplate(tenantId, selectedTemplateId)
+      setServerSubmittedKeys(
+        new Set(subs.filter((s) => s.status === "submitted").map((s) => s.assignment_key))
+      )
+    } catch {
+      /* biarkan set sebelumnya */
+    }
+  }, [tenantId, selectedTemplateId])
 
   useEffect(() => {
     if (isMockMode()) {
@@ -148,6 +162,10 @@ export function usePerf360EmployeeForms(selectedTemplateId: string | undefined) 
     }
   }, [selectedTemplateId, tenantId, questionCache])
 
+  useEffect(() => {
+    void refetchSubmissions()
+  }, [refetchSubmissions])
+
   const viewerProfileId = useMemo(
     () => resolveViewerProfileId(profiles, user?.id, user?.email),
     [profiles, user?.id, user?.email]
@@ -182,8 +200,9 @@ export function usePerf360EmployeeForms(selectedTemplateId: string | undefined) 
         typeof window !== "undefined" ? readPerf360Draft(storageKey) : null
       const qsEff = qs ?? []
       const st = perf360DraftStatus(bundle, qsEff)
+      const dbDone = serverSubmittedKeys.has(a.key)
       let status: Perf360FormListRowModel["status"] = "pending"
-      if (st === "completed") status = "completed"
+      if (dbDone || st === "completed") status = "completed"
       else if (st === "in_progress") status = "in_progress"
       else status = days != null && days < 0 && a.canOpen ? "not_started" : "pending"
 
@@ -204,7 +223,7 @@ export function usePerf360EmployeeForms(selectedTemplateId: string | undefined) 
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- draftTick memaksa re-read localStorage
-  }, [assignments, selectedTemplateId, template, questionCache, tenantId, draftTick])
+  }, [assignments, selectedTemplateId, template, questionCache, tenantId, draftTick, serverSubmittedKeys])
 
   const loading = authLoading || templatesLoading || matrixLoading
 
@@ -220,6 +239,7 @@ export function usePerf360EmployeeForms(selectedTemplateId: string | undefined) 
     assignments,
     rows: enrichedRows,
     bumpDrafts,
+    refetchSubmissions,
     questionsForTemplate: selectedTemplateId ? questionCache[selectedTemplateId] ?? null : null,
     refetchMatrix: () => {
       if (isMockMode()) return

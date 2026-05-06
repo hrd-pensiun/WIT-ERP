@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
   BarChart3,
@@ -54,6 +54,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Performance360Shell } from "@/components/performance/360/shell"
+import { Perf360BehavioralCompetencies } from "@/components/performance/360/perf360-behavioral-competencies"
+import { Perf360ResultsScoreMatrix } from "@/components/performance/360/perf360-results-score-matrix"
 import { ThreeSixtyFillFormDemo } from "@/components/performance/360-feedback/fill-form-demo"
 import { Perf360TemplateFillForm } from "@/components/performance/360-feedback/template-fill-form"
 import { formatTemplatePeriodLabel } from "@/hooks/usePerformance360Templates"
@@ -129,16 +131,6 @@ const FORM_LIST_SOURCE: FormListRow[] = [
   },
 ]
 
-const LATEST_COMPETENCIES = [
-  { name: "Technical Competence", score: 4.5 },
-  { name: "Accountability", score: 4.3 },
-  { name: "Teamwork", score: 4.2 },
-  { name: "Leadership & Delegation", score: 4.0 },
-  { name: "Continuous Learning", score: 4.1 },
-  { name: "Communication", score: 3.8 },
-]
-  .sort((a, b) => b.score - a.score)
-
 const TREND_SERIES = [
   { cycle: "Q4 2023", score: 3.8 },
   { cycle: "Q1 2024", score: 4.0 },
@@ -194,12 +186,6 @@ function FormStatusBadge({ status, overdue }: { status: FormStatus; overdue: boo
   )
 }
 
-function visualBar(score: number, max = 5) {
-  const blocks = 9
-  const filled = Math.round((score / max) * blocks)
-  return "█".repeat(filled) + "░".repeat(blocks - filled)
-}
-
 function liveKindMatchesFilter(kind: Perf360AssignmentKind, filter: string): boolean {
   if (filter === "all") return true
   const map: Record<string, Perf360AssignmentKind> = {
@@ -226,8 +212,18 @@ export function Employee360FeedbackDashboard() {
   const [templateId, setTemplateId] = useState<string>("")
   const [sheetOpen, setSheetOpen] = useState(false)
   const [sheetPayload, setSheetPayload] = useState<SheetOpen | null>(null)
+  const sheetCloseAfterSubmitRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const pf360 = usePerf360EmployeeForms(mockMode ? undefined : templateId || undefined)
+
+  useEffect(() => {
+    return () => {
+      if (sheetCloseAfterSubmitRef.current) {
+        clearTimeout(sheetCloseAfterSubmitRef.current)
+        sheetCloseAfterSubmitRef.current = null
+      }
+    }
+  }, [])
 
   const activeTemplates = useMemo(
     () => pf360.templates.filter((t) => t.status === "active"),
@@ -249,6 +245,11 @@ export function Employee360FeedbackDashboard() {
     n2: false,
     n3: false,
   })
+
+  const selectedTemplateForLatest = useMemo(() => {
+    if (mockMode) return null
+    return templateId ? (pf360.templates.find((t) => t.id === templateId) ?? null) : null
+  }, [mockMode, templateId, pf360.templates])
 
   const filteredRows = useMemo((): FormListUnion[] => {
     if (mockMode) {
@@ -294,7 +295,7 @@ export function Employee360FeedbackDashboard() {
       setSheetPayload({ mode: "mock", row: r })
     } else {
       const r = row as Perf360FormListRowModel
-      if (!r.canOpen || r.status === "completed") return
+      if (!r.canOpen) return
       setSheetPayload({ mode: "live", row: r })
     }
     setSheetOpen(true)
@@ -306,7 +307,7 @@ export function Employee360FeedbackDashboard() {
       subtitle={
         mockMode
           ? "Dashboard personal: form yang perlu diisi, hasil siklus sebelumnya, dan insight pengembangan. Tab Daftar form memakai data contoh."
-          : "Dashboard personal: Daftar form memakai template & roster aktual. Isian disimpan sementara di perangkat (localStorage) sampai penyimpanan server siap."
+          : "Dashboard personal: daftar formulir mengikuti template & roster aktual. Draf lokal + tombol kirim menyimpan jawaban di performance_360_submissions."
       }
       action={
         <div className="flex flex-wrap gap-2">
@@ -586,98 +587,85 @@ export function Employee360FeedbackDashboard() {
               ? "Klik baris (belum selesai) untuk membuka form isi demo. Baris selesai hanya untuk baca status."
               : pf360.showAllForms
                 ? "Profil tanpa role/jabatan: semua form untuk template ini ditampilkan dan dapat dibuka untuk diisi (pratinjau)."
-                : "Klik baris tugas Anda (belum selesai) untuk mengisi pertanyaan dari database. Draft tersimpan di browser."}
+                : "Klik baris tugas Anda untuk mengisi atau membuka lagi jawaban yang sudah dikirim ke server."}
           </p>
         </TabsContent>
 
         <TabsContent value="latest" className="mt-6 space-y-6">
           <Card className="border-slate-800 bg-slate-900">
             <CardHeader>
-              <CardTitle className="text-slate-100">Q2 2024 Review</CardTitle>
-              <CardDescription className="space-y-1 text-slate-400">
-                <p>Periode: 1 Mei – 31 Mei 2024</p>
-                <p>
-                  Status: <span className="text-emerald-400">Selesai</span> — 6/6 penilai
-                </p>
+              <CardTitle className="text-slate-100">Informasi profil</CardTitle>
+              <CardDescription className="text-slate-500">
+                {mockMode
+                  ? "Profil contoh untuk preview hasil 360."
+                  : "Profil dinamis dari user yang sedang login."}
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-slate-400">Skor keseluruhan</p>
-                <p className="text-4xl font-bold text-emerald-400">
-                  4.2 <span className="text-xl font-normal text-slate-500">/ 5.0</span>
+            <CardContent className="-mx-1 overflow-x-auto px-1">
+              <div className="grid min-w-[920px] grid-cols-4 gap-3">
+                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">Nama</p>
+                <p className="mt-1 text-sm font-medium text-slate-100">
+                  {mockMode ? "Igor Tolic Kadiv" : pf360.viewerProfile?.full_name ?? "—"}
                 </p>
-                <p className="text-sm text-slate-500">dari 6 penilai</p>
-                <Progress value={84} className="h-2 bg-slate-800 [&>[data-slot=progress-indicator]]:bg-emerald-500" />
-                <p className="text-xs text-slate-600">Visual 84% dari skala penuh</p>
-              </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
-                <p className="text-sm font-medium text-slate-300">Distribusi penilai</p>
-                <ul className="mt-3 space-y-2 text-sm text-slate-400">
-                  <li>• Self: 1 penilai</li>
-                  <li>• Atasan (Royadi): 1 penilai</li>
-                  <li>• Rekan (Antonius, Gabriel): 2 penilai</li>
-                  <li>• Bawahan (Fadhilah, Gabriel): 2 penilai</li>
-                </ul>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Divisi</p>
+                  <p className="mt-1 text-sm font-medium text-slate-100">
+                    {mockMode ? "Product Engineering" : "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Departemen</p>
+                  <p className="mt-1 text-sm font-medium text-slate-100">
+                    {mockMode ? "Engineering" : pf360.viewerProfile?.department_name ?? "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Total score</p>
+                  <p className="mt-1 text-sm font-medium text-emerald-400">3.9 / 5.0</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-
-          <div>
-            <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
-              Per kompetensi (tertinggi → terendah)
-            </h3>
-            <Card className="border-slate-800 bg-slate-900">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-800 hover:bg-transparent">
-                    <TableHead className="text-slate-400">Kompetensi</TableHead>
-                    <TableHead className="text-slate-400">Skor</TableHead>
-                    <TableHead className="text-slate-400">Visual</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {LATEST_COMPETENCIES.map((c) => (
-                    <TableRow key={c.name} className="border-slate-800">
-                      <TableCell
-                        className="text-slate-200"
-                        title="Detail per penilai: integrasi tooltip saat data rater per kompetensi tersedia."
-                      >
-                        {c.name}
-                      </TableCell>
-                      <TableCell className="font-mono text-emerald-400">{c.score.toFixed(1)}</TableCell>
-                      <TableCell className="font-mono text-xs text-slate-500">{visualBar(c.score)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
 
           <Card className="border-slate-800 bg-slate-900">
             <CardHeader>
-              <CardTitle className="text-base text-slate-100">Tema umpan balik</CardTitle>
-              <CardDescription>Contoh ringkasan dari komentar penilai (analisis sentimen menyusul)</CardDescription>
+              <CardTitle className="text-slate-100">
+                {mockMode
+                  ? (CYCLES.find((c) => c.id === periodId)?.label ?? "Hasil terbaru")
+                  : selectedTemplateForLatest
+                    ? formatTemplatePeriodLabel(selectedTemplateForLatest)
+                    : "Pilih periode (template)"}
+              </CardTitle>
+              <CardDescription className="space-y-1 text-slate-400">
+                {mockMode ? (
+                  <>
+                    <p>Matrix skor mengikuti tampilan dashboard HR (data ilustrasi).</p>
+                    <p className="mt-1">
+                      Samakan periode dengan pilihan di tab <span className="text-slate-500">Daftar form</span> jika perlu.
+                    </p>
+                  </>
+                ) : !templateId || !selectedTemplateForLatest ? (
+                  <p>Belum ada template dipilih. Atur periode di tab Daftar form.</p>
+                ) : (
+                  <p>
+                    {selectedTemplateForLatest.name ? (
+                      <>
+                        Template:{" "}
+                        <span className="text-slate-300">{selectedTemplateForLatest.name}</span>.{" "}
+                      </>
+                    ) : null}
+                    Angka di bawah merupakan demo; agregasi dari{" "}
+                    <span className="font-mono text-slate-500">submission</span> akan menggantikan saat tersedia.
+                  </p>
+                )}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2">
-              <div>
-                <p className="mb-2 text-sm font-medium text-emerald-400/90">Positif</p>
-                <ul className="list-inside list-disc space-y-1 text-sm text-slate-400">
-                  <li>Kuat secara teknis</li>
-                  <li>Bermain tim dengan baik</li>
-                  <li>Bertanggung jawab atas hasil</li>
-                </ul>
-              </div>
-              <div>
-                <p className="mb-2 text-sm font-medium text-amber-400/90">Pengembangan</p>
-                <ul className="list-inside list-disc space-y-1 text-sm text-slate-400">
-                  <li>Delegasi bisa ditingkatkan</li>
-                  <li>Dengarkan masukan tim lebih banyak</li>
-                  <li>Komunikasi lebih tegas</li>
-                </ul>
-              </div>
-            </CardContent>
           </Card>
+
+          <Perf360BehavioralCompetencies />
+          <Perf360ResultsScoreMatrix />
         </TabsContent>
 
         <TabsContent value="insights" className="mt-6 space-y-6">
@@ -917,10 +905,19 @@ export function Employee360FeedbackDashboard() {
         open={sheetOpen}
         onOpenChange={(o) => {
           setSheetOpen(o)
-          if (!o) setSheetPayload(null)
+          if (!o) {
+            if (sheetCloseAfterSubmitRef.current) {
+              clearTimeout(sheetCloseAfterSubmitRef.current)
+              sheetCloseAfterSubmitRef.current = null
+            }
+            setSheetPayload(null)
+          }
         }}
       >
-        <SheetContent side="right" className="w-full overflow-y-auto border-slate-800 bg-slate-900 sm:max-w-xl md:max-w-2xl">
+        <SheetContent
+          side="right"
+          className="max-sm:w-full max-sm:max-w-full w-full overflow-y-auto border-slate-800 bg-slate-900 sm:!w-[50vw] sm:!max-w-[50vw] sm:min-w-0"
+        >
           <SheetHeader>
             <SheetTitle className="text-slate-100">
               {sheetPayload?.mode === "mock"
@@ -951,13 +948,33 @@ export function Employee360FeedbackDashboard() {
                 </div>
               ) : (
                 <Perf360TemplateFillForm
+                  tenantId={tenantId}
+                  templateId={templateId}
+                  assignmentKey={sheetPayload.row.assignmentKey}
+                  raterUserProfileId={sheetPayload.row.assignment.raterId}
+                  assessedUserProfileId={sheetPayload.row.assignment.assessedId}
                   storageKey={perf360DraftStorageKey(tenantId, templateId, sheetPayload.row.assignmentKey)}
                   templateName={pf360.template.name}
                   scaleMax={pf360.template.rating_scale_max ?? 5}
                   assessedName={sheetPayload.row.assessedName}
                   assignmentKind={sheetPayload.row.kind}
                   questions={pf360.questionsForTemplate}
+                  raterContextLine={sheetPayload.row.raterDisplayName}
                   onSaved={pf360.bumpDrafts}
+                  onServerSubmitted={() => {
+                    pf360.bumpDrafts()
+                    void (async () => {
+                      await pf360.refetchSubmissions()
+                      if (sheetCloseAfterSubmitRef.current) {
+                        clearTimeout(sheetCloseAfterSubmitRef.current)
+                      }
+                      sheetCloseAfterSubmitRef.current = setTimeout(() => {
+                        sheetCloseAfterSubmitRef.current = null
+                        setSheetOpen(false)
+                        setSheetPayload(null)
+                      }, 2200)
+                    })()
+                  }}
                 />
               )
             ) : null}

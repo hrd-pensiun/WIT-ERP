@@ -25,6 +25,7 @@ import {
   perf360RaterRoleLabel,
   type Perf360RaterRole,
 } from "@/lib/performance-360-rater-role"
+import { Perf360FormGuidance } from "@/components/performance/360-feedback/form360-guidance"
 
 /** Pertanyaan demo — struktur seperti baris template (rating + reason_mode). */
 const DEMO_RATINGS_TAB_QUESTIONS: {
@@ -140,10 +141,20 @@ export function ThreeSixtyFillFormDemo() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <Perf360FormGuidance
+        templateName="Demo 360 (tidak menyimpan ke server)"
+        scaleMax={5}
+        assessedName="Karyawan contoh — dari data demo"
+        raterRoleLabel={perf360RaterRoleLabel(activeRaterRole)}
+        raterContextLine="Penilai: Anda — ubah «Role penilai» di bawah untuk melihat filter pertanyaan."
+      />
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-100">Isi penilaian (demo)</h2>
-          <p className="text-sm text-slate-500">Struktur mengikuti template (reason_mode, applies_to_role).</p>
+          <p className="text-sm text-slate-500">
+            Struktur mengikuti template (reason_mode, applies_to_role).
+          </p>
         </div>
         <div className="flex items-center gap-3 text-sm">
           <span className="text-slate-500">Progres</span>

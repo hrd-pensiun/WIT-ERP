@@ -24,6 +24,10 @@ import {
   type Perf360DraftBundle,
   type Perf360StoredAnswer,
 } from "@/lib/perf360-draft-storage"
+import { Perf360FormGuidance } from "@/components/performance/360-feedback/form360-guidance"
+import { loadPerf360DraftFromServer, submitPerf360ToDatabase } from "@/lib/perf360-submissions"
+import { isMockMode } from "@/lib/insforge"
+import { CheckCircle2, Loader2 } from "lucide-react"
 
 function kindToActiveRaterRole(kind: Perf360AssignmentKind): Perf360RaterRole {
   switch (kind) {
@@ -61,18 +65,21 @@ function RatingRow({
   value,
   max,
   onChange,
+  disabled,
 }: {
   value: number | null
   max: number
   onChange: (n: number) => void
+  disabled?: boolean
 }) {
   const scale = Array.from({ length: max }, (_, i) => i + 1)
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className={cn("flex flex-wrap gap-2", disabled && "pointer-events-none opacity-50")}>
       {scale.map((n) => (
         <button
           key={n}
           type="button"
+          disabled={disabled}
           onClick={() => onChange(n)}
           className={cn(
             "h-10 min-w-10 rounded-full border px-2 text-sm font-medium transition-colors",
@@ -95,7 +102,16 @@ type Props = {
   assessedName: string
   assignmentKind: Perf360AssignmentKind
   questions: Performance360TemplateQuestionRow[]
+  /** Nama / konteks penilai dari roster (opsional). */
+  raterContextLine?: string | null
   onSaved?: () => void
+  /** Setelah baris tersimpan di `performance_360_submissions` (refresh status list). */
+  onServerSubmitted?: () => void
+  tenantId: string
+  templateId: string
+  assignmentKey: string
+  raterUserProfileId: string
+  assessedUserProfileId: string
 }
 
 export function Perf360TemplateFillForm({
@@ -105,7 +121,14 @@ export function Perf360TemplateFillForm({
   assessedName,
   assignmentKind,
   questions,
+  raterContextLine,
   onSaved,
+  onServerSubmitted,
+  tenantId,
+  templateId,
+  assignmentKey,
+  raterUserProfileId,
+  assessedUserProfileId,
 }: Props) {
   const activeRole = kindToActiveRaterRole(assignmentKind)
   const visibleQuestions = useMemo(
@@ -122,24 +145,94 @@ export function Perf360TemplateFillForm({
     initialAnswers(visibleQuestions)
   )
   const [formError, setFormError] = useState<string | null>(null)
+  const [hydrating, setHydrating] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  /** Setelah POST DB sukses — tampilkan konfirmasi ke pengguna. */
+  const [submitOk, setSubmitOk] = useState<{
+    atLabel: string
+    answerCount: number
+  } | null>(null)
+
+  const visibleQuestionKey = useMemo(
+    () =>
+      [...visibleQuestions]
+        .map((q) => q.id)
+        .sort()
+        .join(","),
+    [visibleQuestions]
+  )
 
   useEffect(() => {
-    const existing = readPerf360Draft(storageKey)
-    const base = initialAnswers(visibleQuestions)
-    if (existing?.answers) {
-      for (const q of visibleQuestions) {
-        const ex = existing.answers[q.id]
-        if (ex) base[q.id] = { rating: ex.rating, reason: ex.reason ?? "" }
+    setSubmitOk(null)
+    setFormError(null)
+  }, [assignmentKey, storageKey])
+
+  useEffect(() => {
+    const buildLocalBase = (): Record<string, Perf360StoredAnswer> => {
+      const existing = readPerf360Draft(storageKey)
+      const base = initialAnswers(visibleQuestions)
+      if (existing?.answers) {
+        for (const q of visibleQuestions) {
+          const ex = existing.answers[q.id]
+          if (ex) base[q.id] = { rating: ex.rating, reason: ex.reason ?? "" }
+        }
       }
+      return base
     }
-    setAnswers(base)
-  }, [storageKey, visibleQuestions])
+
+    let cancelled = false
+    const local = buildLocalBase()
+    setAnswers(local)
+
+    if (isMockMode() || !tenantId || !templateId || !assignmentKey) {
+      setHydrating(false)
+      return
+    }
+
+    setHydrating(true)
+    ;(async () => {
+      try {
+        const remote = await loadPerf360DraftFromServer({
+          tenantId,
+          templateId,
+          assignmentKey,
+        })
+        if (cancelled) return
+        if (remote?.submission?.status === "submitted") {
+          const merged = initialAnswers(visibleQuestions)
+          for (const q of visibleQuestions) {
+            const srv = remote.answers[q.id]
+            merged[q.id] = srv ?? local[q.id] ?? merged[q.id]
+          }
+          setAnswers(merged)
+          const bundle: Perf360DraftBundle = {
+            answers: merged,
+            submittedAt: remote.submission.submitted_at ?? new Date().toISOString(),
+          }
+          writePerf360Draft(storageKey, bundle)
+          queueMicrotask(() => {
+            onSaved?.()
+          })
+        }
+      } catch {
+        /* tetap pakai local */
+      } finally {
+        if (!cancelled) setHydrating(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [tenantId, templateId, assignmentKey, visibleQuestionKey, storageKey, onSaved])
 
   const flush = useCallback(
     (next: Record<string, Perf360StoredAnswer>, submittedAt: string | null) => {
       const bundle: Perf360DraftBundle = { answers: next, submittedAt }
       writePerf360Draft(storageKey, bundle)
-      onSaved?.()
+      // Jangan panggil onSaved (setState parent) dari dalam updater setAnswers — tunda ke setelah commit.
+      queueMicrotask(() => {
+        onSaved?.()
+      })
     },
     [storageKey, onSaved]
   )
@@ -183,14 +276,29 @@ export function Perf360TemplateFillForm({
 
   return (
     <div className="space-y-6">
+      <Perf360FormGuidance
+        templateName={templateName}
+        scaleMax={scaleMax}
+        assessedName={assessedName}
+        raterRoleLabel={perf360RaterRoleLabel(activeRole)}
+        raterContextLine={raterContextLine}
+      />
+
       <div>
-        <p className="text-sm text-slate-500">{templateName}</p>
-        <h2 className="text-lg font-semibold text-slate-100">Dinilai: {assessedName}</h2>
-        <p className="text-sm text-slate-500">
-          Peran Anda mengisi: <span className="text-slate-300">{perf360RaterRoleLabel(activeRole)}</span> — skala 1–
-          {scaleMax}
+        <h2 className="text-base font-semibold text-slate-100">Penilaian</h2>
+        <p className="text-xs text-slate-500">
+          Isi setiap pertanyaan di bawah. Perubahan disimpan sebagai draf di perangkat; gunakan tombol hijau untuk
+          mengirim jawaban ke database.
         </p>
       </div>
+
+      {hydrating ? (
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+          Menyesuaikan dengan data server…
+        </div>
+      ) : null}
+
       <div className="flex items-center gap-3 text-sm">
         <span className="text-slate-500">Progres</span>
         <span className="font-semibold text-emerald-400">{Math.round(pct)}%</span>
@@ -200,6 +308,24 @@ export function Perf360TemplateFillForm({
         className="h-2 max-w-md bg-slate-800 [&>[data-slot=progress-indicator]]:bg-cyan-500"
       />
 
+      {submitOk ? (
+        <div
+          role="status"
+          className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100"
+        >
+          <p className="flex items-start gap-2 font-medium">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+            <span>
+              Berhasil disimpan ke database — {submitOk.answerCount} jawaban untuk formulir ini.
+              <span className="mt-1 block text-xs font-normal text-emerald-200/85">
+                Waktu kirim (perangkat): {submitOk.atLabel}. Panel akan tertutup otomatis; daftar formulir akan
+                memperbarui status ke Selesai.
+              </span>
+            </span>
+          </p>
+        </div>
+      ) : null}
+
       {formError ? (
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300">{formError}</p>
       ) : null}
@@ -208,8 +334,8 @@ export function Perf360TemplateFillForm({
         <CardHeader>
           <CardTitle className="text-base text-slate-100">Pertanyaan dari template</CardTitle>
           <CardDescription className="text-slate-500">
-            Hanya tipe nilai &amp; multiple choice; filter <code className="text-cyan-500/90">applies_to_role</code>{" "}
-            sesuai peran Anda.
+            Hanya tipe penilaian &amp; pilihan ganda untuk periode ini; filter{" "}
+            <code className="text-cyan-500/90">applies_to_role</code> sesuai peran Anda sebagai penilai.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-10">
@@ -237,7 +363,12 @@ export function Perf360TemplateFillForm({
                     <p className="text-[11px] text-slate-500">
                       Alasan: {perf360ReasonModeLabel(mode)}
                     </p>
-                    <RatingRow max={scaleMax} value={a.rating} onChange={(n) => setRating(q.id, n)} />
+                    <RatingRow
+                      max={scaleMax}
+                      value={a.rating}
+                      disabled={!!submitOk}
+                      onChange={(n) => setRating(q.id, n)}
+                    />
                     {mode !== "none" ? (
                       <div className="space-y-2 pt-1">
                         <Label className="text-slate-200">
@@ -246,6 +377,7 @@ export function Perf360TemplateFillForm({
                         </Label>
                         <Textarea
                           value={a.reason}
+                          disabled={!!submitOk}
                           onChange={(e) => setReason(q.id, e.target.value)}
                           rows={3}
                           className="border-slate-800 bg-slate-950 text-slate-100"
@@ -270,16 +402,20 @@ export function Perf360TemplateFillForm({
           variant="outline"
           type="button"
           className="border-slate-700"
+          disabled={submitting || !!submitOk}
           onClick={() => {
             const sub = readPerf360Draft(storageKey)?.submittedAt ?? null
             flush(answers, sub)
           }}
         >
-          Simpan draf
+          Simpan draf (perangkat)
         </Button>
         <Button
           className="bg-emerald-600 hover:bg-emerald-700"
           type="button"
+          disabled={
+            submitting || !!submitOk || isMockMode() || !tenantId || !templateId || !assignmentKey
+          }
           onClick={() => {
             const err = validateSubmit()
             if (err) {
@@ -287,16 +423,63 @@ export function Perf360TemplateFillForm({
               return
             }
             setFormError(null)
-            const ts = new Date().toISOString()
-            flush(answers, ts)
+            setSubmitOk(null)
+            if (isMockMode()) return
+            setSubmitting(true)
+            ;(async () => {
+              try {
+                const payload: Record<string, Perf360StoredAnswer> = {}
+                for (const q of visibleQuestions) {
+                  const a = answers[q.id]
+                  if (a) payload[q.id] = a
+                }
+                await submitPerf360ToDatabase({
+                  tenantId,
+                  templateId,
+                  assignmentKey,
+                  assignmentKind,
+                  raterUserProfileId,
+                  assessedUserProfileId,
+                  answers: payload,
+                })
+                const ts = new Date().toISOString()
+                const atLabel = new Date(ts).toLocaleString("id-ID", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })
+                flush(answers, ts)
+                setSubmitOk({ atLabel, answerCount: Object.keys(payload).length })
+                onServerSubmitted?.()
+              } catch (e: unknown) {
+                const msg =
+                  e instanceof Error
+                    ? e.message
+                    : typeof e === "object" &&
+                        e !== null &&
+                        "message" in e &&
+                        (e as { message?: unknown }).message != null
+                      ? String((e as { message: unknown }).message)
+                      : "Gagal menyimpan ke database."
+                setFormError(msg)
+              } finally {
+                setSubmitting(false)
+              }
+            })()
           }}
         >
-          Tandai selesai (lokal)
+          {submitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Mengirim…
+            </>
+          ) : (
+            "Kirim penilaian ke server"
+          )}
         </Button>
       </div>
       <p className="text-xs text-slate-600">
-        Penyimpanan sementara di perangkat ini. Tabel submission 360 di backend akan menggantikan localStorage ketika
-        tersedia.
+        Setelah dikirim, baris formulir Anda muncul selesai di daftar berdasarkan tabel penyimpanan 360 (
+        <span className="font-mono text-slate-500">performance_360_submissions</span>).
       </p>
     </div>
   )
