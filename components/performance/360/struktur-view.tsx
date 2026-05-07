@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { ChevronDown, Loader2, User } from "lucide-react"
-import { OrgScopeFilterFields, useOrgScopeFilters } from "@/components/performance/360/org-scope-filters"
+import { ORG_SCOPE_FILTER_ALL, useOrgScopeFilters } from "@/components/performance/360/org-scope-filters"
+import { FilterBar } from "@/components/ui/filter-bar"
 import { Performance360Shell } from "@/components/performance/360/shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -159,9 +160,9 @@ function OrgTreeNode({
     <li className="list-none">
       <div
         className={cn(
-          "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2.5",
+          "flex flex-wrap items-center justify-between gap-2 rounded-lg border /80 px-3 py-2.5",
           depth > 0 && "ml-2 border-l-2 border-l-emerald-500/30 pl-4",
-          isEmployee && "bg-slate-950/50"
+          isEmployee && "bg-background/50"
         )}
       >
         <div className="flex items-start gap-2 min-w-0">
@@ -169,7 +170,7 @@ function OrgTreeNode({
             <button
               type="button"
               onClick={() => toggle(node.id)}
-              className="text-slate-400 hover:text-slate-200 p-0.5"
+              className="text-muted-foreground hover:text-foreground p-0.5"
               aria-expanded={isOpen}
             >
               <ChevronDown className={cn("w-4 h-4 transition-transform", !isOpen && "-rotate-90")} />
@@ -188,8 +189,8 @@ function OrgTreeNode({
             )}
           />
           <div className="min-w-0">
-            <div className="text-slate-100 font-medium truncate">{node.name}</div>
-            <div className="text-xs text-slate-500">{node.role}</div>
+            <div className="text-foreground font-medium truncate">{node.name}</div>
+            <div className="text-xs text-muted-foreground">{node.role}</div>
           </div>
         </div>
         {isEmployee && node.profileId ? (
@@ -400,16 +401,66 @@ export function Struktur360View() {
       title="Mapping Penilaian"
       subtitle={`${scope.summaryLine} — Hierarki dari departemen, divisi, dan karyawan (user_profiles).`}
     >
-      <Card className="bg-slate-900 border-slate-800">
-        <CardContent className="pt-6 pb-6">
-          <OrgScopeFilterFields scope={scope} />
-        </CardContent>
-      </Card>
+      <FilterBar>
+        <Select
+          value={scope.entityId || ORG_SCOPE_FILTER_ALL}
+          onValueChange={(v) => scope.setEntityId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
+          disabled={scope.loadingEntities}
+        >
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[160px]">
+            <SelectValue placeholder="Entitas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ORG_SCOPE_FILTER_ALL}>Semua entitas</SelectItem>
+            {scope.entities.map((e) => (
+              <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Card className="bg-slate-900 border-slate-800">
+        <Select
+          value={scope.departmentId || ORG_SCOPE_FILTER_ALL}
+          onValueChange={(v) => scope.setDepartmentId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
+          disabled={scope.loadingDepts}
+        >
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[160px]">
+            <SelectValue placeholder="Departemen" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ORG_SCOPE_FILTER_ALL}>Semua departemen</SelectItem>
+            {scope.departments.map((d) => (
+              <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={scope.divisionId || ORG_SCOPE_FILTER_ALL}
+          onValueChange={(v) => scope.setDivisionId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
+          disabled={scope.loadingDivs}
+        >
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[160px]">
+            <SelectValue placeholder={scope.divisionsFiltered.length ? "Divisi" : "Tidak ada divisi"} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ORG_SCOPE_FILTER_ALL}>Semua divisi</SelectItem>
+            {scope.divisionsFiltered.map((d) => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.departments?.name ? `${d.name} (${d.departments.name})` : d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {scope.filtersLoading && (
+          <Loader2 className="h-4 w-4 animate-spin text-emerald-500 shrink-0" aria-hidden />
+        )}
+      </FilterBar>
+
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100 text-base">Hierarki organisasi</CardTitle>
-          <CardDescription className="text-slate-500">
+          <CardTitle className="text-foreground text-base">Hierarki organisasi</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Susunan mengikuti master departemen dan divisi serta penempatan karyawan di database.
           </CardDescription>
         </CardHeader>
@@ -417,12 +468,12 @@ export function Struktur360View() {
           {error ? (
             <p className="text-sm text-red-400">{error}</p>
           ) : loading ? (
-            <div className="flex items-center justify-center py-16 gap-2 text-slate-400">
+            <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
               Memuat data karyawan…
             </div>
           ) : orgTree.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-12 border border-dashed border-slate-800 rounded-lg">
+            <p className="text-sm text-muted-foreground text-center py-12 border border-dashed border-border rounded-lg">
               Tidak ada karyawan aktif untuk filter ini. Sesuaikan entitas / departemen / divisi atau pastikan data HR
               sudah ada.
             </p>
@@ -453,22 +504,22 @@ export function Struktur360View() {
       >
         <DialogContent
           showCloseButton
-          className="bg-slate-900 border-slate-800 text-slate-100 sm:max-w-lg max-h-[90vh] overflow-y-auto"
+          className="text-foreground sm:max-w-lg max-h-[90vh] overflow-y-auto"
         >
           <DialogHeader>
-            <DialogTitle className="text-slate-100">
+            <DialogTitle className="text-foreground">
               Pengaturan penilai
               {selectedName ? (
-                <span className="block text-sm font-normal text-slate-400 mt-1">{selectedName}</span>
+                <span className="block text-sm font-normal text-muted-foreground mt-1">{selectedName}</span>
               ) : null}
             </DialogTitle>
-            <DialogDescription className="text-slate-500">
+            <DialogDescription className="text-muted-foreground">
               {selectedRole || "Scope filter yang aktif menentukan kandidat penilai."}
             </DialogDescription>
           </DialogHeader>
 
           {settingsLoading && dialogOpen ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-slate-400 justify-center">
+            <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground justify-center">
               <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
               Memuat pengaturan…
             </div>
@@ -480,19 +531,19 @@ export function Struktur360View() {
                 </div>
               ) : null}
 
-              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 space-y-2">
-                <Label className="text-slate-200 text-sm">Atasan untuk 360 (override)</Label>
-                <p className="text-xs text-slate-500">
+              <div className="rounded-lg border border-border bg-background/50 p-3 space-y-2">
+                <Label className="text-foreground text-sm">Atasan untuk 360 (override)</Label>
+                <p className="text-xs text-muted-foreground">
                   Hanya dipakai modul Performance 360; tidak mengubah master HR. Kosongkan jika belum ditetapkan.
                 </p>
                 <Select
                   value={managerId || "__none__"}
                   onValueChange={(v) => setManagerId(v === "__none__" ? "" : v)}
                 >
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+                  <SelectTrigger>
                     <SelectValue placeholder="Pilih atasan…" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 max-h-56">
+                  <SelectContent className="max-h-56">
                     <SelectItem value="__none__">— Belum dipilih —</SelectItem>
                     {managerCandidates.map((e) => (
                       <SelectItem key={e.id} value={e.id}>
@@ -503,7 +554,7 @@ export function Struktur360View() {
                 </Select>
               </div>
 
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Centang peran penilai yang diaktifkan; pratinjau daftar mengikuti filter organisasi di atas.
               </p>
 
@@ -516,7 +567,7 @@ export function Struktur360View() {
                 badgeClass="bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
                 detail={
                   perms.self ? (
-                    <p className="text-xs text-slate-500 mt-2 pl-1 border-l-2 border-emerald-500/40">
+                    <p className="text-xs text-muted-foreground mt-2 pl-1 border-l-2 border-emerald-500/40">
                       Dinilai sendiri dalam siklus 360.
                     </p>
                   ) : null
@@ -533,8 +584,8 @@ export function Struktur360View() {
                   perms.manager ? (
                     <div className="mt-2 space-y-1 pl-1 border-l-2 border-fuchsia-500/40">
                       {resolvedManager ? (
-                        <p className="text-xs text-slate-300">
-                          <span className="text-slate-500">Penilai: </span>
+                        <p className="text-xs text-foreground">
+                          <span className="text-muted-foreground">Penilai: </span>
                           {displayName(resolvedManager)} ({resolvedManager.hr_positions?.name ?? "—"})
                         </p>
                       ) : (
@@ -577,7 +628,7 @@ export function Struktur360View() {
                   perms.subordinate ? (
                     <div className="space-y-1">
                       {subPreview.source === "heuristic" && subPreview.list.length > 0 ? (
-                        <p className="text-[11px] text-slate-500 italic">
+                        <p className="text-[11px] text-muted-foreground italic">
                           Daftar perkiraan — setelah migrasi, isi atasan formal di data HR.
                         </p>
                       ) : null}
@@ -592,8 +643,8 @@ export function Struktur360View() {
             </div>
           )}
 
-          <DialogFooter className="border-t border-slate-800 bg-slate-900/90 sm:justify-end gap-2">
-            <Button type="button" variant="ghost" className="text-slate-400" onClick={closeDialog} disabled={saving}>
+          <DialogFooter className="border-t /90 sm:justify-end gap-2">
+            <Button type="button" variant="ghost" className="text-muted-foreground" onClick={closeDialog} disabled={saving}>
               Tutup
             </Button>
             <Button
@@ -627,15 +678,15 @@ function RaterNameList({
 }) {
   if (!people.length) {
     return (
-      <p className="text-xs text-slate-500 mt-2 pl-1 border-l-2 border-slate-700 italic">{emptyHint}</p>
+      <p className="text-xs text-muted-foreground mt-2 pl-1 border-l-2 border-border italic">{emptyHint}</p>
     )
   }
   return (
     <ul className="mt-2 space-y-1 pl-1 border-l-2 border-sky-500/40 max-h-32 overflow-y-auto">
       {people.map((e) => (
-        <li key={String(e.id)} className="text-xs text-slate-300 truncate">
+        <li key={String(e.id)} className="text-xs text-foreground truncate">
           {displayName(e as { full_name?: string; employee_number?: string })}{" "}
-          <span className="text-slate-500">
+          <span className="text-muted-foreground">
             · L{getJobGradeLevelDisplay(e as { hr_job_grades?: { level?: number } })}
           </span>
         </li>
@@ -667,16 +718,16 @@ function PermissionRow({
   detail?: ReactNode
 }) {
   return (
-    <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+    <div className="rounded-lg border border-border bg-background/50 p-3">
       <div className="flex items-start gap-3">
         <Checkbox
           checked={checked}
           onCheckedChange={(v) => onCheckedChange(v === true)}
-          className="mt-1 border-slate-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+          className="mt-1 border-border data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
         />
         <div className="flex-1 min-w-0">
-          <Label className="text-slate-200 font-medium cursor-pointer">{title}</Label>
-          <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
+          <Label className="text-foreground font-medium cursor-pointer">{title}</Label>
+          <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
         </div>
         <Badge variant="outline" className={cn("shrink-0", badgeClass)}>
           {badge}

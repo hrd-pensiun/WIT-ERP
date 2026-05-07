@@ -34,39 +34,39 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
   const totalNet = payrollData.reduce((sum, p) => sum + (p.net_salary || 0), 0)
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/hr/payroll"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Detail Payroll</h1>
-            <p className="text-slate-400">
+            <h1 className="text-2xl font-bold text-foreground">Detail Payroll</h1>
+            <p className="text-muted-foreground">
               Periode: {periodData ? `${periodData.period_month}/${periodData.period_year}` : period}
             </p>
           </div>
         </div>
-        <Button variant="outline" className="border-slate-700">
+        <Button variant="outline" className="border-border">
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-400">Total Karyawan</p>
-            <p className="text-2xl font-bold text-slate-100">{payrollData.length}</p>
+            <p className="text-sm text-muted-foreground">Total Karyawan</p>
+            <p className="text-2xl font-bold text-foreground">{payrollData.length}</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-400">Total Net Salary</p>
+            <p className="text-sm text-muted-foreground">Total Net Salary</p>
             <p className="text-2xl font-bold text-emerald-400">{formatCurrency(totalNet)}</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-400">Status</p>
+            <p className="text-sm text-muted-foreground">Status</p>
             <Badge className={`${getStatusBadge(periodData?.status || "draft")} mt-1`}>
               {(periodData?.status || "draft").toUpperCase()}
             </Badge>
@@ -74,8 +74,8 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
         </Card>
       </div>
 
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader><CardTitle className="text-slate-100">Daftar Gaji Karyawan</CardTitle></CardHeader>
+      <Card>
+        <CardHeader><CardTitle>Daftar Gaji Karyawan</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -85,26 +85,26 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-800">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Karyawan</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Gaji Pokok</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Tunjangan</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Potongan</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Net Salary</th>
-                    <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">Status</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Karyawan</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Gaji Pokok</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Tunjangan</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Potongan</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Net Salary</th>
+                    <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payrollData.map((row: any) => (
-                    <tr key={row.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
+                    <tr key={row.id} className="border-b border-border/50 hover:bg-muted/30">
                       <td className="py-3 px-4">
-                        <p className="font-medium text-slate-100">{row.user_profiles?.full_name || "-"}</p>
-                        <p className="text-xs text-slate-500">{row.user_profiles?.employee_number || "-"}</p>
+                        <p className="font-medium text-foreground">{row.user_profiles?.full_name || "-"}</p>
+                        <p className="text-xs text-muted-foreground">{row.user_profiles?.employee_number || "-"}</p>
                       </td>
-                      <td className="py-3 px-4 text-right text-slate-300">{formatCurrency(row.basic_salary)}</td>
+                      <td className="py-3 px-4 text-right text-foreground">{formatCurrency(row.basic_salary)}</td>
                       <td className="py-3 px-4 text-right text-emerald-400">+{formatCurrency(row.total_allowances || 0)}</td>
                       <td className="py-3 px-4 text-right text-red-400">-{formatCurrency(row.total_deductions || 0)}</td>
-                      <td className="py-3 px-4 text-right font-bold text-slate-100">{formatCurrency(row.net_salary)}</td>
+                      <td className="py-3 px-4 text-right font-bold text-foreground">{formatCurrency(row.net_salary)}</td>
                       <td className="py-3 px-4 text-center"><Badge className={getStatusBadge(row.status)}>{row.status.toUpperCase()}</Badge></td>
                     </tr>
                   ))}
@@ -112,7 +112,7 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
               </table>
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-muted-foreground">
               <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Belum ada data payroll untuk periode ini</p>
             </div>

@@ -1,16 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { 
-  Lock, Mail, Eye, EyeOff, ArrowRight,
-  Building2, AlertCircle
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Eye, EyeOff, AlertCircle } from "lucide-react"
+import { AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/hooks/useAuth"
 import { insForge } from "@/lib/insforge"
 
@@ -19,139 +11,108 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState("")
 
-  // Check if already logged in
   useEffect(() => {
     if (!insForge) return
-
     insForge.auth.getCurrentUser().then(({ data }) => {
-      if (data.user) {
-        window.location.href = '/'
-      }
+      if (data.user) window.location.href = "/"
     })
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    console.log("Submitting login for:", email)
-    
     const result = await signIn(email, password)
-    console.log("Login result:", result)
-    
     if (result.success) {
-      console.log("Login successful, redirecting...")
-      // Redirect ke dashboard
-      window.location.href = '/'  // Redirect ke root, bukan crm
+      window.location.href = "/"
     } else {
-      console.log("Login failed:", result.error)
-      setError(result.error || 'Login failed')
+      setError(result.error || "Login failed")
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-8 h-8 text-white" />
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background:
+          "linear-gradient(135deg, #0d1b3e 0%, #0a2a35 45%, #063535 100%)",
+      }}
+    >
+      <div className="w-full max-w-sm">
+        <div className="bg-white rounded-3xl shadow-2xl shadow-black/40 px-8 py-10">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <span className="text-5xl font-black text-slate-900 tracking-tight leading-none">
+              WIT<span className="text-red-500">.</span>
+            </span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-100">WeWok.dtk</h1>
-          <p className="text-slate-500 mt-1">Sistem Informasi Perusahaan</p>
-        </div>
 
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-slate-100 text-center">Login</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <Alert className="bg-red-500/10 border-red-500/30 text-red-400">
-                  <AlertCircle className="w-4 h-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@wit.id"
-                    className="pl-10 bg-slate-950 border-slate-800 text-slate-100"
-                    required
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {error && (
+              <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-3 py-2.5 text-sm text-red-600">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <AlertDescription className="text-red-600">{error}</AlertDescription>
               </div>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="pl-10 pr-10 bg-slate-950 border-slate-800 text-slate-100"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              autoComplete="email"
+              className="w-full h-12 px-4 rounded-xl bg-slate-100 text-slate-900 placeholder:text-slate-400 border-0 outline-none focus:ring-2 focus:ring-emerald-500/30 text-sm transition-shadow"
+              required
+            />
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  />
-                  <Label htmlFor="remember" className="text-sm text-slate-400 cursor-pointer">
-                    Remember me
-                  </Label>
-                </div>
-                <a href="#" className="text-sm text-emerald-500 hover:text-emerald-400">
-                  Forgot password?
-                </a>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-700"
-                disabled={loading}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                autoComplete="current-password"
+                className="w-full h-12 px-4 pr-11 rounded-xl bg-slate-100 text-slate-900 placeholder:text-slate-400 border-0 outline-none focus:ring-2 focus:ring-emerald-500/30 text-sm transition-shadow"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
               >
-                {loading ? (
-                  "Loading..."
-                ) : (
-                  <>
-                    Login
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-              <p className="text-xs text-slate-600 mt-1">Login dengan akun InsForge kamu</p>
+                {showPassword
+                  ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+                  : <Eye className="w-4 h-4" strokeWidth={1.5} />}
+              </button>
             </div>
-          </CardContent>
-        </Card>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-xl bg-emerald-700 hover:bg-emerald-600 active:scale-[0.98] text-white font-semibold text-sm tracking-wide transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Logging in…
+                </span>
+              ) : (
+                "Login"
+              )}
+            </button>
+          </form>
+
+          <div className="mt-5 text-center">
+            <a
+              href="#"
+              className="text-sm font-medium text-slate-700 hover:text-slate-500 transition-colors"
+            >
+              Forgot Password?
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   )

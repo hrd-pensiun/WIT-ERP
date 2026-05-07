@@ -26,7 +26,7 @@ function statusBadge(status: "active" | "draft") {
       <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 font-normal">Aktif</Badge>
     )
   }
-  return <Badge variant="secondary" className="bg-slate-800 text-slate-300 font-normal">Draft</Badge>
+  return <Badge variant="secondary" className="bg-muted text-foreground font-normal">Draft</Badge>
 }
 
 export function Template360ListView() {
@@ -70,40 +70,40 @@ export function Template360ListView() {
       }
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-slate-100 text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-foreground text-sm font-medium flex items-center gap-2">
               <LayoutTemplate className="w-4 h-4 text-cyan-400" />
               Total template
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold text-slate-100">{total}</p>
-            <p className="text-xs text-slate-500 mt-1">Terdaftar di tenant ini</p>
+            <p className="text-3xl font-semibold text-foreground">{total}</p>
+            <p className="text-xs text-muted-foreground mt-1">Terdaftar di tenant ini</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-slate-100 text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-foreground text-sm font-medium flex items-center gap-2">
               <ListChecks className="w-4 h-4 text-emerald-400" />
               Template aktif
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold text-slate-100">{aktif}</p>
-            <p className="text-xs text-slate-500 mt-1">Dipakai untuk siklus penilaian</p>
+            <p className="text-3xl font-semibold text-foreground">{aktif}</p>
+            <p className="text-xs text-muted-foreground mt-1">Dipakai untuk siklus penilaian</p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-slate-100 text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-foreground text-sm font-medium flex items-center gap-2">
               <FileStack className="w-4 h-4 text-amber-400" />
               Draft
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold text-slate-100">{total - aktif}</p>
-            <p className="text-xs text-slate-500 mt-1">Belum dipublikasikan</p>
+            <p className="text-3xl font-semibold text-foreground">{total - aktif}</p>
+            <p className="text-xs text-muted-foreground mt-1">Belum dipublikasikan</p>
           </CardContent>
         </Card>
       </div>
@@ -112,10 +112,10 @@ export function Template360ListView() {
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>
       )}
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100 text-base">Daftar template</CardTitle>
-          <CardDescription className="text-slate-500">
+          <CardTitle className="text-foreground text-base">Daftar template</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Nama template, periode penilaian, dan ringkasan konten.
           </CardDescription>
         </CardHeader>
@@ -125,19 +125,19 @@ export function Template360ListView() {
               <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
             </div>
           ) : templates.length === 0 ? (
-            <p className="py-12 text-center text-sm text-slate-500">
+            <p className="py-12 text-center text-sm text-muted-foreground">
               Belum ada template. Tambahkan dari tombol &quot;Tambah template&quot;.
             </p>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-800 hover:bg-transparent">
-                  <TableHead className="text-slate-300">Nama template</TableHead>
-                  <TableHead className="text-slate-300">Periode penilaian</TableHead>
-                  <TableHead className="text-slate-300 text-right">Pertanyaan</TableHead>
-                  <TableHead className="text-slate-300">Skala</TableHead>
-                  <TableHead className="text-slate-300">Status</TableHead>
-                  <TableHead className="text-slate-300 text-right">Aksi</TableHead>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-foreground">Nama template</TableHead>
+                  <TableHead className="text-foreground">Periode penilaian</TableHead>
+                  <TableHead className="text-foreground text-right">Pertanyaan</TableHead>
+                  <TableHead className="text-foreground">Skala</TableHead>
+                  <TableHead className="text-foreground">Status</TableHead>
+                  <TableHead className="text-foreground text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -145,11 +145,11 @@ export function Template360ListView() {
                   const n = row.performance_360_template_questions?.length ?? 0
                   const scale = `1–${row.rating_scale_max}`
                   return (
-                    <TableRow key={row.id} className="border-slate-800">
-                      <TableCell className="font-medium text-slate-200">{row.name}</TableCell>
-                      <TableCell className="text-slate-400">{formatTemplatePeriodLabel(row)}</TableCell>
-                      <TableCell className="text-right text-slate-300">{n}</TableCell>
-                      <TableCell className="text-slate-400">{scale}</TableCell>
+                    <TableRow key={row.id} className="border-border">
+                      <TableCell className="font-medium text-foreground">{row.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatTemplatePeriodLabel(row)}</TableCell>
+                      <TableCell className="text-right text-foreground">{n}</TableCell>
+                      <TableCell className="text-muted-foreground">{scale}</TableCell>
                       <TableCell>{statusBadge(row.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap items-center justify-end gap-1">
@@ -159,7 +159,7 @@ export function Template360ListView() {
                               Preview
                             </Link>
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-slate-300 hover:text-slate-100" asChild>
+                          <Button variant="ghost" size="sm" className="text-foreground hover:text-foreground" asChild>
                             <Link href={`/performance/360/template/${row.id}/edit`}>
                               <Pencil className="mr-1 h-4 w-4" />
                               Edit

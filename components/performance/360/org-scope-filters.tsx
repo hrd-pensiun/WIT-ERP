@@ -150,7 +150,7 @@ export function OrgScopeFilterFields({
     <div>
       {!hideHeader ? (
         <div className="flex items-center justify-between gap-2 mb-3 pb-0.5">
-          <h3 className="text-slate-200 font-medium">{title}</h3>
+          <h3 className="text-foreground font-medium">{title}</h3>
           {filtersLoading ? (
             <Loader2 className="w-4 h-4 animate-spin text-emerald-500 shrink-0" aria-hidden />
           ) : null}
@@ -170,16 +170,16 @@ export function OrgScopeFilterFields({
       >
         {!hideEntity ? (
           <div className="min-w-0 space-y-2">
-            <Label className="text-slate-400 text-xs">Entitas</Label>
+            <Label className="text-muted-foreground text-xs">Entitas</Label>
             <Select
               value={entityId || F}
               onValueChange={(v) => setEntityId(v === F ? "" : v)}
               disabled={loadingEntities}
             >
-              <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
+              <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden">
                 <SelectValue placeholder="Pilih entitas" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800">
+              <SelectContent>
                 <SelectItem value={F}>Semua entitas</SelectItem>
                 {entities.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
@@ -191,16 +191,16 @@ export function OrgScopeFilterFields({
           </div>
         ) : null}
         <div className="min-w-0 space-y-2">
-          <Label className="text-slate-400 text-xs">Departemen</Label>
+          <Label className="text-muted-foreground text-xs">Departemen</Label>
           <Select
             value={departmentId || F}
             onValueChange={(v) => setDepartmentId(v === F ? "" : v)}
             disabled={loadingDepts}
           >
-            <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
+            <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden">
               <SelectValue placeholder="Pilih departemen" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800">
+            <SelectContent>
               <SelectItem value={F}>Semua departemen</SelectItem>
               {departments.map((d) => (
                 <SelectItem key={d.id} value={d.id}>
@@ -211,16 +211,16 @@ export function OrgScopeFilterFields({
           </Select>
         </div>
         <div className="min-w-0 space-y-2">
-          <Label className="text-slate-400 text-xs">Divisi</Label>
+          <Label className="text-muted-foreground text-xs">Divisi</Label>
           <Select
             value={divisionId || F}
             onValueChange={(v) => setDivisionId(v === F ? "" : v)}
             disabled={loadingDivs}
           >
-            <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
+            <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden">
               <SelectValue placeholder={divisionsFiltered.length ? "Pilih divisi" : "Tidak ada divisi"} />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800">
+            <SelectContent>
               <SelectItem value={F}>Semua divisi</SelectItem>
               {divisionsFiltered.map((d) => {
                 const sub = d.departments?.name

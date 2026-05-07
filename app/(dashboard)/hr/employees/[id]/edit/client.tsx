@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Loader2, Plus, Save, Trash2, User } from "lucide-react"
+import { ArrowLeft, Loader2, Plus, Save, Trash2, User, UserCircle, Briefcase, Users, GraduationCap, TrendingUp, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -621,81 +621,95 @@ export default function EmployeeEditClient({ id }: { id: string }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={`/hr/employees/${id}`}><Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100"><ArrowLeft className="w-5 h-5" /></Button></Link>
-        <div><h1 className="text-2xl font-bold text-slate-100">Edit Karyawan</h1><p className="text-xs text-slate-500">EDIT-EMPLOYEE : {formData.full_name || "-"}</p></div>
+        <Link href={`/hr/employees/${id}`}><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
+        <div><h1 className="text-2xl font-bold text-foreground">Edit Karyawan</h1><p className="text-xs text-muted-foreground">EDIT-EMPLOYEE : {formData.full_name || "-"}</p></div>
       </div>
       {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg">{error}</div>}
       <form onSubmit={handleSubmit}>
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader><CardTitle className="text-slate-100 flex items-center gap-2"><User className="w-5 h-5 text-emerald-500" /> Informasi Karyawan</CardTitle></CardHeader>
-          <CardContent className="space-y-6">
+        <Card className="overflow-hidden">
+          <div className="flex items-center gap-3 px-4 pt-4 pb-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/20">
+              <User className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Human Resources</p>
+              <h2 className="text-sm font-semibold text-foreground leading-tight">Informasi Karyawan</h2>
+            </div>
+          </div>
+          <CardContent className="space-y-0 px-0 pb-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-slate-950 border border-slate-800">
-                <TabsTrigger value="personal" className="data-[state=active]:bg-emerald-600">
+              <TabsList variant="line" className="px-4 flex-wrap">
+                <TabsTrigger value="personal">
+                  <UserCircle className="size-3.5" />
                   Data Pribadi
                 </TabsTrigger>
-                <TabsTrigger value="employment" className="data-[state=active]:bg-emerald-600">
+                <TabsTrigger value="employment">
+                  <Briefcase className="size-3.5" />
                   Kepegawaian
                 </TabsTrigger>
-                <TabsTrigger value="family" className="data-[state=active]:bg-emerald-600">
+                <TabsTrigger value="family">
+                  <Users className="size-3.5" />
                   Data Keluarga
                 </TabsTrigger>
-                <TabsTrigger value="education" className="data-[state=active]:bg-emerald-600">
-                  Riwayat Pendidikan
+                <TabsTrigger value="education">
+                  <GraduationCap className="size-3.5" />
+                  Pendidikan
                 </TabsTrigger>
-                <TabsTrigger value="career" className="data-[state=active]:bg-emerald-600">
-                  Karier & Organisasi
+                <TabsTrigger value="career">
+                  <TrendingUp className="size-3.5" />
+                  Karier
                 </TabsTrigger>
-                <TabsTrigger value="portfolio" className="data-[state=active]:bg-emerald-600">
+                <TabsTrigger value="portfolio">
+                  <FolderOpen className="size-3.5" />
                   Portfolio
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="personal" className="mt-4">
+              <TabsContent value="personal" className="px-4 pt-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2"><Label className="text-slate-200">Nama Lengkap <span className="text-red-400">*</span></Label><Input value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} required className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Nomor Karyawan</Label><Input value={formData.employee_number} onChange={(e) => setFormData({ ...formData, employee_number: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Email</Label><Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Telepon</Label><Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Tanggal Lahir</Label><Input type="date" value={formData.date_of_birth} onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                  <div className="space-y-2"><Label>Nama Lengkap <span className="text-red-400">*</span></Label><Input value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} required className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Nomor Karyawan</Label><Input value={formData.employee_number} onChange={(e) => setFormData({ ...formData, employee_number: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Email</Label><Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Telepon</Label><Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Tanggal Lahir</Label><Input type="date" value={formData.date_of_birth} onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })} className="bg-background border-border text-foreground" /></div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Jenis Kelamin</Label>
+                    <Label>Jenis Kelamin</Label>
                     <Select value={formData.gender || "__none__"} onValueChange={(value) => setFormData({ ...formData, gender: value === "__none__" ? "" : value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="__none__">-</SelectItem><SelectItem value="male">Laki-laki</SelectItem><SelectItem value="female">Perempuan</SelectItem><SelectItem value="other">Lainnya</SelectItem></SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="__none__">-</SelectItem><SelectItem value="male">Laki-laki</SelectItem><SelectItem value="female">Perempuan</SelectItem><SelectItem value="other">Lainnya</SelectItem></SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2"><Label className="text-slate-200">Agama</Label><Input value={formData.religion} onChange={(e) => setFormData({ ...formData, religion: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                  <div className="space-y-2"><Label>Agama</Label><Input value={formData.religion} onChange={(e) => setFormData({ ...formData, religion: e.target.value })} className="bg-background border-border text-foreground" /></div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Status Pernikahan</Label>
+                    <Label>Status Pernikahan</Label>
                     <Select value={formData.marital_status || "__none__"} onValueChange={(value) => setFormData({ ...formData, marital_status: value === "__none__" ? "" : value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="__none__">-</SelectItem><SelectItem value="single">Belum menikah</SelectItem><SelectItem value="married">Menikah</SelectItem><SelectItem value="divorced">Cerai</SelectItem><SelectItem value="widowed">Duda/Janda</SelectItem></SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="__none__">-</SelectItem><SelectItem value="single">Belum menikah</SelectItem><SelectItem value="married">Menikah</SelectItem><SelectItem value="divorced">Cerai</SelectItem><SelectItem value="widowed">Duda/Janda</SelectItem></SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2"><Label className="text-slate-200">Kota</Label><Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Alamat</Label><Textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" rows={3} /></div>
+                  <div className="space-y-2"><Label>Kota</Label><Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2 md:col-span-2"><Label>Alamat</Label><Textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="bg-background border-border text-foreground" rows={3} /></div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="employment" className="mt-4">
+              <TabsContent value="employment" className="px-4 pt-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Departemen</Label>
+                    <Label>Departemen</Label>
                     <Select value={formData.department_id || "__none__"} onValueChange={(value) => setFormData({ ...formData, department_id: value === "__none__" ? "" : value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="__none__">-</SelectItem>{departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>)}</SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="__none__">-</SelectItem>{departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Divisi</Label>
+                    <Label>Divisi</Label>
                     <Select value={formData.division_id || "__none__"} onValueChange={(value) => setFormData({ ...formData, division_id: value === "__none__" ? "" : value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="__none__">-</SelectItem>{divisions.map((d) => <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>)}</SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="__none__">-</SelectItem>{divisions.map((d) => <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Atasan (Reports To)</Label>
+                    <Label>Atasan (Reports To)</Label>
                     <Select
                       value={formData.reports_to_profile_id || "__none__"}
                       disabled={selectedGradeLevel == null}
@@ -706,8 +720,8 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                         })
                       }
                     >
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue placeholder="Pilih atasan" /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue placeholder="Pilih atasan" /></SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="__none__">-</SelectItem>
                         {eligibleManagers
                           .map((emp) => (
@@ -719,11 +733,11 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                       </SelectContent>
                     </Select>
                     {selectedGradeLevel == null ? (
-                      <p className="text-xs text-slate-500">Pilih jabatan/grade dulu agar daftar atasan akurat.</p>
+                      <p className="text-xs text-muted-foreground">Pilih jabatan/grade dulu agar daftar atasan akurat.</p>
                     ) : null}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Jabatan</Label>
+                    <Label>Jabatan</Label>
                     <Select
                       value={formData.position_id || "__none__"}
                       onValueChange={(value) => {
@@ -741,29 +755,29 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                         })
                       }}
                     >
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="__none__">-</SelectItem>{positions.map((p) => <SelectItem key={p.id} value={p.id}>{p.code} — {p.name}{(p as any).hr_job_grades?.level ? ` (Level ${(p as any).hr_job_grades.level})` : ""}</SelectItem>)}</SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="__none__">-</SelectItem>{positions.map((p) => <SelectItem key={p.id} value={p.id}>{p.code} — {p.name}{(p as any).hr_job_grades?.level ? ` (Level ${(p as any).hr_job_grades.level})` : ""}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Job Grade</Label>
+                    <Label>Job Grade</Label>
                     <Select value={formData.job_grade_id || "__none__"} onValueChange={(value) => setFormData({ ...formData, job_grade_id: value === "__none__" ? "" : value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="__none__">-</SelectItem>{jobGrades.map((g) => <SelectItem key={g.id} value={g.id}>{g.code} — {g.name}</SelectItem>)}</SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="__none__">-</SelectItem>{jobGrades.map((g) => <SelectItem key={g.id} value={g.id}>{g.code} — {g.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Tipe Karyawan</Label>
+                    <Label>Tipe Karyawan</Label>
                     <Select value={formData.employment_type} onValueChange={(value) => setFormData({ ...formData, employment_type: value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="permanent">Tetap</SelectItem><SelectItem value="contract">Kontrak</SelectItem><SelectItem value="freelance">Freelance</SelectItem><SelectItem value="intern">Magang</SelectItem></SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="permanent">Tetap</SelectItem><SelectItem value="contract">Kontrak</SelectItem><SelectItem value="freelance">Freelance</SelectItem><SelectItem value="intern">Magang</SelectItem></SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Role Aplikasi</Label>
+                    <Label>Role Aplikasi</Label>
                     <Select value={formData.app_role} onValueChange={(value) => setFormData({ ...formData, app_role: value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="employee">Employee</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="hr_admin">HR Admin</SelectItem>
@@ -772,21 +786,21 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Status</Label>
+                    <Label>Status</Label>
                     <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="active">Aktif</SelectItem><SelectItem value="inactive">Non-Aktif</SelectItem><SelectItem value="resigned">Resign</SelectItem><SelectItem value="terminated">Terminated</SelectItem></SelectContent>
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="active">Aktif</SelectItem><SelectItem value="inactive">Non-Aktif</SelectItem><SelectItem value="resigned">Resign</SelectItem><SelectItem value="terminated">Terminated</SelectItem></SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2"><Label className="text-slate-200">Tanggal Bergabung <span className="text-red-400">*</span></Label><Input type="date" required value={formData.join_date} onChange={(e) => setFormData({ ...formData, join_date: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Akhir Probation</Label><Input type="date" value={formData.probation_end_date} onChange={(e) => setFormData({ ...formData, probation_end_date: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Tanggal Berakhir Kontrak</Label><Input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">NPWP</Label><Input value={formData.npwp} onChange={(e) => setFormData({ ...formData, npwp: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                  <div className="space-y-2"><Label>Tanggal Bergabung <span className="text-red-400">*</span></Label><Input type="date" required value={formData.join_date} onChange={(e) => setFormData({ ...formData, join_date: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Akhir Probation</Label><Input type="date" value={formData.probation_end_date} onChange={(e) => setFormData({ ...formData, probation_end_date: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Tanggal Berakhir Kontrak</Label><Input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>NPWP</Label><Input value={formData.npwp} onChange={(e) => setFormData({ ...formData, npwp: e.target.value })} className="bg-background border-border text-foreground" /></div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Status PTKP (Perpajakan)</Label>
+                    <Label>Status PTKP (Perpajakan)</Label>
                     <Select value={formData.ptkp_status} onValueChange={(value) => setFormData({ ...formData, ptkp_status: value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent>
                         {["TK/0", "TK/1", "TK/2", "TK/3", "K/0", "K/1", "K/2", "K/3", "K/I/0", "K/I/1", "K/I/2", "K/I/3"].map((status) => (
                           <SelectItem key={status} value={status}>{status}</SelectItem>
                         ))}
@@ -794,34 +808,34 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Posisi Pajak</Label>
+                    <Label>Posisi Pajak</Label>
                     <Select value={formData.tax_position} onValueChange={(value) => setFormData({ ...formData, tax_position: value })}>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="staff">Staff</SelectItem>
                         <SelectItem value="non-staff">Non-staff</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2"><Label className="text-slate-200">BPJS TK Number</Label><Input value={formData.bpjs_tk_number} onChange={(e) => setFormData({ ...formData, bpjs_tk_number: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">BPJS Kesehatan Number</Label><Input value={formData.bpjs_kes_number} onChange={(e) => setFormData({ ...formData, bpjs_kes_number: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Nama Kontak Darurat</Label><Input value={formData.emergency_contact_name} onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">No. Kontak Darurat</Label><Input value={formData.emergency_contact_phone} onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Bank</Label><Input value={formData.bank_name} onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Nomor Rekening</Label><Input value={formData.bank_account_number} onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                  <div className="space-y-2"><Label className="text-slate-200">Nama Pemilik Rekening</Label><Input value={formData.bank_account_name} onChange={(e) => setFormData({ ...formData, bank_account_name: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                  <div className="space-y-2"><Label>BPJS TK Number</Label><Input value={formData.bpjs_tk_number} onChange={(e) => setFormData({ ...formData, bpjs_tk_number: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>BPJS Kesehatan Number</Label><Input value={formData.bpjs_kes_number} onChange={(e) => setFormData({ ...formData, bpjs_kes_number: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Nama Kontak Darurat</Label><Input value={formData.emergency_contact_name} onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>No. Kontak Darurat</Label><Input value={formData.emergency_contact_phone} onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Bank</Label><Input value={formData.bank_name} onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Nomor Rekening</Label><Input value={formData.bank_account_number} onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })} className="bg-background border-border text-foreground" /></div>
+                  <div className="space-y-2"><Label>Nama Pemilik Rekening</Label><Input value={formData.bank_account_name} onChange={(e) => setFormData({ ...formData, bank_account_name: e.target.value })} className="bg-background border-border text-foreground" /></div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="family" className="mt-4">
+              <TabsContent value="family" className="px-4 pt-5">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-400">Riwayat keluarga bisa lebih dari satu data.</p>
+                    <p className="text-sm text-muted-foreground">Riwayat keluarga bisa lebih dari satu data.</p>
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="border-slate-700 text-slate-200"
+                      className="border-border text-foreground"
                       onClick={() =>
                         setFamilyMembers((prev) => [...prev, { ...EMPTY_FAMILY_MEMBER }])
                       }
@@ -832,9 +846,9 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                   </div>
 
                   {familyMembers.map((member, idx) => (
-                    <div key={`family-${idx}`} className="rounded-lg border border-slate-800 p-4 space-y-4">
+                    <div key={`family-${idx}`} className="rounded-lg border border-border p-4 space-y-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-slate-200">Anggota Keluarga #{idx + 1}</p>
+                        <p className="text-sm font-medium text-foreground">Anggota Keluarga #{idx + 1}</p>
                         <Button
                           type="button"
                           size="sm"
@@ -852,33 +866,33 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                         </Button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label className="text-slate-200">Nama</Label><Input value={member.name} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, name: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Relasi</Label><Input value={member.relation} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, relation: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" placeholder="Pasangan / Anak / Ayah / Ibu" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">No. HP</Label><Input value={member.phone} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, phone: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Tanggal Lahir</Label><Input type="date" value={member.birth_date} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, birth_date: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                        <div className="space-y-2"><Label>Nama</Label><Input value={member.name} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, name: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Relasi</Label><Input value={member.relation} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, relation: e.target.value } : item))} className="bg-background border-border text-foreground" placeholder="Pasangan / Anak / Ayah / Ibu" /></div>
+                        <div className="space-y-2"><Label>No. HP</Label><Input value={member.phone} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, phone: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Tanggal Lahir</Label><Input type="date" value={member.birth_date} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, birth_date: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
                         <div className="space-y-2">
-                          <Label className="text-slate-200">Tanggungan Pajak</Label>
+                          <Label>Tanggungan Pajak</Label>
                           <Select value={member.dependent_for_tax ? "yes" : "no"} onValueChange={(value) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, dependent_for_tax: value === "yes" } : item))}>
-                            <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                            <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="yes">Ya</SelectItem><SelectItem value="no">Tidak</SelectItem></SelectContent>
+                            <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="yes">Ya</SelectItem><SelectItem value="no">Tidak</SelectItem></SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Catatan</Label><Textarea rows={2} value={member.notes} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, notes: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                        <div className="space-y-2 md:col-span-2"><Label>Catatan</Label><Textarea rows={2} value={member.notes} onChange={(e) => setFamilyMembers((prev) => prev.map((item, i) => i === idx ? { ...item, notes: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
                       </div>
                     </div>
                   ))}
                 </div>
               </TabsContent>
 
-              <TabsContent value="education" className="mt-4">
+              <TabsContent value="education" className="px-4 pt-5">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-400">Riwayat pendidikan dapat menampung banyak data.</p>
+                    <p className="text-sm text-muted-foreground">Riwayat pendidikan dapat menampung banyak data.</p>
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="border-slate-700 text-slate-200"
+                      className="border-border text-foreground"
                       onClick={() =>
                         setEducationHistories((prev) => [...prev, { ...EMPTY_EDUCATION_HISTORY }])
                       }
@@ -889,9 +903,9 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                   </div>
 
                   {educationHistories.map((edu, idx) => (
-                    <div key={`education-${idx}`} className="rounded-lg border border-slate-800 p-4 space-y-4">
+                    <div key={`education-${idx}`} className="rounded-lg border border-border p-4 space-y-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-slate-200">Pendidikan #{idx + 1}</p>
+                        <p className="text-sm font-medium text-foreground">Pendidikan #{idx + 1}</p>
                         <Button
                           type="button"
                           size="sm"
@@ -909,29 +923,29 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                         </Button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label className="text-slate-200">Jenjang</Label><Input value={edu.level} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, level: e.target.value } : item))} placeholder="SMA / D3 / S1 / S2" className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Institusi</Label><Input value={edu.institution} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, institution: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Jurusan</Label><Input value={edu.major} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, major: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">IPK/Nilai</Label><Input value={edu.gpa} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, gpa: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" placeholder="3.75" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Tahun Mulai</Label><Input type="number" min={1950} max={2100} value={edu.start_year} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, start_year: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Tahun Lulus</Label><Input type="number" min={1950} max={2100} value={edu.end_year} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, end_year: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Catatan</Label><Textarea rows={2} value={edu.notes} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, notes: e.target.value } : item))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                        <div className="space-y-2"><Label>Jenjang</Label><Input value={edu.level} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, level: e.target.value } : item))} placeholder="SMA / D3 / S1 / S2" className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Institusi</Label><Input value={edu.institution} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, institution: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Jurusan</Label><Input value={edu.major} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, major: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>IPK/Nilai</Label><Input value={edu.gpa} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, gpa: e.target.value } : item))} className="bg-background border-border text-foreground" placeholder="3.75" /></div>
+                        <div className="space-y-2"><Label>Tahun Mulai</Label><Input type="number" min={1950} max={2100} value={edu.start_year} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, start_year: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Tahun Lulus</Label><Input type="number" min={1950} max={2100} value={edu.end_year} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, end_year: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2 md:col-span-2"><Label>Catatan</Label><Textarea rows={2} value={edu.notes} onChange={(e) => setEducationHistories((prev) => prev.map((item, i) => i === idx ? { ...item, notes: e.target.value } : item))} className="bg-background border-border text-foreground" /></div>
                       </div>
                     </div>
                   ))}
                 </div>
               </TabsContent>
 
-              <TabsContent value="career" className="mt-4">
+              <TabsContent value="career" className="px-4 pt-5">
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-slate-400">Pendidikan informal (kursus/sertifikasi) dapat diisi banyak data.</p>
+                      <p className="text-sm text-muted-foreground">Pendidikan informal (kursus/sertifikasi) dapat diisi banyak data.</p>
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="border-slate-700 text-slate-200"
+                        className="border-border text-foreground"
                         onClick={() =>
                           setInformalEducations((prev) => [...prev, { ...EMPTY_INFORMAL_EDUCATION }])
                         }
@@ -941,19 +955,19 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                       </Button>
                     </div>
                     {informalEducations.map((item, idx) => (
-                      <div key={`informal-${idx}`} className="rounded-lg border border-slate-800 p-4 space-y-4">
+                      <div key={`informal-${idx}`} className="rounded-lg border border-border p-4 space-y-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-slate-200">Pendidikan Informal #{idx + 1}</p>
+                          <p className="text-sm font-medium text-foreground">Pendidikan Informal #{idx + 1}</p>
                           <Button type="button" size="sm" variant="ghost" className="text-red-400 hover:text-red-300" onClick={() => setInformalEducations((prev) => prev.length === 1 ? [{ ...EMPTY_INFORMAL_EDUCATION }] : prev.filter((_, i) => i !== idx))}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2"><Label className="text-slate-200">Nama Program</Label><Input value={item.name} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Penyelenggara</Label><Input value={item.provider} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, provider: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Tahun</Label><Input type="number" min={1950} max={2100} value={item.year} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, year: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Sertifikat</Label><Input value={item.certificate} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, certificate: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" placeholder="Nomor/jenis sertifikat" /></div>
-                          <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Catatan</Label><Textarea rows={2} value={item.notes} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, notes: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                          <div className="space-y-2"><Label>Nama Program</Label><Input value={item.name} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Penyelenggara</Label><Input value={item.provider} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, provider: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Tahun</Label><Input type="number" min={1950} max={2100} value={item.year} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, year: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Sertifikat</Label><Input value={item.certificate} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, certificate: e.target.value } : x))} className="bg-background border-border text-foreground" placeholder="Nomor/jenis sertifikat" /></div>
+                          <div className="space-y-2 md:col-span-2"><Label>Catatan</Label><Textarea rows={2} value={item.notes} onChange={(e) => setInformalEducations((prev) => prev.map((x, i) => i === idx ? { ...x, notes: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
                         </div>
                       </div>
                     ))}
@@ -961,12 +975,12 @@ export default function EmployeeEditClient({ id }: { id: string }) {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-slate-400">Pengalaman organisasi bisa lebih dari satu.</p>
+                      <p className="text-sm text-muted-foreground">Pengalaman organisasi bisa lebih dari satu.</p>
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="border-slate-700 text-slate-200"
+                        className="border-border text-foreground"
                         onClick={() =>
                           setOrganizationExperiences((prev) => [
                             ...prev,
@@ -979,19 +993,19 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                       </Button>
                     </div>
                     {organizationExperiences.map((item, idx) => (
-                      <div key={`org-${idx}`} className="rounded-lg border border-slate-800 p-4 space-y-4">
+                      <div key={`org-${idx}`} className="rounded-lg border border-border p-4 space-y-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-slate-200">Organisasi #{idx + 1}</p>
+                          <p className="text-sm font-medium text-foreground">Organisasi #{idx + 1}</p>
                           <Button type="button" size="sm" variant="ghost" className="text-red-400 hover:text-red-300" onClick={() => setOrganizationExperiences((prev) => prev.length === 1 ? [{ ...EMPTY_ORGANIZATION_EXPERIENCE }] : prev.filter((_, i) => i !== idx))}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2"><Label className="text-slate-200">Nama Organisasi</Label><Input value={item.organization} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, organization: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Peran/Jabatan</Label><Input value={item.role} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Tahun Mulai</Label><Input type="number" min={1950} max={2100} value={item.start_year} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, start_year: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Tahun Selesai</Label><Input type="number" min={1950} max={2100} value={item.end_year} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, end_year: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Catatan</Label><Textarea rows={2} value={item.notes} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, notes: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                          <div className="space-y-2"><Label>Nama Organisasi</Label><Input value={item.organization} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, organization: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Peran/Jabatan</Label><Input value={item.role} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Tahun Mulai</Label><Input type="number" min={1950} max={2100} value={item.start_year} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, start_year: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Tahun Selesai</Label><Input type="number" min={1950} max={2100} value={item.end_year} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, end_year: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2 md:col-span-2"><Label>Catatan</Label><Textarea rows={2} value={item.notes} onChange={(e) => setOrganizationExperiences((prev) => prev.map((x, i) => i === idx ? { ...x, notes: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
                         </div>
                       </div>
                     ))}
@@ -999,12 +1013,12 @@ export default function EmployeeEditClient({ id }: { id: string }) {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-slate-400">Riwayat pekerjaan sebelumnya.</p>
+                      <p className="text-sm text-muted-foreground">Riwayat pekerjaan sebelumnya.</p>
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="border-slate-700 text-slate-200"
+                        className="border-border text-foreground"
                         onClick={() =>
                           setWorkHistories((prev) => [...prev, { ...EMPTY_WORK_HISTORY }])
                         }
@@ -1014,20 +1028,20 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                       </Button>
                     </div>
                     {workHistories.map((item, idx) => (
-                      <div key={`work-${idx}`} className="rounded-lg border border-slate-800 p-4 space-y-4">
+                      <div key={`work-${idx}`} className="rounded-lg border border-border p-4 space-y-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-slate-200">Pekerjaan #{idx + 1}</p>
+                          <p className="text-sm font-medium text-foreground">Pekerjaan #{idx + 1}</p>
                           <Button type="button" size="sm" variant="ghost" className="text-red-400 hover:text-red-300" onClick={() => setWorkHistories((prev) => prev.length === 1 ? [{ ...EMPTY_WORK_HISTORY }] : prev.filter((_, i) => i !== idx))}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2"><Label className="text-slate-200">Perusahaan</Label><Input value={item.company} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, company: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Posisi</Label><Input value={item.position} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, position: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Mulai</Label><Input type="date" value={item.start_date} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, start_date: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2"><Label className="text-slate-200">Selesai</Label><Input type="date" value={item.end_date} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, end_date: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Alasan Berhenti</Label><Input value={item.reason_for_leaving} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, reason_for_leaving: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                          <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Catatan</Label><Textarea rows={2} value={item.notes} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, notes: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                          <div className="space-y-2"><Label>Perusahaan</Label><Input value={item.company} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, company: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Posisi</Label><Input value={item.position} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, position: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Mulai</Label><Input type="date" value={item.start_date} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, start_date: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2"><Label>Selesai</Label><Input type="date" value={item.end_date} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, end_date: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2 md:col-span-2"><Label>Alasan Berhenti</Label><Input value={item.reason_for_leaving} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, reason_for_leaving: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                          <div className="space-y-2 md:col-span-2"><Label>Catatan</Label><Textarea rows={2} value={item.notes} onChange={(e) => setWorkHistories((prev) => prev.map((x, i) => i === idx ? { ...x, notes: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
                         </div>
                       </div>
                     ))}
@@ -1035,15 +1049,15 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                 </div>
               </TabsContent>
 
-              <TabsContent value="portfolio" className="mt-4">
+              <TabsContent value="portfolio" className="px-4 pt-5">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-400">Portfolio/proyek yang pernah dikerjakan.</p>
+                    <p className="text-sm text-muted-foreground">Portfolio/proyek yang pernah dikerjakan.</p>
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="border-slate-700 text-slate-200"
+                      className="border-border text-foreground"
                       onClick={() =>
                         setPortfolioItems((prev) => [...prev, { ...EMPTY_PORTFOLIO_ITEM }])
                       }
@@ -1053,27 +1067,27 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                     </Button>
                   </div>
                   {portfolioItems.map((item, idx) => (
-                    <div key={`portfolio-${idx}`} className="rounded-lg border border-slate-800 p-4 space-y-4">
+                    <div key={`portfolio-${idx}`} className="rounded-lg border border-border p-4 space-y-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-slate-200">Portfolio #{idx + 1}</p>
+                        <p className="text-sm font-medium text-foreground">Portfolio #{idx + 1}</p>
                         <Button type="button" size="sm" variant="ghost" className="text-red-400 hover:text-red-300" onClick={() => setPortfolioItems((prev) => prev.length === 1 ? [{ ...EMPTY_PORTFOLIO_ITEM }] : prev.filter((_, i) => i !== idx))}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label className="text-slate-200">Judul</Label><Input value={item.title} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, title: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Peran</Label><Input value={item.role} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Tahun</Label><Input type="number" min={1950} max={2100} value={item.year} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, year: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-                        <div className="space-y-2"><Label className="text-slate-200">Link URL</Label><Input value={item.url} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, url: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" placeholder="https://..." /></div>
-                        <div className="space-y-2 md:col-span-2"><Label className="text-slate-200">Deskripsi</Label><Textarea rows={3} value={item.description} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+                        <div className="space-y-2"><Label>Judul</Label><Input value={item.title} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, title: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Peran</Label><Input value={item.role} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Tahun</Label><Input type="number" min={1950} max={2100} value={item.year} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, year: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
+                        <div className="space-y-2"><Label>Link URL</Label><Input value={item.url} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, url: e.target.value } : x))} className="bg-background border-border text-foreground" placeholder="https://..." /></div>
+                        <div className="space-y-2 md:col-span-2"><Label>Deskripsi</Label><Textarea rows={3} value={item.description} onChange={(e) => setPortfolioItems((prev) => prev.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} className="bg-background border-border text-foreground" /></div>
                       </div>
                     </div>
                   ))}
                 </div>
               </TabsContent>
             </Tabs>
-            <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-800">
-              <Link href={`/hr/employees/${id}`}><Button type="button" variant="ghost" className="text-slate-400">Batal</Button></Link>
+            <div className="flex items-center justify-end gap-3 px-4 py-4 mt-4 border-t border-border">
+              <Link href={`/hr/employees/${id}`}><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
               <Button type="submit" disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</> : <><Save className="w-4 h-4 mr-2" />Simpan Perubahan</>}</Button>
             </div>
           </CardContent>

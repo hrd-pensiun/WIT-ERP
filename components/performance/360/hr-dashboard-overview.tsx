@@ -11,6 +11,7 @@ import {
 } from "@/components/performance/360/org-scope-filters"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FilterBar, FilterBarActions } from "@/components/ui/filter-bar"
 import { Progress } from "@/components/ui/progress"
 import {
   Select,
@@ -524,113 +525,102 @@ export function Perf360HrDashboardOverview() {
       title="Dashboard 360 HR"
       subtitle={`${filterSummary} — Monitoring & management assessment 360.`}
     >
-      <Card className="border-slate-800 bg-slate-900">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base text-slate-100">Filter &amp; periode</CardTitle>
-          <CardDescription className="text-slate-500">
-            Satu baris filter; pada layar kecil bisa digeser ke samping.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="-mx-1 overflow-x-auto px-1 pb-1">
-            <div className="grid min-w-[980px] grid-cols-4 gap-3">
-              <Select
-                value={scope.departmentId || ORG_SCOPE_FILTER_ALL}
-                onValueChange={(v) => scope.setDepartmentId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
-                disabled={scope.loadingDepts}
-              >
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
-                  <SelectValue placeholder="Departemen" />
-                </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900">
-                  <SelectItem value={ORG_SCOPE_FILTER_ALL}>Semua departemen</SelectItem>
-                  {scope.departments.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <FilterBar>
+        <Select
+          value={scope.departmentId || ORG_SCOPE_FILTER_ALL}
+          onValueChange={(v) => scope.setDepartmentId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
+          disabled={scope.loadingDepts}
+        >
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[160px]">
+            <SelectValue placeholder="Departemen" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ORG_SCOPE_FILTER_ALL}>Semua departemen</SelectItem>
+            {scope.departments.map((d) => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-              <Select
-                value={scope.divisionId || ORG_SCOPE_FILTER_ALL}
-                onValueChange={(v) => scope.setDivisionId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
-                disabled={scope.loadingDivs}
-              >
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
-                  <SelectValue placeholder="Divisi" />
-                </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900">
-                  <SelectItem value={ORG_SCOPE_FILTER_ALL}>Semua divisi</SelectItem>
-                  {scope.divisionsFiltered.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.departments?.name ? `${d.name} (${d.departments.name})` : d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <Select
+          value={scope.divisionId || ORG_SCOPE_FILTER_ALL}
+          onValueChange={(v) => scope.setDivisionId(v === ORG_SCOPE_FILTER_ALL ? "" : v)}
+          disabled={scope.loadingDivs}
+        >
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[160px]">
+            <SelectValue placeholder="Divisi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ORG_SCOPE_FILTER_ALL}>Semua divisi</SelectItem>
+            {scope.divisionsFiltered.map((d) => (
+              <SelectItem key={d.id} value={d.id}>
+                {d.departments?.name ? `${d.name} (${d.departments.name})` : d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-              <Select
-                value={templateId || undefined}
-                onValueChange={setTemplateId}
-                disabled={templatesLoading || templates.length === 0}
-              >
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100 [&>span]:truncate">
-                  <SelectValue
-                    placeholder={
-                      templatesLoading
-                        ? "Memuat template…"
-                        : templates.length === 0
-                          ? "Belum ada template"
-                          : "Template / periode"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900">
-                  {templatesForSelect.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {shortTemplateOptionLabel(t)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <Select
+          value={templateId || undefined}
+          onValueChange={setTemplateId}
+          disabled={templatesLoading || templates.length === 0}
+        >
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[200px] [&>span]:truncate">
+            <SelectValue
+              placeholder={
+                templatesLoading
+                  ? "Memuat template…"
+                  : templates.length === 0
+                    ? "Belum ada template"
+                    : "Template / periode"
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            {templatesForSelect.map((t) => (
+              <SelectItem key={t.id} value={t.id}>
+                {shortTemplateOptionLabel(t)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void fetchEmployees({ status: "active" })
-                  void loadRatees()
-                  void loadMatrix()
-                  void loadTemplateStats(templateId)
-                }}
-                className="h-9 border-slate-800 bg-slate-950 px-3 text-slate-200 hover:bg-slate-900"
-              >
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <FilterBarActions>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void fetchEmployees({ status: "active" })
+              void loadRatees()
+              void loadMatrix()
+              void loadTemplateStats(templateId)
+            }}
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </FilterBarActions>
+      </FilterBar>
 
       {(employeesLoading || rateeLoading || matrixLoading || submissionsLoading) && !mock ? (
-        <div className="flex items-center justify-center gap-2 rounded-lg border border-slate-800 bg-slate-900/80 py-16 text-slate-400">
+        <div className="flex items-center justify-center gap-2 rounded-lg border /80 py-16 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
           Memuat dashboard…
         </div>
       ) : rosterForList.length === 0 ? (
-        <Card className="border-slate-800 bg-slate-900">
+        <Card>
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-            <Users className="h-10 w-10 text-slate-600" />
-            <p className="max-w-md text-sm text-slate-400">
+            <Users className="h-10 w-10 text-muted-foreground" />
+            <p className="max-w-md text-sm text-muted-foreground">
               {mock ? (
                 <>Mode demo: data contoh dapat diklik sebagai ilustrasi.</>
               ) : rateeIds.size === 0 ? (
                 <>
                   Belum ada baris di{" "}
-                  <span className="font-mono text-slate-500">performance_360_rater_settings</span> — daftar berisi semua
+                  <span className="font-mono text-muted-foreground">performance_360_rater_settings</span> — daftar berisi semua
                   karyawan aktif dalam filter. Atur roster di Struktur bila Anda ingin hanya nama terkonfigurasi.
                   {filteredProfiles.length === 0
                     ? " Tidak ada karyawan aktif pada filter ini."
@@ -645,40 +635,40 @@ export function Perf360HrDashboardOverview() {
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">AVG Total Score</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">AVG Total Score</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-semibold text-slate-100">
+                <div className="text-2xl font-semibold text-foreground">
                   {avgTotalScore == null ? "—" : `${avgTotalScore.toFixed(1)} / 5.0`}
                 </div>
-                <div className="text-[11px] text-slate-500">dari {rosterForList.length} employee</div>
+                <div className="text-[11px] text-muted-foreground">dari {rosterForList.length} employee</div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">Forms Completed</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Forms Completed</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="text-2xl font-semibold text-slate-100">
+                <div className="text-2xl font-semibold text-foreground">
                   {totals.completed} / {totals.totalForms}
                 </div>
-                <Progress value={percent(totals.completed, totals.totalForms)} className="bg-slate-800" />
-                <div className="text-[11px] text-slate-500">
+                <Progress value={percent(totals.completed, totals.totalForms)} className="bg-muted" />
+                <div className="text-[11px] text-muted-foreground">
                   {Math.round(percent(totals.completed, totals.totalForms))}% complete
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">Pending Responses</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Pending Responses</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-semibold text-slate-100">{totals.pending}</div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-2xl font-semibold text-foreground">{totals.pending}</div>
+                <div className="text-[11px] text-muted-foreground">
                   Forms in progress
                   {templateIsOverdue && totals.overdue > 0 ? (
                     <span className="ml-2 text-amber-400">{totals.overdue} OVERDUE</span>
@@ -687,38 +677,38 @@ export function Perf360HrDashboardOverview() {
               </CardContent>
             </Card>
 
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-slate-400">Overdue</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">Overdue</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-semibold text-slate-100">{totals.overdue}</div>
-                <div className="text-[11px] text-slate-500">Need follow-up</div>
+                <div className="text-2xl font-semibold text-foreground">{totals.overdue}</div>
+                <div className="text-[11px] text-muted-foreground">Need follow-up</div>
               </CardContent>
             </Card>
           </div>
 
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-slate-100">By department</CardTitle>
-                <CardDescription className="text-slate-500">Progress completion per departemen.</CardDescription>
+                <CardTitle className="text-sm text-foreground">By department</CardTitle>
+                <CardDescription className="text-muted-foreground">Progress completion per departemen.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {byDept.length === 0 ? (
-                  <div className="text-sm text-slate-500">Belum ada data.</div>
+                  <div className="text-sm text-muted-foreground">Belum ada data.</div>
                 ) : (
                   byDept.map((d) => {
                     const pct = percent(d.completed, d.total)
                     return (
                       <div key={d.dept} className="space-y-1">
                         <div className="flex items-center justify-between text-xs">
-                          <div className="text-slate-300">{d.dept}</div>
-                          <div className="text-slate-500">
+                          <div className="text-foreground">{d.dept}</div>
+                          <div className="text-muted-foreground">
                             {d.completed} / {d.total} ({Math.round(pct)}%) · {d.employees.size} employee
                           </div>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-slate-800">
+                        <div className="h-2 w-full rounded-full bg-muted">
                           <div
                             className={cn("h-2 rounded-full", scoreColor(pct))}
                             style={{ width: `${pct}%` }}
@@ -731,25 +721,25 @@ export function Perf360HrDashboardOverview() {
               </CardContent>
             </Card>
 
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-slate-100">By job level</CardTitle>
-                <CardDescription className="text-slate-500">Progress completion per level.</CardDescription>
+                <CardTitle className="text-sm text-foreground">By job level</CardTitle>
+                <CardDescription className="text-muted-foreground">Progress completion per level.</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {byLevel.length === 0 ? (
-                  <div className="col-span-full text-sm text-slate-500">Belum ada data.</div>
+                  <div className="col-span-full text-sm text-muted-foreground">Belum ada data.</div>
                 ) : (
                   byLevel.slice(0, 8).map((l) => {
                     const pct = percent(l.completedForms, l.totalForms)
                     return (
-                      <div key={l.level} className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                        <div className="text-xs text-slate-400">Level {l.level}</div>
-                        <div className="mt-1 text-lg font-semibold text-slate-100">{l.employees.size}</div>
-                        <div className="mt-2 h-2 w-full rounded-full bg-slate-800">
+                      <div key={l.level} className="rounded-lg border border-border bg-background/40 p-3">
+                        <div className="text-xs text-muted-foreground">Level {l.level}</div>
+                        <div className="mt-1 text-lg font-semibold text-foreground">{l.employees.size}</div>
+                        <div className="mt-2 h-2 w-full rounded-full bg-muted">
                           <div className={cn("h-2 rounded-full", scoreColor(pct))} style={{ width: `${pct}%` }} />
                         </div>
-                        <div className="mt-1 text-[11px] text-slate-500">
+                        <div className="mt-1 text-[11px] text-muted-foreground">
                           {l.completedForms}/{l.totalForms} ({Math.round(pct)}%)
                         </div>
                       </div>
@@ -760,34 +750,34 @@ export function Perf360HrDashboardOverview() {
             </Card>
           </div>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-slate-100">Response rate by rater type</CardTitle>
-              <CardDescription className="text-slate-500">Completion rate tiap tipe rater.</CardDescription>
+              <CardTitle className="text-sm text-foreground">Response rate by rater type</CardTitle>
+              <CardDescription className="text-muted-foreground">Completion rate tiap tipe rater.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {byRaterType.map((x) => {
                 const pct = percent(x.completed, x.total)
                 return (
-                  <div key={x.kind} className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                    <div className="text-xs text-slate-400">{kindLabel(x.kind)}</div>
-                    <div className="mt-1 text-lg font-semibold text-slate-100">
+                  <div key={x.kind} className="rounded-lg border border-border bg-background/40 p-3">
+                    <div className="text-xs text-muted-foreground">{kindLabel(x.kind)}</div>
+                    <div className="mt-1 text-lg font-semibold text-foreground">
                       {x.completed}/{x.total}
                     </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-slate-800">
+                    <div className="mt-2 h-2 w-full rounded-full bg-muted">
                       <div className={cn("h-2 rounded-full", scoreColor(pct))} style={{ width: `${pct}%` }} />
                     </div>
-                    <div className="mt-1 text-[11px] text-slate-500">{Math.round(pct)}%</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">{Math.round(pct)}%</div>
                   </div>
                 )
               })}
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-slate-100">Assessment management</CardTitle>
-              <CardDescription className="text-slate-500">
+              <CardTitle className="text-sm text-foreground">Assessment management</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 Filter dan manage progress per employee. Periode:{" "}
                 {selectedTemplate ? `${formatTemplatePeriodLabel(selectedTemplate)} — ${selectedTemplate.name}` : "—"}
                 {templateIsOverdue ? <span className="ml-2 text-rose-400">Overdue</span> : null}
@@ -797,10 +787,10 @@ export function Perf360HrDashboardOverview() {
               <div className="-mx-1 overflow-x-auto px-1 pb-1">
                 <div className="grid min-w-[860px] grid-cols-2 gap-3">
                   <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-                    <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                    <SelectTrigger className="border-border bg-background text-foreground">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
-                    <SelectContent className="border-slate-800 bg-slate-900">
+                    <SelectContent>
                       <SelectItem value="all">All</SelectItem>
                       <SelectItem value="completed">Completed (100%)</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
@@ -810,10 +800,10 @@ export function Perf360HrDashboardOverview() {
                   </Select>
 
                   <Select value={levelFilter} onValueChange={setLevelFilter}>
-                    <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                    <SelectTrigger className="border-border bg-background text-foreground">
                       <SelectValue placeholder="Job level" />
                     </SelectTrigger>
-                    <SelectContent className="border-slate-800 bg-slate-900">
+                    <SelectContent>
                       <SelectItem value="all">All</SelectItem>
                       {levelOptions.map((lvl) => (
                         <SelectItem key={lvl} value={lvl}>
@@ -829,19 +819,19 @@ export function Perf360HrDashboardOverview() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-slate-800">
-                      <TableHead className="text-slate-400">Employee</TableHead>
-                      <TableHead className="text-slate-400">Dept</TableHead>
-                      <TableHead className="text-slate-400">Level</TableHead>
-                      <TableHead className="text-slate-400">Forms</TableHead>
-                      <TableHead className="text-slate-400">Completed</TableHead>
-                      <TableHead className="text-right text-slate-400">Action</TableHead>
+                    <TableRow className="border-border">
+                      <TableHead className="text-muted-foreground">Employee</TableHead>
+                      <TableHead className="text-muted-foreground">Dept</TableHead>
+                      <TableHead className="text-muted-foreground">Level</TableHead>
+                      <TableHead className="text-muted-foreground">Forms</TableHead>
+                      <TableHead className="text-muted-foreground">Completed</TableHead>
+                      <TableHead className="text-right text-muted-foreground">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {tableRows.length === 0 ? (
-                      <TableRow className="border-slate-800">
-                        <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
+                      <TableRow className="border-border">
+                        <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
                           Tidak ada data untuk filter ini.
                         </TableCell>
                       </TableRow>
@@ -850,25 +840,25 @@ export function Perf360HrDashboardOverview() {
                           const pct = percent(r.completed, r.total)
                           const actionLabel = pct >= 100 ? "View" : templateIsOverdue ? "Remind" : "Follow-up"
                           return (
-                            <TableRow key={r.assessedId} className="border-slate-800">
-                              <TableCell className="font-medium text-slate-100">
+                            <TableRow key={r.assessedId} className="border-border">
+                              <TableCell className="font-medium text-foreground">
                                 <Link
                                   href={`/performance/360/dashboard/${r.assessedId}${qs}`}
                                   className="inline-flex items-center gap-2 hover:underline"
                                 >
                                   {r.name}
-                                  <ChevronRight className="h-4 w-4 text-slate-600" />
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 </Link>
                               </TableCell>
-                              <TableCell className="text-slate-400">{r.dept}</TableCell>
-                              <TableCell className="text-slate-400">{r.level}</TableCell>
-                              <TableCell className="text-slate-400">{r.total}</TableCell>
-                              <TableCell className="text-slate-300">
+                              <TableCell className="text-muted-foreground">{r.dept}</TableCell>
+                              <TableCell className="text-muted-foreground">{r.level}</TableCell>
+                              <TableCell className="text-muted-foreground">{r.total}</TableCell>
+                              <TableCell className="text-foreground">
                                 <div className="flex items-center gap-3">
                                   <div className="w-28">
-                                    <Progress value={pct} className="bg-slate-800" />
+                                    <Progress value={pct} className="bg-muted" />
                                   </div>
-                                  <span className="text-xs text-slate-400">
+                                  <span className="text-xs text-muted-foreground">
                                     {r.completed}/{r.total} ({Math.round(pct)}%)
                                   </span>
                                 </div>
@@ -878,7 +868,7 @@ export function Perf360HrDashboardOverview() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-slate-800 bg-slate-950 text-slate-200 hover:bg-slate-900"
+                                    className="border-border bg-background text-foreground hover:bg-card"
                                   >
                                     {actionLabel}
                                   </Button>

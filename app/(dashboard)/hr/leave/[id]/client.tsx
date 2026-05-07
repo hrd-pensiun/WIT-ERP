@@ -51,38 +51,38 @@ export default function LeaveDetailClient({ id }: { id: string }) {
 
   if (!leave) {
     return (
-      <div className="p-6">
+      <div>
         <div className="text-center py-12">
-          <p className="text-slate-400">Pengajuan cuti tidak ditemukan</p>
-          <Link href="/hr/leave"><Button variant="outline" className="mt-4 border-slate-700">Kembali</Button></Link>
+          <p className="text-muted-foreground">Pengajuan cuti tidak ditemukan</p>
+          <Link href="/hr/leave"><Button variant="outline" className="mt-4 border-border">Kembali</Button></Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/hr/leave"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Detail Pengajuan Cuti</h1>
-            <p className="text-slate-400">{leave.hr_leave_types?.name || "-"} • {leave.start_date} s/d {leave.end_date}</p>
+            <h1 className="text-2xl font-bold text-foreground">Detail Pengajuan Cuti</h1>
+            <p className="text-muted-foreground">{leave.hr_leave_types?.name || "-"} • {leave.start_date} s/d {leave.end_date}</p>
           </div>
         </div>
         <Badge className={getStatusBadge(leave.status)}>{leave.status.toUpperCase()}</Badge>
       </div>
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardContent className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3"><User className="w-4 h-4 text-slate-500" /><span className="text-slate-300">{leave.user_profiles?.full_name || "Karyawan"}</span></div>
-            <div className="flex items-center gap-3"><Calendar className="w-4 h-4 text-slate-500" /><span className="text-slate-300">{leave.days_requested || 0} hari</span></div>
+            <div className="flex items-center gap-3"><User className="w-4 h-4 text-muted-foreground" /><span>{leave.user_profiles?.full_name || "Karyawan"}</span></div>
+            <div className="flex items-center gap-3"><Calendar className="w-4 h-4 text-muted-foreground" /><span>{leave.days_requested || 0} hari</span></div>
           </div>
           {leave.reason && (
-            <div className="border-t border-slate-800 pt-4">
-              <p className="text-sm text-slate-500 mb-1">Alasan</p>
-              <p className="text-slate-300">{leave.reason}</p>
+            <div className="border-t border-border pt-4">
+              <p className="text-sm text-muted-foreground mb-1">Alasan</p>
+              <p>{leave.reason}</p>
             </div>
           )}
         </CardContent>

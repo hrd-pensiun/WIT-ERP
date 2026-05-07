@@ -177,12 +177,11 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-100">Main Dashboard</h1>
-          <p className="text-sm text-slate-400">Ringkasan semua modul dalam satu tampilan.</p>
+          <h1 className="text-2xl font-semibold text-foreground">Main Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Ringkasan semua modul dalam satu tampilan.</p>
         </div>
         <Button
           variant="outline"
-          className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800"
           onClick={() => {
             void fetchEmployees()
             void fetchDepartments()
@@ -204,40 +203,40 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {quickStats.map((item) => (
-          <Card key={item.label} className="border-slate-800 bg-slate-900">
+          <Card key={item.label}>
             <CardContent className="p-5">
-              <p className="text-sm text-slate-400">{item.label}</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-100">{item.value}</p>
-              <p className="mt-1 text-xs text-slate-500">{item.subtitle}</p>
+              <p className="text-sm text-muted-foreground">{item.label}</p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">{item.value}</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">{item.subtitle}</p>
             </CardContent>
           </Card>
         ))}
-        <Card className="border-slate-800 bg-slate-900">
+        <Card>
           <CardContent className="p-5">
-            <p className="text-sm text-slate-400">System</p>
+            <p className="text-sm text-muted-foreground">System</p>
             <div className="mt-2">
               <Badge
                 className={
                   healthStatus === "Operational"
-                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                     : healthStatus === "Maintenance"
-                      ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-                      : "bg-red-500/15 text-red-400 border border-red-500/20"
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/20"
                 }
               >
                 {healthStatus}
               </Badge>
             </div>
-            <p className="mt-2 text-xs text-slate-500">All systems OK</p>
+            <p className="mt-2 text-xs text-muted-foreground/70">All systems OK</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {modules.map((module) => (
-          <Card key={module.title} className="border-slate-800 bg-slate-900">
+          <Card key={module.title}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-slate-100">
+              <CardTitle className="text-base text-foreground">
                 <span className="mr-2">{module.icon}</span>
                 {module.title}
               </CardTitle>
@@ -245,12 +244,12 @@ export default function DashboardPage() {
             <CardContent className="space-y-2">
               {module.rows.map(([name, value]) => (
                 <div key={name} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">{name}</span>
-                  <span className="font-medium text-slate-200">{value}</span>
+                  <span className="text-muted-foreground">{name}</span>
+                  <span className="font-medium text-foreground">{value}</span>
                 </div>
               ))}
               <Link href={module.href} className="block pt-2">
-                <Button variant="outline" className="w-full border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-800">
+                <Button variant="outline" className="w-full">
                   {module.cta}
                 </Button>
               </Link>
@@ -259,32 +258,32 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <Card className="border-slate-800 bg-slate-900">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base text-slate-100">Recent Activities</CardTitle>
+          <CardTitle className="text-base text-foreground">Recent Activities</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {loading ? (
-            <div className="flex items-center gap-2 text-sm text-slate-400">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Memuat aktivitas...
             </div>
           ) : recentActivities.length ? (
             recentActivities.map((item) => (
-              <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-950 p-3">
-                <p className="flex items-start gap-2 text-sm text-slate-100">
-                  <CircleDot className="mt-0.5 h-4 w-4 text-blue-400" />
+              <div key={item.id} className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="flex items-start gap-2 text-sm text-foreground">
+                  <CircleDot className="mt-0.5 h-4 w-4 text-blue-500 dark:text-blue-400" />
                   {item.subject || item.title || "Aktivitas baru tercatat"}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {formatRelative(item.created_at || item.scheduled_at)} • CRM
                 </p>
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-500">Belum ada aktivitas terbaru.</p>
+            <p className="text-sm text-muted-foreground">Belum ada aktivitas terbaru.</p>
           )}
-          <Link href="/crm/activities" className="inline-flex text-sm text-emerald-400 hover:text-emerald-300">
+          <Link href="/crm/activities" className="inline-flex text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-500">
             View all activities
           </Link>
         </CardContent>

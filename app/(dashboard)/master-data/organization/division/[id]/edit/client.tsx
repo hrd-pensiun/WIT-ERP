@@ -103,14 +103,14 @@ export default function DivisionEditClient({ id }: { id: string }) {
           <Button
             variant="ghost"
             size="icon"
-            className="text-slate-400 hover:text-slate-100"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Edit Divisi</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Edit Divisi</h1>
+          <p className="text-xs text-muted-foreground">
             EDIT-DIVISION : {formData.name || formData.code || "-"}
           </p>
         </div>
@@ -121,9 +121,9 @@ export default function DivisionEditClient({ id }: { id: string }) {
         </div>
       )}
       <form onSubmit={handleSubmit}>
-        <Card className="border-slate-800 bg-slate-900">
+        <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-100">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <Layers className="h-5 w-5 text-emerald-500" />
               Informasi Divisi
             </CardTitle>
@@ -131,7 +131,7 @@ export default function DivisionEditClient({ id }: { id: string }) {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-slate-200">
+                <Label>
                   Kode <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -140,11 +140,11 @@ export default function DivisionEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, code: e.target.value })
                   }
                   required
-                  className="border-slate-800 bg-slate-950 uppercase text-slate-100"
+                  className="border-border bg-background uppercase text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">
+                <Label>
                   Nama <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -153,13 +153,13 @@ export default function DivisionEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-slate-200">
+              <Label>
                 Departemen <span className="text-red-400">*</span>
               </Label>
               <Select
@@ -168,10 +168,10 @@ export default function DivisionEditClient({ id }: { id: string }) {
                   setFormData({ ...formData, department_id: value })
                 }
               >
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                <SelectTrigger className="border-border bg-background text-foreground">
                   <SelectValue placeholder="Pilih departemen" />
                 </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900">
+                <SelectContent className="border-border bg-card">
                   {departments.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
                       {d.code} — {d.name}
@@ -179,16 +179,16 @@ export default function DivisionEditClient({ id }: { id: string }) {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Instansi mengikuti departemen yang dipilih.
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-800 bg-slate-950/80 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <div className="rounded-lg border border-border bg-background/80 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Instansi (entity)
               </p>
-              <p className="mt-1 text-sm text-slate-200">
+              <p className="mt-1 text-sm text-foreground">
                 {entityLabel
                   ? `${entityLabel.code} — ${entityLabel.name}`
                   : selectedDept && !selectedDept.entity_id
@@ -198,20 +198,20 @@ export default function DivisionEditClient({ id }: { id: string }) {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-slate-200">Deskripsi</Label>
+              <Label>Deskripsi</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
                 rows={3}
-                className="border-slate-800 bg-slate-950 text-slate-100"
+                className="border-border bg-background text-foreground"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-6">
+            <div className="flex items-center justify-end gap-3 border-t border-border pt-6">
               <Link href="/master-data/organization">
-                <Button type="button" variant="ghost" className="text-slate-400">
+                <Button type="button" variant="ghost" className="text-muted-foreground">
                   Batal
                 </Button>
               </Link>

@@ -5,7 +5,6 @@ import Link from "next/link"
 import {
   Users,
   Plus,
-  Search,
   Download,
   Loader2,
   MoreHorizontal,
@@ -15,7 +14,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { FilterBar, FilterBarSearch, FilterBarSeparator, FilterBarActions } from "@/components/ui/filter-bar"
 import { Badge } from "@/components/ui/badge"
 import { 
   DropdownMenu, 
@@ -112,7 +111,7 @@ export default function EmployeesPage() {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
       active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-      inactive: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+      inactive: "bg-muted/50 text-muted-foreground border-border/30",
       resigned: "bg-amber-500/20 text-amber-400 border-amber-500/30",
       terminated: "bg-red-500/20 text-red-400 border-red-500/30"
     }
@@ -171,11 +170,11 @@ export default function EmployeesPage() {
       {/* Header — padding halaman dari layout parent (main) */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Users className="w-6 h-6 text-emerald-500" />
             Karyawan
           </h1>
-          <p className="text-slate-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Kelola data karyawan dan informasi SDM
           </p>
         </div>
@@ -183,7 +182,7 @@ export default function EmployeesPage() {
           <Button
             type="button"
             variant="outline"
-            className="border-slate-700 text-slate-200"
+            className="border-border text-foreground"
             onClick={handleBulkSyncAuth}
             disabled={syncingAuth}
           >
@@ -205,30 +204,30 @@ export default function EmployeesPage() {
         </div>
       </div>
       {syncMessage ? (
-        <div className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-300">{syncMessage}</div>
+        <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">{syncMessage}</div>
       ) : null}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-400">Total Karyawan</p>
-            <p className="text-2xl font-bold text-slate-100 mt-1">
+            <p className="text-sm text-muted-foreground">Total Karyawan</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
               {employees.length}
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-400">Aktif</p>
+            <p className="text-sm text-muted-foreground">Aktif</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
               {employees.filter(e => e.status === 'active').length}
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-400">Baru (30 hari)</p>
+            <p className="text-sm text-muted-foreground">Baru (30 hari)</p>
             <p className="text-2xl font-bold text-blue-400 mt-1">
               {employees.filter(e => {
                 const joinDate = new Date(e.join_date)
@@ -239,9 +238,9 @@ export default function EmployeesPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-400">Keluar</p>
+            <p className="text-sm text-muted-foreground">Keluar</p>
             <p className="text-2xl font-bold text-amber-400 mt-1">
               {employees.filter(e => e.status === 'resigned').length}
             </p>
@@ -250,94 +249,83 @@ export default function EmployeesPage() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="Cari nama, nomor karyawan, email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-slate-950 border-slate-800 text-slate-100"
-              />
-            </div>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px] bg-slate-950 border-slate-800 text-slate-100">
-                <SelectValue placeholder="Filter Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800">
-                <SelectItem value="all">Semua status</SelectItem>
-                <SelectItem value="active">Aktif</SelectItem>
-                <SelectItem value="inactive">Tidak aktif</SelectItem>
-                <SelectItem value="resigned">Resign</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={deptFilter} onValueChange={setDeptFilter}>
-              <SelectTrigger className="w-full md:w-[200px] bg-slate-950 border-slate-800 text-slate-100">
-                <SelectValue placeholder="Filter departemen" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800 max-h-56">
-                <SelectItem value="all">Semua departemen</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              className="w-full shrink-0 border-slate-700 text-slate-300 md:w-auto"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <FilterBar>
+        <FilterBarSearch
+          placeholder="Cari nama, nomor karyawan, email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <FilterBarSeparator />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[160px]">
+            <SelectValue placeholder="Filter Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua status</SelectItem>
+            <SelectItem value="active">Aktif</SelectItem>
+            <SelectItem value="inactive">Tidak aktif</SelectItem>
+            <SelectItem value="resigned">Resign</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={deptFilter} onValueChange={setDeptFilter}>
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[180px]">
+            <SelectValue placeholder="Filter departemen" />
+          </SelectTrigger>
+          <SelectContent className="max-h-56">
+            <SelectItem value="all">Semua departemen</SelectItem>
+            {departments.map((dept) => (
+              <SelectItem key={dept.id} value={dept.id}>
+                {dept.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FilterBarActions>
+          <Button variant="outline" size="sm" className="shrink-0">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </FilterBarActions>
+      </FilterBar>
 
       {/* Employee table — tepi lurus kartu, scroll horizontal di layar kecil */}
-      <Card className="overflow-hidden bg-slate-900 border-slate-800">
-        <CardHeader className="border-b border-slate-800 py-4 space-y-0 px-4 sm:px-6">
-          <CardTitle className="text-lg text-slate-100">Daftar Karyawan</CardTitle>
+      <Card className="overflow-hidden bg-card border-border">
+        <CardHeader className="border-b border-border py-4 space-y-0 px-4 sm:px-6">
+          <CardTitle className="text-lg text-foreground">Daftar Karyawan</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="py-14 text-center text-slate-400">Memuat...</div>
+            <div className="py-14 text-center text-muted-foreground">Memuat...</div>
           ) : employees.length === 0 ? (
-            <div className="py-14 text-center text-slate-400">
+            <div className="py-14 text-center text-muted-foreground">
               Belum ada data karyawan
             </div>
           ) : (
             <Table className="min-w-[900px] table-fixed">
               <TableHeader>
-                <TableRow className="border-slate-800 bg-slate-950/50 hover:bg-slate-950/50">
-                  <TableHead className="pl-4 sm:pl-6 w-[24%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                <TableRow className="border-border bg-background/50 hover:bg-background/50">
+                  <TableHead className="pl-4 sm:pl-6 w-[24%] text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Karyawan
                   </TableHead>
-                  <TableHead className="w-[16%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <TableHead className="w-[16%] text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Departemen
                   </TableHead>
-                  <TableHead className="w-[16%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <TableHead className="w-[16%] text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Divisi
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell w-[14%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <TableHead className="hidden lg:table-cell w-[14%] text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Jabatan
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell w-[14%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <TableHead className="hidden sm:table-cell w-[14%] text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Bergabung
                   </TableHead>
-                  <TableHead className="w-[12%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <TableHead className="w-[12%] text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Role
                   </TableHead>
-                  <TableHead className="w-[12%] text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <TableHead className="w-[12%] text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Status
                   </TableHead>
-                  <TableHead className="w-12 pr-4 sm:pr-6 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <TableHead className="w-12 pr-4 sm:pr-6 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {/* aksi */}
                   </TableHead>
                 </TableRow>
@@ -351,7 +339,7 @@ export default function EmployeesPage() {
                   return (
                   <TableRow
                     key={emp.id}
-                    className="border-slate-800 hover:bg-slate-800/40"
+                    className="border-border hover:bg-muted/40"
                   >
                     <TableCell className="pl-4 py-4 align-middle sm:pl-6">
                       <div className="flex min-w-0 items-center gap-3">
@@ -359,18 +347,18 @@ export default function EmployeesPage() {
                           {emp.full_name?.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-slate-100">
+                          <p className="truncate font-medium text-foreground">
                             {emp.full_name}
                           </p>
-                          <p className="truncate text-xs text-slate-500">
+                          <p className="truncate text-xs text-muted-foreground">
                             {emp.employee_number} •{" "}
                             {getEmploymentBadge(emp.employment_type)}
                           </p>
-                          <p className="mt-1 line-clamp-2 text-xs text-slate-400 lg:hidden">
-                            <span className="text-slate-500">Dept:</span> {dept}
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground lg:hidden">
+                            <span className="text-muted-foreground">Dept:</span> {dept}
                             {divName !== "—" ? (
                               <>
-                                <span className="text-slate-500"> · Div:</span> {divName}
+                                <span className="text-muted-foreground"> · Div:</span> {divName}
                               </>
                             ) : null}
                             {pos !== "—" ? ` · ${pos}` : ""}
@@ -378,25 +366,25 @@ export default function EmployeesPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-[10rem] py-4 align-middle whitespace-normal text-slate-300 lg:max-w-none">
+                    <TableCell className="max-w-[10rem] py-4 align-middle whitespace-normal text-foreground lg:max-w-none">
                       <span className="line-clamp-2 break-words" title={dept}>
                         {dept}
                       </span>
                     </TableCell>
-                    <TableCell className="max-w-[10rem] py-4 align-middle whitespace-normal text-slate-300 lg:max-w-none">
+                    <TableCell className="max-w-[10rem] py-4 align-middle whitespace-normal text-foreground lg:max-w-none">
                       <span className="line-clamp-2 break-words" title={divName}>
                         {divName}
                       </span>
                     </TableCell>
-                    <TableCell className="hidden max-w-[9rem] py-4 align-middle whitespace-normal text-slate-300 lg:table-cell">
+                    <TableCell className="hidden max-w-[9rem] py-4 align-middle whitespace-normal text-foreground lg:table-cell">
                       <span className="line-clamp-2 break-words">{pos}</span>
                     </TableCell>
-                    <TableCell className="hidden py-4 align-middle text-sm text-slate-400 sm:table-cell">
+                    <TableCell className="hidden py-4 align-middle text-sm text-muted-foreground sm:table-cell">
                       {emp.join_date
                         ? new Date(emp.join_date).toLocaleDateString("id-ID")
                         : "—"}
                     </TableCell>
-                    <TableCell className="py-4 align-middle text-slate-300">
+                    <TableCell className="py-4 align-middle text-foreground">
                       {(emp as EmployeeRow).app_role || "employee"}
                     </TableCell>
                     <TableCell className="py-4 align-middle">
@@ -412,7 +400,7 @@ export default function EmployeesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-slate-400 hover:text-slate-100"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
                             aria-label="Menu aksi"
                           >
                             <MoreHorizontal className="h-4 w-4" />
@@ -420,16 +408,16 @@ export default function EmployeesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                           align="end"
-                          className="border-slate-800 bg-slate-900"
+                          className="border-border bg-card"
                         >
                           <Link href={`/hr/employees/${emp.id}`}>
-                            <DropdownMenuItem className="text-slate-200 focus:bg-slate-800 focus:text-slate-100">
+                            <DropdownMenuItem className="text-foreground focus:bg-muted focus:text-foreground">
                               <UserCheck className="mr-2 h-4 w-4" />
                               Detail
                             </DropdownMenuItem>
                           </Link>
                           <Link href={`/hr/employees/${emp.id}/edit`}>
-                            <DropdownMenuItem className="text-slate-200 focus:bg-slate-800 focus:text-slate-100">
+                            <DropdownMenuItem className="text-foreground focus:bg-muted focus:text-foreground">
                               <Briefcase className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>

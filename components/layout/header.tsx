@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Search, Menu } from "lucide-react";
+import { Bell, Search, Menu, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,22 @@ type HeaderProfile = {
 export function Header() {
   const { user } = useAuth()
   const [profile, setProfile] = useState<HeaderProfile | null>(null)
+  const [isDark, setIsDark] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const isDarkMode = document.documentElement.classList.contains("dark")
+    setIsDark(isDarkMode)
+  }, [])
+
+  const toggleTheme = () => {
+    const html = document.documentElement
+    const newIsDark = !isDark
+    html.classList.toggle("dark", newIsDark)
+    localStorage.setItem("theme", newIsDark ? "dark" : "light")
+    setIsDark(newIsDark)
+  }
 
   useEffect(() => {
     if (!user?.id || !insForge) return
@@ -63,46 +79,58 @@ export function Header() {
     .join("") || "U"
 
   return (
-    <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6">
-      {/* Left - Mobile menu + Search */}
-      <div className="flex items-center gap-4 flex-1">
+    <header className="h-14 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 shrink-0 sticky top-0 z-30">
+      {/* Left — mobile menu + search */}
+      <div className="flex items-center gap-3 flex-1">
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden text-slate-400 hover:text-slate-100"
+          className="lg:hidden text-muted-foreground hover:text-foreground size-8"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-4 h-4" strokeWidth={1.5} />
         </Button>
-        
-        <div className="relative max-w-md w-full hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+
+        <div className="relative max-w-xs w-full hidden sm:block">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
           <Input
             type="search"
-            placeholder="Cari..."
-            className="pl-10 bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20"
+            placeholder="Search..."
+            className="h-8 pl-8 text-sm bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-emerald-500/50 focus:ring-emerald-500/10 rounded-md"
           />
         </div>
       </div>
 
-      {/* Right - Notifications */}
-      <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2.5 rounded-lg border border-slate-800 bg-slate-950/60 px-2.5 py-1.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/30">
-            {avatarInitials}
-          </div>
-          <div className="min-w-0">
-            <p className="max-w-[180px] truncate text-sm font-medium text-slate-100 leading-tight">{displayName}</p>
-            <p className="max-w-[180px] truncate text-xs text-slate-400 leading-tight">{displayPosition}</p>
-          </div>
-        </div>
+      {/* Right — theme toggle + notifications + avatar */}
+      <div className="flex items-center gap-2">
+        {mounted && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="text-muted-foreground hover:text-foreground size-8 transition-colors"
+            title={isDark ? "Light mode" : "Dark mode"}
+          >
+            {isDark ? <Sun className="w-4 h-4" strokeWidth={1.5} /> : <Moon className="w-4 h-4" strokeWidth={1.5} />}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-slate-400 hover:text-slate-100"
+          className="relative text-muted-foreground hover:text-foreground size-8"
         >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full" />
+          <Bell className="w-4 h-4" strokeWidth={1.5} />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full ring-1 ring-background" />
         </Button>
+
+        <div className="hidden md:flex items-center gap-2.5 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 cursor-default">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15 text-[0.65rem] font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/25 shrink-0">
+            {avatarInitials}
+          </div>
+          <div className="min-w-0">
+            <p className="max-w-[160px] truncate text-xs font-medium text-foreground leading-tight">{displayName}</p>
+            <p className="max-w-[160px] truncate text-[0.7rem] text-muted-foreground leading-tight">{displayPosition}</p>
+          </div>
+        </div>
       </div>
     </header>
   );

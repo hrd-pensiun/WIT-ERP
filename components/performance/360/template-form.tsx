@@ -457,64 +457,64 @@ export function Template360Form(props?: { templateId?: string }) {
           {hookError}
         </div>
       )}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100 text-lg border-b border-slate-800 pb-2">
+          <CardTitle className="text-foreground text-lg border-b border-border pb-2">
             Informasi template
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-slate-200">Nama template</Label>
+            <Label className="text-foreground">Nama template</Label>
             <Input
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="Contoh: Annual Review 2024"
-              className="bg-slate-950 border-slate-800 text-slate-100"
+              className="bg-background border-border text-foreground"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-200">Deskripsi</Label>
+            <Label className="text-foreground">Deskripsi</Label>
             <Textarea
               value={templateDesc}
               onChange={(e) => setTemplateDesc(e.target.value)}
               placeholder="Jelaskan tujuan penilaian ini..."
               rows={3}
-              className="bg-slate-950 border-slate-800 text-slate-100"
+              className="bg-background border-border text-foreground"
             />
           </div>
 
           <div className="space-y-2 max-w-md">
-            <Label className="text-slate-200">Status</Label>
+            <Label className="text-foreground">Status</Label>
             <Select
               value={templateStatus}
               onValueChange={(v) => setTemplateStatus(v as "draft" | "active")}
             >
-              <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800">
+              <SelectContent>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="active">Aktif</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-4 pt-2 border-t border-slate-800">
+          <div className="space-y-4 pt-2 border-t border-border">
             <div>
-              <p className="text-sm font-medium text-slate-200">Periode penilaian</p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-sm font-medium text-foreground">Periode penilaian</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Digunakan saat menjalankan siklus 360 — filter matrix dan laporan dapat mengikuti periode ini.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-slate-200">Jenis periode</Label>
+                <Label className="text-foreground">Jenis periode</Label>
                 <Select value={periodKind} onValueChange={(v) => setPeriodKind(v as PeriodKind)}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+                  <SelectTrigger className="bg-background border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800">
+                  <SelectContent>
                     {PERIOD_KINDS.map((p) => (
                       <SelectItem key={p.value} value={p.value}>
                         {p.label}
@@ -524,57 +524,57 @@ export function Template360Form(props?: { templateId?: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Tahun</Label>
+                <Label className="text-foreground">Tahun</Label>
                 <Input
                   type="number"
                   min={2000}
                   max={2100}
                   value={periodYear}
                   onChange={(e) => setPeriodYear(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
             </div>
             {periodKind === "custom" && (
               <div className="space-y-2">
-                <Label className="text-slate-200">Nama periode</Label>
+                <Label className="text-foreground">Nama periode</Label>
                 <Input
                   value={periodCustomLabel}
                   onChange={(e) => setPeriodCustomLabel(e.target.value)}
                   placeholder="Contoh: Proyek Alpha — Wave 2"
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
             )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-slate-200">Tanggal mulai pelaksanaan</Label>
+                <Label className="text-foreground">Tanggal mulai pelaksanaan</Label>
                 <Input
                   type="date"
                   value={periodStart}
                   onChange={(e) => setPeriodStart(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Tanggal selesai pelaksanaan</Label>
+                <Label className="text-foreground">Tanggal selesai pelaksanaan</Label>
                 <Input
                   type="date"
                   value={periodEnd}
                   onChange={(e) => setPeriodEnd(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
             </div>
           </div>
 
           <div className="space-y-2 max-w-md">
-            <Label className="text-slate-200">Skala rating</Label>
+            <Label className="text-foreground">Skala rating</Label>
             <Select value={ratingScale} onValueChange={setRatingScale}>
-              <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800">
+              <SelectContent>
                 <SelectItem value="5">1–5 (Sangat tidak setuju — Sangat setuju)</SelectItem>
                 <SelectItem value="10">1–10 (Numerik)</SelectItem>
                 <SelectItem value="4">1–4 (Skala Likert)</SelectItem>
@@ -584,15 +584,15 @@ export function Template360Form(props?: { templateId?: string }) {
         </CardContent>
       </Card>
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100 text-lg border-b border-emerald-500/40 pb-2">
+          <CardTitle className="text-foreground text-lg border-b border-emerald-500/40 pb-2">
             Pertanyaan penilaian
           </CardTitle>
-          <CardDescription className="text-slate-500">
+          <CardDescription className="text-muted-foreground">
             Kelompokkan pertanyaan ke dalam bagian (mis. &quot;Assessment A&quot;). Kosongkan judul bagian jika tidak perlu
             heading. Pilihan kategori diambil dari{" "}
-            <span className="text-slate-400">Performance 360 → Konfigurasi</span>.
+            <span className="text-muted-foreground">Performance 360 → Konfigurasi</span>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -601,18 +601,18 @@ export function Template360Form(props?: { templateId?: string }) {
             return sections.map((sec, secIdx) => (
               <div
                 key={sec.id}
-                className="space-y-4 rounded-xl border border-slate-800 bg-slate-950/40 p-4"
+                className="space-y-4 rounded-xl border border-border bg-background/40 p-4"
               >
-                <div className="flex flex-wrap items-end gap-3 border-b border-slate-800/80 pb-4">
+                <div className="flex flex-wrap items-end gap-3 border-b border-border/80 pb-4">
                   <div className="min-w-[200px] flex-1 space-y-2">
-                    <Label className="text-slate-200">Judul bagian</Label>
+                    <Label className="text-foreground">Judul bagian</Label>
                     <Input
                       value={sec.title}
                       onChange={(e) => updateSectionTitle(sec.id, e.target.value)}
                       placeholder='Contoh: Assessment A (opsional)'
-                      className="bg-slate-950 border-slate-800 text-slate-100"
+                      className="bg-background border-border text-foreground"
                     />
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Pertanyaan di bawah disimpan sebagai satu blok dengan judul ini.
                     </p>
                   </div>
@@ -637,8 +637,8 @@ export function Template360Form(props?: { templateId?: string }) {
                     <div
                       key={q.id}
                       className={cn(
-                        "rounded-lg border border-slate-800 p-4 space-y-4",
-                        "bg-slate-950/50"
+                        "rounded-lg border border-border p-4 space-y-4",
+                        "bg-background/50"
                       )}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -670,24 +670,24 @@ export function Template360Form(props?: { templateId?: string }) {
                       </div>
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2 md:col-span-2">
-                          <Label className="text-slate-200">Pertanyaan</Label>
+                          <Label className="text-foreground">Pertanyaan</Label>
                           <Input
                             value={q.text}
                             onChange={(e) => updateQuestion(sec.id, q.id, { text: e.target.value })}
                             placeholder="Masukkan pertanyaan..."
-                            className="border-slate-800 bg-slate-950 text-slate-100"
+                            className="border-border bg-background text-foreground"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-slate-200">Kategori</Label>
+                          <Label className="text-foreground">Kategori</Label>
                           <Select
                             value={categories.includes(q.category) ? q.category : firstCategory}
                             onValueChange={(v) => updateQuestion(sec.id, q.id, { category: v })}
                           >
-                            <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                            <SelectTrigger className="border-border bg-background text-foreground">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-slate-800 bg-slate-900">
+                            <SelectContent>
                               {categories.map((c) => (
                                 <SelectItem key={c} value={c}>
                                   {c}
@@ -697,7 +697,7 @@ export function Template360Form(props?: { templateId?: string }) {
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-slate-200">Tipe pertanyaan</Label>
+                          <Label className="text-foreground">Tipe pertanyaan</Label>
                           <Select
                             value={q.questionType}
                             onValueChange={(v) => {
@@ -708,10 +708,10 @@ export function Template360Form(props?: { templateId?: string }) {
                               })
                             }}
                           >
-                            <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                            <SelectTrigger className="border-border bg-background text-foreground">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-slate-800 bg-slate-900">
+                            <SelectContent>
                               {QUESTION_TYPES.map((t) => (
                                 <SelectItem key={t} value={t}>
                                   {t}
@@ -721,7 +721,7 @@ export function Template360Form(props?: { templateId?: string }) {
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-slate-200">Bobot (weight)</Label>
+                          <Label className="text-foreground">Bobot (weight)</Label>
                           <Input
                             type="number"
                             min={0}
@@ -729,11 +729,11 @@ export function Template360Form(props?: { templateId?: string }) {
                             step={0.1}
                             value={q.weight}
                             onChange={(e) => updateQuestion(sec.id, q.id, { weight: e.target.value })}
-                            className="border-slate-800 bg-slate-950 text-slate-100"
+                            className="border-border bg-background text-foreground"
                           />
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                          <Label className="text-slate-200">Tampil untuk peran penilai</Label>
+                          <Label className="text-foreground">Tampil untuk peran penilai</Label>
                           <Select
                             value={q.appliesToRole}
                             onValueChange={(v) =>
@@ -742,10 +742,10 @@ export function Template360Form(props?: { templateId?: string }) {
                               })
                             }
                           >
-                            <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                            <SelectTrigger className="border-border bg-background text-foreground">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-slate-800 bg-slate-900">
+                            <SelectContent>
                               {PERF360_RATER_ROLE_OPTIONS.map((o) => (
                                 <SelectItem key={o.value} value={o.value}>
                                   {o.label}
@@ -753,7 +753,7 @@ export function Template360Form(props?: { templateId?: string }) {
                               ))}
                             </SelectContent>
                           </Select>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-muted-foreground">
                             {
                               PERF360_RATER_ROLE_OPTIONS.find((o) => o.value === q.appliesToRole)
                                 ?.description
@@ -761,9 +761,9 @@ export function Template360Form(props?: { templateId?: string }) {
                           </p>
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                          <Label className="text-slate-200">Alasan tambahan</Label>
+                          <Label className="text-foreground">Alasan tambahan</Label>
                           {q.questionType === "Text" ? (
-                            <p className="rounded-md border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs text-slate-500 leading-relaxed">
+                            <p className="rounded-md border border-border bg-background/80 px-3 py-2 text-xs text-muted-foreground leading-relaxed">
                               Untuk tipe teks bebas tidak berlaku — jawaban responden sudah berupa narasi penuh.
                             </p>
                           ) : (
@@ -776,10 +776,10 @@ export function Template360Form(props?: { templateId?: string }) {
                                   })
                                 }
                               >
-                                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                                <SelectTrigger className="border-border bg-background text-foreground">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="border-slate-800 bg-slate-900">
+                                <SelectContent>
                                   {PERF360_REASON_MODE_OPTIONS.map((o) => (
                                     <SelectItem key={o.value} value={o.value}>
                                       {o.label}
@@ -787,7 +787,7 @@ export function Template360Form(props?: { templateId?: string }) {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-muted-foreground">
                                 {
                                   PERF360_REASON_MODE_OPTIONS.find((o) => o.value === q.reasonMode)
                                     ?.description
@@ -804,7 +804,7 @@ export function Template360Form(props?: { templateId?: string }) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-slate-700 text-slate-200"
+                  className="border-border text-foreground"
                   onClick={() => addQuestionToSection(sec.id)}
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -812,7 +812,7 @@ export function Template360Form(props?: { templateId?: string }) {
                 </Button>
 
                 {secIdx < sections.length - 1 ? (
-                  <div className="border-t border-dashed border-slate-800 pt-2" aria-hidden />
+                  <div className="border-t border-dashed border-border pt-2" aria-hidden />
                 ) : null}
               </div>
             ))
@@ -823,7 +823,7 @@ export function Template360Form(props?: { templateId?: string }) {
             Tambah bagian
           </Button>
 
-          <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-800">
+          <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
             <Button
               className="bg-emerald-600 hover:bg-emerald-700"
               type="button"
@@ -833,7 +833,7 @@ export function Template360Form(props?: { templateId?: string }) {
               {savingBusy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Simpan template
             </Button>
-            <Button type="button" variant="secondary" className="bg-slate-800 text-slate-100" onClick={handleReset}>
+            <Button type="button" variant="secondary" className="bg-muted text-foreground" onClick={handleReset}>
               Reset form
             </Button>
           </div>

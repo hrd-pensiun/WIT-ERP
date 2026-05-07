@@ -13,7 +13,7 @@ export default async function Performance360DashboardDetailPage({
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-slate-400">
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
           <span className="text-sm">Memuat hasil…</span>
         </div>

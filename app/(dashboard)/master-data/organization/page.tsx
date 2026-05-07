@@ -201,16 +201,16 @@ export default function OrganizationPage() {
       />
 
       <div>
-        <h1 className="text-3xl font-bold text-slate-100">Struktur Organisasi</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-3xl font-bold text-foreground">Struktur Organisasi</h1>
+        <p className="text-muted-foreground mt-1">
           Kelola departemen, divisi, jabatan, dan grade
         </p>
       </div>
 
       {showInstansiBanner && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-4 py-3">
-          <div className="text-sm text-slate-200">
-            <span className="text-slate-400">Instansi aktif: </span>
+          <div className="text-sm text-foreground">
+            <span className="text-muted-foreground">Instansi aktif: </span>
             <span className="font-medium text-emerald-300">
               {activeEntityLabel
                 ? `${activeEntityLabel.code} — ${activeEntityLabel.name}`
@@ -221,7 +221,7 @@ export default function OrganizationPage() {
             type="button"
             variant="outline"
             size="sm"
-            className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800"
+            className="border-border bg-card text-foreground hover:bg-muted"
             onClick={() => {
               setDraftInstansiId(defaultEntityId ?? "")
               setInstansiDialogOpen(true)
@@ -239,7 +239,7 @@ export default function OrganizationPage() {
             {actionError}
           </div>
         )}
-        <TabsList className="flex flex-wrap gap-1 bg-slate-900 border border-slate-800 h-auto p-1">
+        <TabsList className="flex flex-wrap gap-1 bg-card border border-border h-auto p-1">
           <TabsTrigger value="departments" className="data-[state=active]:bg-emerald-600">
             Departemen
           </TabsTrigger>
@@ -256,9 +256,9 @@ export default function OrganizationPage() {
 
         {/* Departments Tab */}
         <TabsContent value="departments" className="space-y-4">
-          <Card className="bg-slate-900 border-slate-800">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-slate-100 flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-emerald-500" />
                 Departemen
               </CardTitle>
@@ -275,17 +275,17 @@ export default function OrganizationPage() {
             </CardHeader>
             <CardContent>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-muted-foreground">
                   Filter daftar departemen berdasarkan entitas
                 </div>
                 <Select
                   value={departmentEntityFilter}
                   onValueChange={setDepartmentEntityFilter}
                 >
-                  <SelectTrigger className="w-full sm:w-72 bg-slate-950 border-slate-800 text-slate-100">
+                  <SelectTrigger className="w-full sm:w-72 bg-background border-border text-foreground">
                     <SelectValue placeholder="Pilih entitas" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800">
+                  <SelectContent>
                     <SelectItem value="__all__">Semua entitas</SelectItem>
                     <SelectItem value="__global__">Global (tanpa entitas)</SelectItem>
                     {entities.map((ent) => (
@@ -297,12 +297,12 @@ export default function OrganizationPage() {
                 </Select>
               </div>
               {skipOrgScopeFetch || deptLoading ? (
-                <div className="text-center py-8 text-slate-400">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
               ) : filteredDepartments.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-muted-foreground">
                   Belum ada departemen
                   {isSuperAdmin && defaultEntityId && (
-                    <span className="block text-xs mt-2 text-slate-500">
+                    <span className="block text-xs mt-2 text-muted-foreground">
                       untuk instansi yang dipilih
                     </span>
                   )}
@@ -312,7 +312,7 @@ export default function OrganizationPage() {
                   {filteredDepartments.map((dept) => (
                     <div
                       key={dept.id}
-                      className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors"
+                      className="flex items-center justify-between p-3 bg-background rounded-lg border border-border hover:border-border transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center">
@@ -321,9 +321,9 @@ export default function OrganizationPage() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium text-slate-100">{dept.name}</p>
-                          <p className="text-sm text-slate-400">{dept.code}</p>
-                          <p className="text-xs text-slate-500 mt-1">
+                          <p className="font-medium text-foreground">{dept.name}</p>
+                          <p className="text-sm text-muted-foreground">{dept.code}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
                             {entitiesLoading
                               ? "Loading entity..."
                               : dept.entity_id
@@ -338,7 +338,7 @@ export default function OrganizationPage() {
                           className={
                             dept.status === "active"
                               ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                              : "bg-slate-700 text-slate-400"
+                              : "bg-muted text-muted-foreground"
                           }
                         >
                           {dept.status}
@@ -347,7 +347,7 @@ export default function OrganizationPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-slate-400 hover:text-slate-100"
+                            className="text-muted-foreground hover:text-foreground"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -355,7 +355,7 @@ export default function OrganizationPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-slate-400 hover:text-red-400"
+                          className="text-muted-foreground hover:text-red-400"
                           onClick={() => handleDeleteDepartment(dept.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -371,9 +371,9 @@ export default function OrganizationPage() {
 
         {/* Divisions Tab */}
         <TabsContent value="divisions" className="space-y-4">
-          <Card className="bg-slate-900 border-slate-800">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-slate-100 flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <Layers className="w-5 h-5 text-emerald-500" />
                 Divisi
               </CardTitle>
@@ -390,12 +390,12 @@ export default function OrganizationPage() {
             </CardHeader>
             <CardContent>
               {skipOrgScopeFetch || divLoading ? (
-                <div className="text-center py-8 text-slate-400">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
               ) : divisions.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-muted-foreground">
                   Belum ada divisi
                   {isSuperAdmin && defaultEntityId && (
-                    <span className="block text-xs mt-2 text-slate-500">
+                    <span className="block text-xs mt-2 text-muted-foreground">
                       untuk instansi yang dipilih
                     </span>
                   )}
@@ -404,23 +404,23 @@ export default function OrganizationPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px]">
                     <thead>
-                      <tr className="border-b border-slate-800">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Kode
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Nama
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Departemen
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Instansi
                         </th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
                           Status
                         </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
                           Aksi
                         </th>
                       </tr>
@@ -435,16 +435,16 @@ export default function OrganizationPage() {
                         return (
                           <tr
                             key={div.id}
-                            className="border-b border-slate-800/50 hover:bg-slate-800/30"
+                            className="border-b border-border/50 hover:bg-muted/30"
                           >
-                            <td className="py-3 px-4 font-medium text-slate-100">
+                            <td className="py-3 px-4 font-medium text-foreground">
                               {div.code}
                             </td>
-                            <td className="py-3 px-4 text-slate-300">{div.name}</td>
-                            <td className="py-3 px-4 text-slate-300">
+                            <td className="py-3 px-4 text-foreground">{div.name}</td>
+                            <td className="py-3 px-4 text-foreground">
                               {d ? `${d.code} — ${d.name}` : "—"}
                             </td>
-                            <td className="py-3 px-4 text-slate-400 text-sm">
+                            <td className="py-3 px-4 text-muted-foreground text-sm">
                               {entitiesLoading
                                 ? "…"
                                 : entLabel
@@ -458,7 +458,7 @@ export default function OrganizationPage() {
                                 className={
                                   div.status === "active"
                                     ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                                    : "bg-slate-700 text-slate-400"
+                                    : "bg-muted text-muted-foreground"
                                 }
                               >
                                 {div.status}
@@ -472,7 +472,7 @@ export default function OrganizationPage() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-slate-400 hover:text-slate-100"
+                                    className="text-muted-foreground hover:text-foreground"
                                   >
                                     <Pencil className="w-4 h-4" />
                                   </Button>
@@ -480,7 +480,7 @@ export default function OrganizationPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-slate-400 hover:text-red-400"
+                                  className="text-muted-foreground hover:text-red-400"
                                   onClick={() => handleDeleteDivision(div.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -500,9 +500,9 @@ export default function OrganizationPage() {
 
         {/* Job titles (hr_positions) */}
         <TabsContent value="positions" className="space-y-4">
-          <Card className="bg-slate-900 border-slate-800">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-slate-100 flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-emerald-500" />
                 Job title
               </CardTitle>
@@ -519,12 +519,12 @@ export default function OrganizationPage() {
             </CardHeader>
             <CardContent>
               {skipOrgScopeFetch || posLoading ? (
-                <div className="text-center py-8 text-slate-400">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
               ) : positions.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-muted-foreground">
                   Belum ada job title
                   {isSuperAdmin && defaultEntityId && (
-                    <span className="block text-xs mt-2 text-slate-500">
+                    <span className="block text-xs mt-2 text-muted-foreground">
                       untuk instansi yang dipilih
                     </span>
                   )}
@@ -533,23 +533,23 @@ export default function OrganizationPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px]">
                     <thead>
-                      <tr className="border-b border-slate-800">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Kode
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Nama
                         </th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
                           Level
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Instansi
                         </th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
                           Status
                         </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
                           Aksi
                         </th>
                       </tr>
@@ -562,16 +562,16 @@ export default function OrganizationPage() {
                         return (
                           <tr
                             key={pos.id}
-                            className="border-b border-slate-800/50 hover:bg-slate-800/30"
+                            className="border-b border-border/50 hover:bg-muted/30"
                           >
-                            <td className="py-3 px-4 font-medium text-slate-100">
+                            <td className="py-3 px-4 font-medium text-foreground">
                               {pos.code}
                             </td>
-                            <td className="py-3 px-4 text-slate-300">{pos.name}</td>
-                            <td className="py-3 px-4 text-center text-slate-400">
+                            <td className="py-3 px-4 text-foreground">{pos.name}</td>
+                            <td className="py-3 px-4 text-center text-muted-foreground">
                               {(pos as any).hr_job_grades?.level ?? pos.level ?? "—"}
                             </td>
-                            <td className="py-3 px-4 text-slate-400 text-sm">
+                            <td className="py-3 px-4 text-muted-foreground text-sm">
                               {entitiesLoading
                                 ? "…"
                                 : entLabel
@@ -585,7 +585,7 @@ export default function OrganizationPage() {
                                 className={
                                   pos.status === "active"
                                     ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                                    : "bg-slate-700 text-slate-400"
+                                    : "bg-muted text-muted-foreground"
                                 }
                               >
                                 {pos.status}
@@ -599,7 +599,7 @@ export default function OrganizationPage() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-slate-400 hover:text-slate-100"
+                                    className="text-muted-foreground hover:text-foreground"
                                   >
                                     <Pencil className="w-4 h-4" />
                                   </Button>
@@ -607,7 +607,7 @@ export default function OrganizationPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-slate-400 hover:text-red-400"
+                                  className="text-muted-foreground hover:text-red-400"
                                   onClick={() => handleDeletePosition(pos.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -627,9 +627,9 @@ export default function OrganizationPage() {
 
         {/* Grades Tab */}
         <TabsContent value="grades" className="space-y-4">
-          <Card className="bg-slate-900 border-slate-800">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-slate-100">Job Grades</CardTitle>
+              <CardTitle>Job Grades</CardTitle>
               <Link href="/master-data/organization/grade/new">
                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
                   <Plus className="w-4 h-4 mr-1" />
@@ -639,35 +639,35 @@ export default function OrganizationPage() {
             </CardHeader>
             <CardContent>
               {gradeLoading ? (
-                <div className="text-center py-8 text-slate-400">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
               ) : jobGrades.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-muted-foreground">
                   Belum ada job grade
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-slate-800">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Kode
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Nama
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                           Level
                         </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
                           Gaji Min
                         </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
                           Gaji Max
                         </th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">
                           Status
                         </th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
                           Aksi
                         </th>
                       </tr>
@@ -676,19 +676,19 @@ export default function OrganizationPage() {
                       {jobGrades.map((grade) => (
                         <tr
                           key={grade.id}
-                          className="border-b border-slate-800/50 hover:bg-slate-800/30"
+                          className="border-b border-border/50 hover:bg-muted/30"
                         >
-                          <td className="py-3 px-4 text-slate-100 font-medium">{grade.code}</td>
-                          <td className="py-3 px-4 text-slate-300">{grade.name}</td>
+                          <td className="py-3 px-4 text-foreground font-medium">{grade.code}</td>
+                          <td className="py-3 px-4 text-foreground">{grade.name}</td>
                           <td className="py-3 px-4">
-                            <span className="text-slate-400">Level {grade.level}</span>
+                            <span className="text-muted-foreground">Level {grade.level}</span>
                           </td>
-                          <td className="py-3 px-4 text-right text-slate-300">
+                          <td className="py-3 px-4 text-right text-foreground">
                             {grade.min_salary
                               ? `Rp ${Number(grade.min_salary).toLocaleString("id-ID")}`
                               : "-"}
                           </td>
-                          <td className="py-3 px-4 text-right text-slate-300">
+                          <td className="py-3 px-4 text-right text-foreground">
                             {grade.max_salary
                               ? `Rp ${Number(grade.max_salary).toLocaleString("id-ID")}`
                               : "-"}
@@ -698,7 +698,7 @@ export default function OrganizationPage() {
                               className={
                                 grade.status === "active"
                                   ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                                  : "bg-slate-700 text-slate-400"
+                                  : "bg-muted text-muted-foreground"
                               }
                             >
                               {grade.status}
@@ -710,7 +710,7 @@ export default function OrganizationPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-slate-400 hover:text-slate-100"
+                                  className="text-muted-foreground hover:text-foreground"
                                 >
                                   <Pencil className="w-4 h-4" />
                                 </Button>
@@ -718,7 +718,7 @@ export default function OrganizationPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-slate-400 hover:text-red-400"
+                                className="text-muted-foreground hover:text-red-400"
                                 onClick={() => handleDeleteGrade(grade.id)}
                               >
                                 <Trash2 className="w-4 h-4" />

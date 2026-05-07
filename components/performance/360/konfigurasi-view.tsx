@@ -106,9 +106,9 @@ export function Konfigurasi360View() {
         <ConfigCard icon={<Settings2 className="w-5 h-5 text-cyan-400" />} title="Konfigurasi penilaian">
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <Label className="text-slate-300">Skala rating default</Label>
+              <Label className="text-foreground">Skala rating default</Label>
               <Select value={scale} onValueChange={setScale}>
-                <SelectTrigger className="w-full sm:w-[140px] bg-slate-950 border-slate-800">
+                <SelectTrigger className="w-full sm:w-[140px] bg-background border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -136,19 +136,19 @@ export function Konfigurasi360View() {
       </div>
 
       <ConfigCard icon={<Tags className="w-5 h-5 text-amber-400" />} title="Kategori penilaian">
-        <p className="text-sm text-slate-500 mb-4">
-          Daftar ini dipakai sebagai pilihan dropdown <span className="text-slate-400">Kategori</span> saat membuat
+        <p className="text-sm text-muted-foreground mb-4">
+          Daftar ini dipakai sebagai pilihan dropdown <span className="text-muted-foreground">Kategori</span> saat membuat
           template penilaian 360. Simpan konfigurasi untuk menerapkan perubahan ke browser ini.
         </p>
         <div className="space-y-3">
           {categories.map((label, index) => (
               <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                <span className="text-slate-500 text-sm w-8 shrink-0">{index + 1}.</span>
+                <span className="text-muted-foreground text-sm w-8 shrink-0">{index + 1}.</span>
                 <Input
                   value={label}
                   onChange={(e) => updateCategoryRow(index, e.target.value)}
                   placeholder="Nama kategori"
-                  className="flex-1 bg-slate-950 border-slate-800 text-slate-100"
+                  className="flex-1 bg-background border-border text-foreground"
                 />
                 <Button
                   type="button"
@@ -163,7 +163,7 @@ export function Konfigurasi360View() {
                 </Button>
               </div>
             ))}
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center pt-2 border-t border-slate-800">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center pt-2 border-t border-border">
             <Input
               value={newCategoryDraft}
               onChange={(e) => setNewCategoryDraft(e.target.value)}
@@ -174,9 +174,9 @@ export function Konfigurasi360View() {
                 }
               }}
               placeholder="Kategori baru…"
-              className="flex-1 bg-slate-950 border-slate-800 text-slate-100"
+              className="flex-1 bg-background border-border text-foreground"
             />
-            <Button type="button" variant="outline" className="border-slate-700 shrink-0" onClick={addCategoryFromDraft}>
+            <Button type="button" variant="outline" className="border-border shrink-0" onClick={addCategoryFromDraft}>
               <Plus className="w-4 h-4 mr-2" />
               Tambah
             </Button>
@@ -184,13 +184,13 @@ export function Konfigurasi360View() {
         </div>
       </ConfigCard>
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardContent className="pt-6 flex flex-wrap gap-3">
           <Button className="bg-emerald-600 hover:bg-emerald-700" type="button" onClick={saveAll} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Simpan semua konfigurasi
           </Button>
-          <Button type="button" variant="outline" className="border-slate-700" onClick={resetDefault}>
+          <Button type="button" variant="outline" className="border-border" onClick={resetDefault}>
             Reset ke default
           </Button>
         </CardContent>
@@ -209,9 +209,9 @@ function ConfigCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className="bg-slate-900 border-slate-800">
+    <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-slate-100 text-base flex items-center gap-2">
+        <CardTitle className="text-foreground text-base flex items-center gap-2">
           {icon}
           {title}
         </CardTitle>
@@ -232,12 +232,12 @@ function WeightField({
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-      <Label className="text-slate-300">{label}</Label>
+      <Label className="text-foreground">{label}</Label>
       <Input
         type="number"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full sm:w-24 bg-slate-950 border-slate-800"
+        className="w-full sm:w-24 bg-background border-border"
       />
     </div>
   )
@@ -254,7 +254,7 @@ function ToggleRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-slate-300 text-sm">{label}</span>
+      <span className="text-foreground text-sm">{label}</span>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   )

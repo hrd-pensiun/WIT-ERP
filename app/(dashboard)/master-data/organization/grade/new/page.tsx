@@ -52,13 +52,13 @@ export default function NewJobGradePage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/master-data/organization">
-          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Tambah Job Grade</h1>
-          <p className="text-slate-400 text-sm">Buat grade/jenjang karir baru</p>
+          <h1 className="text-2xl font-bold text-foreground">Tambah Job Grade</h1>
+          <p className="text-muted-foreground text-sm">Buat grade/jenjang karir baru</p>
         </div>
       </div>
 
@@ -67,9 +67,9 @@ export default function NewJobGradePage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-slate-100 flex items-center gap-2">
+            <CardTitle className="text-foreground flex items-center gap-2">
               <Award className="w-5 h-5 text-emerald-500" />
               Informasi Job Grade
             </CardTitle>
@@ -77,31 +77,31 @@ export default function NewJobGradePage() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="code" className="text-slate-200">Kode <span className="text-red-400">*</span></Label>
+                <Label htmlFor="code">Kode <span className="text-red-400">*</span></Label>
                 <Input
                   id="code"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="e.g., JG1"
                   required
-                  className="bg-slate-950 border-slate-800 text-slate-100 uppercase"
+                  className="bg-background border-border text-foreground uppercase"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-200">Nama <span className="text-red-400">*</span></Label>
+                <Label htmlFor="name">Nama <span className="text-red-400">*</span></Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Staff Junior"
                   required
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="level" className="text-slate-200">Level <span className="text-red-400">*</span> (1-10)</Label>
+                <Label htmlFor="level">Level <span className="text-red-400">*</span> (1-10)</Label>
                 <Input
                   id="level"
                   type="number"
@@ -110,52 +110,52 @@ export default function NewJobGradePage() {
                   value={formData.level}
                   onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                   required
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="min_salary" className="text-slate-200">Gaji Minimum</Label>
+                <Label htmlFor="min_salary">Gaji Minimum</Label>
                 <Input
                   id="min_salary"
                   type="number"
                   value={formData.min_salary}
                   onChange={(e) => setFormData({ ...formData, min_salary: e.target.value })}
                   placeholder="5000000"
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="max_salary" className="text-slate-200">Gaji Maksimum</Label>
+                <Label htmlFor="max_salary">Gaji Maksimum</Label>
                 <Input
                   id="max_salary"
                   type="number"
                   value={formData.max_salary}
                   onChange={(e) => setFormData({ ...formData, max_salary: e.target.value })}
                   placeholder="8000000"
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-slate-200">Deskripsi</Label>
+              <Label htmlFor="description">Deskripsi</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Deskripsi grade..."
                 rows={3}
-                className="bg-slate-950 border-slate-800 text-slate-100"
+                className="bg-background border-border text-foreground"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
               <Link href="/master-data/organization">
-                <Button type="button" variant="ghost" className="text-slate-400">Batal</Button>
+                <Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button>
               </Link>
               <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
                 {loading ? "Menyimpan..." : "Simpan"}

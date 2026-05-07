@@ -32,24 +32,24 @@ const getActivityColor = (type: string) => {
     whatsapp: "bg-green-500/20 text-green-400",
     proposal: "bg-pink-500/20 text-pink-400",
     visit: "bg-orange-500/20 text-orange-400",
-    note: "bg-slate-500/20 text-slate-400",
+    note: "bg-muted-foreground/40/20 text-muted-foreground",
     task: "bg-cyan-500/20 text-cyan-400",
   }
-  return colors[type] || "bg-slate-500/20 text-slate-400"
+  return colors[type] || "bg-muted-foreground/40/20 text-muted-foreground"
 }
 
 export default function ActivitiesPage() {
   const { activities, loading } = useActivities()
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Activity className="w-6 h-6 text-emerald-500" />
             Aktivitas CRM
           </h1>
-          <p className="text-slate-400 mt-1">Log aktivitas dan follow-up</p>
+          <p className="text-muted-foreground mt-1">Log aktivitas dan follow-up</p>
         </div>
         <Link href="/crm/activities/new">
           <Button className="bg-emerald-600 hover:bg-emerald-700">
@@ -66,7 +66,7 @@ export default function ActivitiesPage() {
       ) : activities.length > 0 ? (
         <div className="space-y-3">
           {activities.map((activity: any) => (
-            <Card key={activity.id} className={`bg-slate-900 border-slate-800 ${activity.is_completed ? 'opacity-60' : ''}`}>
+            <Card key={activity.id} className={`bg-card border-border ${activity.is_completed ? 'opacity-60' : ''}`}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getActivityColor(activity.activity_type)}`}>
@@ -74,24 +74,24 @@ export default function ActivitiesPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`font-medium ${activity.is_completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>{activity.subject}</h3>
+                      <h3 className={`font-medium ${activity.is_completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{activity.subject}</h3>
                       {activity.is_completed && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                     </div>
-                    <p className="text-sm text-slate-400 mb-2">{activity.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                    <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>{activity.crm_leads?.contact_name || activity.crm_leads?.company_name || '-'}</span>
                       <span>•</span>
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{activity.scheduled_at ? new Date(activity.scheduled_at).toLocaleString('id-ID') : '-'}</span>
                     </div>
                   </div>
-                  <Badge variant="outline" className="border-slate-700 text-slate-400 capitalize">{activity.activity_type}</Badge>
+                  <Badge variant="outline" className="border-border text-muted-foreground capitalize">{activity.activity_type}</Badge>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 text-slate-500">
+        <div className="text-center py-16 text-muted-foreground">
           <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Belum ada aktivitas CRM</p>
           <p className="text-sm mt-1">Tambahkan aktivitas pertama Anda</p>

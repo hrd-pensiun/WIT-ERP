@@ -108,14 +108,14 @@ export default function PositionEditClient({ id }: { id: string }) {
           <Button
             variant="ghost"
             size="icon"
-            className="text-slate-400 hover:text-slate-100"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Edit Job Title</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Edit Job Title</h1>
+          <p className="text-xs text-muted-foreground">
             EDIT-JOB TITLE : {formData.name || formData.code || "-"}
           </p>
         </div>
@@ -126,9 +126,9 @@ export default function PositionEditClient({ id }: { id: string }) {
         </div>
       )}
       <form onSubmit={handleSubmit}>
-        <Card className="border-slate-800 bg-slate-900">
+        <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-100">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <Briefcase className="h-5 w-5 text-emerald-500" />
               Informasi Jabatan
             </CardTitle>
@@ -136,7 +136,7 @@ export default function PositionEditClient({ id }: { id: string }) {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-slate-200">
+                <Label>
                   Kode <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -145,11 +145,11 @@ export default function PositionEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, code: e.target.value })
                   }
                   required
-                  className="border-slate-800 bg-slate-950 uppercase text-slate-100"
+                  className="border-border bg-background uppercase text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">
+                <Label>
                   Nama <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -158,11 +158,11 @@ export default function PositionEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Job Grade <span className="text-red-400">*</span></Label>
+                <Label>Job Grade <span className="text-red-400">*</span></Label>
                 <Select
                   value={formData.job_grade_id || "__none__"}
                   onValueChange={(v) =>
@@ -173,10 +173,10 @@ export default function PositionEditClient({ id }: { id: string }) {
                   }
                   disabled={gradesLoading}
                 >
-                  <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                  <SelectTrigger className="border-border bg-background text-foreground">
                     <SelectValue placeholder="Pilih grade (otomatis menentukan level)" />
                   </SelectTrigger>
-                  <SelectContent className="border-slate-800 bg-slate-900">
+                  <SelectContent className="border-border bg-card">
                     <SelectItem value="__none__">-</SelectItem>
                     {jobGrades.map((grade) => (
                       <SelectItem key={grade.id} value={String(grade.id)}>
@@ -187,7 +187,7 @@ export default function PositionEditClient({ id }: { id: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Instansi (entity)</Label>
+                <Label>Instansi (entity)</Label>
                 <Select
                   value={formData.entity_id || "__none__"}
                   onValueChange={(v) =>
@@ -198,10 +198,10 @@ export default function PositionEditClient({ id }: { id: string }) {
                   }
                   disabled={entitiesLoading}
                 >
-                  <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                  <SelectTrigger className="border-border bg-background text-foreground">
                     <SelectValue placeholder="Opsional — hubungkan ke instansi" />
                   </SelectTrigger>
-                  <SelectContent className="border-slate-800 bg-slate-900">
+                  <SelectContent className="border-border bg-card">
                     <SelectItem value="__none__">Tidak spesifik</SelectItem>
                     {entities.map((ent) => (
                       <SelectItem key={ent.id} value={String(ent.id)}>
@@ -213,19 +213,19 @@ export default function PositionEditClient({ id }: { id: string }) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-200">Deskripsi</Label>
+              <Label>Deskripsi</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
                 rows={3}
-                className="border-slate-800 bg-slate-950 text-slate-100"
+                className="border-border bg-background text-foreground"
               />
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-6">
+            <div className="flex items-center justify-end gap-3 border-t border-border pt-6">
               <Link href="/master-data/organization">
-                <Button type="button" variant="ghost" className="text-slate-400">
+                <Button type="button" variant="ghost" className="text-muted-foreground">
                   Batal
                 </Button>
               </Link>

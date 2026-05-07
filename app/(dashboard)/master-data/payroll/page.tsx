@@ -33,8 +33,8 @@ export default function PayrollConfigPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-100">Konfigurasi Payroll</h1>
-        <p className="text-slate-400 mt-1">Setup komponen gaji dan matrix</p>
+        <h1 className="text-3xl font-bold text-foreground">Konfigurasi Payroll</h1>
+        <p className="text-muted-foreground mt-1">Setup komponen gaji dan matrix</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -43,7 +43,7 @@ export default function PayrollConfigPage() {
             {actionError}
           </div>
         )}
-        <TabsList className="bg-slate-900 border border-slate-800">
+        <TabsList className="bg-card border border-border">
           <TabsTrigger value="components" className="data-[state=active]:bg-emerald-600">
             Komponen Gaji
           </TabsTrigger>
@@ -59,9 +59,9 @@ export default function PayrollConfigPage() {
         <TabsContent value="components" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Earnings */}
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-slate-100 flex items-center gap-2">
+                <CardTitle className="text-foreground flex items-center gap-2">
                   <Wallet className="w-5 h-5 text-emerald-500" />
                   Penghasilan
                 </CardTitle>
@@ -73,22 +73,22 @@ export default function PayrollConfigPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {compLoading ? (
-                  <div className="text-center py-8 text-slate-400">Loading...</div>
+                  <div className="text-center py-8 text-muted-foreground">Loading...</div>
                 ) : earnings.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">Belum ada komponen</div>
+                  <div className="text-center py-8 text-muted-foreground">Belum ada komponen</div>
                 ) : (
                   earnings.map((comp) => (
                     <div
                       key={comp.id}
-                      className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800"
+                      className="flex items-center justify-between p-3 bg-background rounded-lg border border-border"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-emerald-500/10 rounded flex items-center justify-center">
                           <span className="text-emerald-500 text-sm font-medium">{comp.code}</span>
                         </div>
                         <div>
-                          <p className="font-medium text-slate-100">{comp.name}</p>
-                          <p className="text-xs text-slate-400">
+                          <p className="font-medium text-foreground">{comp.name}</p>
+                          <p className="text-xs text-muted-foreground">
                             {comp.calculation_type} • {comp.is_taxable ? "Taxable" : "Non-taxable"}
                           </p>
                         </div>
@@ -98,20 +98,20 @@ export default function PayrollConfigPage() {
                           className={
                             comp.status === "active"
                               ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-slate-700"
+                              : "bg-muted"
                           }
                         >
                           {comp.status}
                         </Badge>
                         <Link href={`/master-data/payroll/component/${comp.id}/edit`}>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100">
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                             <Pencil className="w-4 h-4" />
                           </Button>
                         </Link>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-slate-400 hover:text-red-400"
+                          className="text-muted-foreground hover:text-red-400"
                           onClick={() => handleDeleteComponent(comp.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -124,9 +124,9 @@ export default function PayrollConfigPage() {
             </Card>
 
             {/* Deductions */}
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-slate-100 flex items-center gap-2">
+                <CardTitle className="text-foreground flex items-center gap-2">
                   <Percent className="w-5 h-5 text-red-400" />
                   Potongan
                 </CardTitle>
@@ -136,22 +136,22 @@ export default function PayrollConfigPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {compLoading ? (
-                  <div className="text-center py-8 text-slate-400">Loading...</div>
+                  <div className="text-center py-8 text-muted-foreground">Loading...</div>
                 ) : deductions.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">Belum ada komponen</div>
+                  <div className="text-center py-8 text-muted-foreground">Belum ada komponen</div>
                 ) : (
                   deductions.map((comp) => (
                     <div
                       key={comp.id}
-                      className="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800"
+                      className="flex items-center justify-between p-3 bg-background rounded-lg border border-border"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-red-500/10 rounded flex items-center justify-center">
                           <span className="text-red-400 text-sm font-medium">{comp.code}</span>
                         </div>
                         <div>
-                          <p className="font-medium text-slate-100">{comp.name}</p>
-                          <p className="text-xs text-slate-400">
+                          <p className="font-medium text-foreground">{comp.name}</p>
+                          <p className="text-xs text-muted-foreground">
                             {comp.calculation_type} • {comp.is_taxable ? "Taxable" : "Non-taxable"}
                           </p>
                         </div>
@@ -161,20 +161,20 @@ export default function PayrollConfigPage() {
                           className={
                             comp.status === "active"
                               ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-slate-700"
+                              : "bg-muted"
                           }
                         >
                           {comp.status}
                         </Badge>
                         <Link href={`/master-data/payroll/component/${comp.id}/edit`}>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100">
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                             <Pencil className="w-4 h-4" />
                           </Button>
                         </Link>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-slate-400 hover:text-red-400"
+                          className="text-muted-foreground hover:text-red-400"
                           onClick={() => handleDeleteComponent(comp.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -190,42 +190,42 @@ export default function PayrollConfigPage() {
 
         {/* Salary Matrix Tab */}
         <TabsContent value="matrix">
-          <Card className="bg-slate-900 border-slate-800">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-slate-100">Salary Matrix</CardTitle>
+              <CardTitle>Salary Matrix</CardTitle>
             </CardHeader>
             <CardContent>
               {gradeLoading ? (
-                <div className="text-center py-8 text-slate-400">Loading...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
               ) : jobGrades.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">Buat Job Grade terlebih dahulu</div>
+                <div className="text-center py-8 text-muted-foreground">Buat Job Grade terlebih dahulu</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-slate-800">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Grade</th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">Step 1</th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">Step 2</th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">Step 3</th>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Grade</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Step 1</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Step 2</th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Step 3</th>
                       </tr>
                     </thead>
                     <tbody>
                       {jobGrades.map((grade) => (
-                        <tr key={grade.id} className="border-b border-slate-800/50">
+                        <tr key={grade.id} className="border-b border-border/50">
                           <td className="py-3 px-4">
                             <div>
-                              <p className="font-medium text-slate-100">{grade.name}</p>
-                              <p className="text-xs text-slate-400">{grade.code}</p>
+                              <p className="font-medium text-foreground">{grade.name}</p>
+                              <p className="text-xs text-muted-foreground">{grade.code}</p>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-center text-slate-300">
+                          <td className="py-3 px-4 text-center text-foreground">
                             {grade.min_salary
                               ? `Rp ${Number(grade.min_salary).toLocaleString("id-ID")}`
                               : "-"}
                           </td>
-                          <td className="py-3 px-4 text-center text-slate-300">-</td>
-                          <td className="py-3 px-4 text-center text-slate-300">-</td>
+                          <td className="py-3 px-4 text-center text-foreground">-</td>
+                          <td className="py-3 px-4 text-center text-foreground">-</td>
                         </tr>
                       ))}
                     </tbody>
@@ -238,8 +238,8 @@ export default function PayrollConfigPage() {
 
         {/* BOPP Formula Tab */}
         <TabsContent value="bopp">
-          <Card className="bg-slate-900 border-slate-800">
-            <CardContent className="py-8 text-center text-slate-400">
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
               BOPP Formula configuration coming soon...
             </CardContent>
           </Card>

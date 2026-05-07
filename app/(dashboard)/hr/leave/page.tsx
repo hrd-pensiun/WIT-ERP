@@ -28,8 +28,8 @@ export default function LeavePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Cuti</h1>
-          <p className="text-slate-400 mt-1">Kelola pengajuan cuti karyawan</p>
+          <h1 className="text-3xl font-bold text-foreground">Cuti</h1>
+          <p className="text-muted-foreground mt-1">Kelola pengajuan cuti karyawan</p>
         </div>
         <Button className="bg-emerald-600 hover:bg-emerald-700">
           <Plus className="w-4 h-4 mr-2" />
@@ -39,41 +39,41 @@ export default function LeavePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-emerald-500/10 rounded-lg">
                 <CheckCircle className="w-6 h-6 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-100">{stats.approved}</p>
-                <p className="text-sm text-slate-400">Disetujui</p>
+                <p className="text-2xl font-bold text-foreground">{stats.approved}</p>
+                <p className="text-sm text-muted-foreground">Disetujui</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-yellow-500/10 rounded-lg">
                 <Clock className="w-6 h-6 text-yellow-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-100">{stats.pending}</p>
-                <p className="text-sm text-slate-400">Menunggu</p>
+                <p className="text-2xl font-bold text-foreground">{stats.pending}</p>
+                <p className="text-sm text-muted-foreground">Menunggu</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-red-500/10 rounded-lg">
                 <XCircle className="w-6 h-6 text-red-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-100">{stats.rejected}</p>
-                <p className="text-sm text-slate-400">Ditolak</p>
+                <p className="text-2xl font-bold text-foreground">{stats.rejected}</p>
+                <p className="text-sm text-muted-foreground">Ditolak</p>
               </div>
             </div>
           </CardContent>
@@ -81,9 +81,9 @@ export default function LeavePage() {
       </div>
 
       {/* Leave List */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100">Pengajuan Cuti</CardTitle>
+          <CardTitle>Pengajuan Cuti</CardTitle>
         </CardHeader>
         <CardContent>
           {leaves.length > 0 ? (
@@ -91,21 +91,21 @@ export default function LeavePage() {
               {leaves.map((leave: any) => (
                 <div
                   key={leave.id}
-                  className="flex items-center justify-between p-4 bg-slate-950 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-background rounded-lg"
                 >
                   <div className="flex-1">
-                    <p className="text-slate-100 font-medium">{leave.user_profiles?.full_name || '-'}</p>
-                    <div className="flex items-center gap-4 text-sm text-slate-400">
+                    <p className="text-foreground font-medium">{leave.user_profiles?.full_name || '-'}</p>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {leave.start_date} → {leave.end_date}
                       </span>
                       <span>{leave.days_requested} hari</span>
-                      <span className="text-slate-500">{leave.reason}</span>
+                      <span className="text-muted-foreground">{leave.reason}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-slate-400">
+                    <Badge variant="outline" className="text-muted-foreground">
                       {leave.hr_leave_types?.name || leave.leave_type_id}
                     </Badge>
                     <Badge
@@ -124,7 +124,7 @@ export default function LeavePage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-muted-foreground">
               <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Belum ada pengajuan cuti</p>
             </div>

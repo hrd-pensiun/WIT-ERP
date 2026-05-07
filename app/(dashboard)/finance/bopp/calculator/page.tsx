@@ -65,22 +65,22 @@ export default function BoppCalculatorPage() {
   const getFormula = () => formulas.find(f => f.id === selectedFormula)
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
           <Calculator className="w-5 h-5 text-emerald-500" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Kalkulator BOPP</h1>
-          <p className="text-slate-400">Hitung pembagian bonus berdasarkan formula</p>
+          <h1 className="text-2xl font-bold text-foreground">Kalkulator BOPP</h1>
+          <p className="text-muted-foreground">Hitung pembagian bonus berdasarkan formula</p>
         </div>
       </div>
 
       {/* Input Section */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100 flex items-center gap-2">
+          <CardTitle className="text-foreground flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-emerald-500" />
             Input Revenue
           </CardTitle>
@@ -92,7 +92,7 @@ export default function BoppCalculatorPage() {
               <select
                 value={selectedFormula}
                 onChange={(e) => setSelectedFormula(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-slate-100"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
               >
                 <option value="">Pilih formula...</option>
                 {formulas.map(f => (
@@ -110,7 +110,7 @@ export default function BoppCalculatorPage() {
                 value={revenue}
                 onChange={(e) => setRevenue(e.target.value)}
                 placeholder="100000000"
-                className="bg-slate-950 border-slate-800 text-slate-100"
+                className="bg-background border-border text-foreground"
               />
             </div>
           </div>
@@ -128,9 +128,9 @@ export default function BoppCalculatorPage() {
 
       {/* Formula Details */}
       {getFormula() && (
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-slate-100 text-sm">
+            <CardTitle className="text-foreground text-sm">
               Formula: {getFormula()?.name}
             </CardTitle>
           </CardHeader>
@@ -145,7 +145,7 @@ export default function BoppCalculatorPage() {
               ].map((item) => (
                 <div key={item.label} className="text-center">
                   <p className="text-2xl font-bold text-emerald-400">{item.value}%</p>
-                  <p className="text-sm text-slate-500">{item.label}</p>
+                  <p className="text-sm text-muted-foreground">{item.label}</p>
                 </div>
               ))}
             </div>
@@ -155,18 +155,18 @@ export default function BoppCalculatorPage() {
 
       {/* Results */}
       {calculation && (
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-slate-100 flex items-center gap-2">
+            <CardTitle className="text-foreground flex items-center gap-2">
               <PieChart className="w-5 h-5 text-emerald-500" />
               Hasil Perhitungan
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Total Revenue */}
-            <div className="p-4 bg-slate-950 rounded-lg border border-slate-800">
-              <p className="text-sm text-slate-500">Total Revenue</p>
-              <p className="text-3xl font-bold text-slate-100">
+            <div className="p-4 bg-background rounded-lg border border-border">
+              <p className="text-sm text-muted-foreground">Total Revenue</p>
+              <p className="text-3xl font-bold text-foreground">
                 {formatCurrency(calculation.revenue)}
               </p>
             </div>
@@ -178,12 +178,12 @@ export default function BoppCalculatorPage() {
                 { label: 'Sales Engineer', amount: calculation.se, color: 'bg-purple-500' },
                 { label: 'Management', amount: calculation.management, color: 'bg-amber-500' },
                 { label: 'Tech Team', amount: calculation.tech, color: 'bg-emerald-500' },
-                { label: 'Operational', amount: calculation.operational, color: 'bg-slate-500' },
+                { label: 'Operational', amount: calculation.operational, color: 'bg-muted-foreground/40' },
               ].map((item) => (
                 <div key={item.label} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-300">{item.label}</span>
-                    <span className="font-medium text-slate-100">
+                    <span>{item.label}</span>
+                    <span className="font-medium text-foreground">
                       {formatCurrency(item.amount)}
                     </span>
                   </div>
@@ -196,16 +196,16 @@ export default function BoppCalculatorPage() {
             </div>
 
             {/* Summary */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
               <div className="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
                 <p className="text-sm text-emerald-400">Total Distribusi</p>
                 <p className="text-xl font-bold text-emerald-300">
                   {formatCurrency(calculation.totalDistributed)}
                 </p>
               </div>
-              <div className="p-4 bg-slate-800 rounded-lg">
-                <p className="text-sm text-slate-500">Sisa (Net Profit)</p>
-                <p className="text-xl font-bold text-slate-300">
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">Sisa (Net Profit)</p>
+                <p className="text-xl font-bold text-foreground">
                   {formatCurrency(calculation.remaining)}
                 </p>
               </div>

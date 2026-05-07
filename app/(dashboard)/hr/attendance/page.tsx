@@ -22,8 +22,8 @@ export default function AttendancePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Absensi</h1>
-          <p className="text-slate-400 mt-1">Kelola kehadiran karyawan</p>
+          <h1 className="text-3xl font-bold text-foreground">Absensi</h1>
+          <p className="text-muted-foreground mt-1">Kelola kehadiran karyawan</p>
         </div>
         <Button className="bg-emerald-600 hover:bg-emerald-700">
           <Clock className="w-4 h-4 mr-2" />
@@ -33,41 +33,41 @@ export default function AttendancePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-emerald-500/10 rounded-lg">
                 <CheckCircle className="w-6 h-6 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-100">{stats.present}</p>
-                <p className="text-sm text-slate-400">Hadir</p>
+                <p className="text-2xl font-bold text-foreground">{stats.present}</p>
+                <p className="text-sm text-muted-foreground">Hadir</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-red-500/10 rounded-lg">
                 <XCircle className="w-6 h-6 text-red-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-100">{stats.absent}</p>
-                <p className="text-sm text-slate-400">Tidak Hadir</p>
+                <p className="text-2xl font-bold text-foreground">{stats.absent}</p>
+                <p className="text-sm text-muted-foreground">Tidak Hadir</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-yellow-500/10 rounded-lg">
                 <AlertCircle className="w-6 h-6 text-yellow-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-100">{stats.late}</p>
-                <p className="text-sm text-slate-400">Terlambat</p>
+                <p className="text-2xl font-bold text-foreground">{stats.late}</p>
+                <p className="text-sm text-muted-foreground">Terlambat</p>
               </div>
             </div>
           </CardContent>
@@ -75,27 +75,27 @@ export default function AttendancePage() {
       </div>
 
       {/* Attendance List */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100">Data Absensi Hari Ini ({currentDate})</CardTitle>
+          <CardTitle>Data Absensi Hari Ini ({currentDate})</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-slate-400 text-center py-8">Loading...</p>
+            <p className="text-muted-foreground text-center py-8">Loading...</p>
           ) : attendance?.length === 0 ? (
-            <p className="text-slate-400 text-center py-8">Belum ada data absensi</p>
+            <p className="text-muted-foreground text-center py-8">Belum ada data absensi</p>
           ) : (
             <div className="space-y-2">
               {attendance?.map((record: any) => (
                 <div
                   key={record.id}
-                  className="flex items-center justify-between p-4 bg-slate-950 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-background rounded-lg"
                 >
                   <div>
-                    <p className="text-slate-100 font-medium">
+                    <p className="text-foreground font-medium">
                       {record.employees?.full_name || `Karyawan ${record.employee_id}`}
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-muted-foreground">
                       Check-in: {record.check_in ? new Date(record.check_in).toLocaleTimeString('id-ID') : '-'}
                     </p>
                   </div>

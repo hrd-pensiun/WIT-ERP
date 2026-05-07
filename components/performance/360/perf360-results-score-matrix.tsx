@@ -90,7 +90,7 @@ const TOTAL_ROW: Perf360ResultsTotalRow = { self: 4.2, atasan: 3.9, rekan: 4.0, 
 function ScoreBar({ value, max = 5 }: { value: number; max?: number }) {
   const pct = Math.min(100, Math.round((value / max) * 100))
   return (
-    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-800">
+    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
       <div className="h-full rounded-full bg-emerald-500/90 transition-all" style={{ width: `${pct}%` }} />
     </div>
   )
@@ -99,7 +99,7 @@ function ScoreBar({ value, max = 5 }: { value: number; max?: number }) {
 function CellScore({ value }: { value: number }) {
   return (
     <div className="min-w-[100px]">
-      <span className="text-sm font-medium text-slate-200">{value.toFixed(1)}</span>
+      <span className="text-sm font-medium text-foreground">{value.toFixed(1)}</span>
       <ScoreBar value={value} />
     </div>
   )
@@ -112,7 +112,7 @@ function fmtScore(v: number | null | undefined): string {
 
 function CellScoreMaybe({ value }: { value: number | null }) {
   if (value == null || !Number.isFinite(value)) {
-    return <span className="text-sm text-slate-600">—</span>
+    return <span className="text-sm text-muted-foreground">—</span>
   }
   return <CellScore value={value} />
 }
@@ -151,24 +151,24 @@ export function Perf360ResultsScoreMatrix({
       </div>
 
       <div>
-        <h3 className="mb-4 font-medium text-slate-200">Rincian skor per kategori</h3>
-        <Card className="overflow-hidden border-slate-800 bg-slate-900">
+        <h3 className="mb-4 font-medium text-foreground">Rincian skor per kategori</h3>
+        <Card className="overflow-hidden ">
           <Table>
             <TableHeader>
-              <TableRow className="border-slate-800 hover:bg-transparent">
-                <TableHead className="text-slate-400">Kategori</TableHead>
-                <TableHead className="text-slate-400">Self</TableHead>
-                <TableHead className="text-slate-400">Atasan</TableHead>
-                <TableHead className="text-slate-400">Rekan</TableHead>
-                <TableHead className="text-slate-400">Bawahan</TableHead>
-                <TableHead className="text-slate-400">Total skor</TableHead>
-                <TableHead className="text-slate-400">Rata-rata</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground">Kategori</TableHead>
+                <TableHead className="text-muted-foreground">Self</TableHead>
+                <TableHead className="text-muted-foreground">Atasan</TableHead>
+                <TableHead className="text-muted-foreground">Rekan</TableHead>
+                <TableHead className="text-muted-foreground">Bawahan</TableHead>
+                <TableHead className="text-muted-foreground">Total skor</TableHead>
+                <TableHead className="text-muted-foreground">Rata-rata</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.category} className="border-slate-800">
-                  <TableCell className="font-medium text-slate-200">{row.category}</TableCell>
+                <TableRow key={row.category} className="border-border">
+                  <TableCell className="font-medium text-foreground">{row.category}</TableCell>
                   <TableCell>
                     <CellScoreMaybe value={row.self} />
                   </TableCell>
@@ -181,7 +181,7 @@ export function Perf360ResultsScoreMatrix({
                   <TableCell>
                     <CellScoreMaybe value={row.bawahan} />
                   </TableCell>
-                  <TableCell className="font-semibold text-slate-200">{fmtScore(row.total)}</TableCell>
+                  <TableCell className="font-semibold text-foreground">{fmtScore(row.total)}</TableCell>
                   <TableCell
                     className={cn(
                       "font-semibold",
@@ -192,13 +192,13 @@ export function Perf360ResultsScoreMatrix({
                   </TableCell>
                 </TableRow>
               ))}
-              <TableRow className="border-slate-800 bg-slate-950/80 font-semibold">
-                <TableCell className="text-slate-200">SKOR TOTAL</TableCell>
+              <TableRow className="border-border bg-background/80 font-semibold">
+                <TableCell className="text-foreground">SKOR TOTAL</TableCell>
                 <TableCell className="text-emerald-400">{fmtScore(totalRow.self)}</TableCell>
                 <TableCell className="text-emerald-400">{fmtScore(totalRow.atasan)}</TableCell>
                 <TableCell className="text-emerald-400">{fmtScore(totalRow.rekan)}</TableCell>
                 <TableCell className="text-emerald-400">{fmtScore(totalRow.bawahan)}</TableCell>
-                <TableCell className="text-slate-500">—</TableCell>
+                <TableCell className="text-muted-foreground">—</TableCell>
                 <TableCell className="text-lg text-emerald-400">{fmtScore(totalRow.overall)}</TableCell>
               </TableRow>
             </TableBody>
@@ -206,14 +206,14 @@ export function Perf360ResultsScoreMatrix({
         </Card>
       </div>
 
-      <Card className="border-l-4 border-l-cyan-500 border-slate-800 bg-slate-950/80">
-        <CardContent className="space-y-2 pt-6 text-sm text-slate-400">
-          <p className="font-medium text-slate-200">Formula perhitungan</p>
+      <Card className="border-l-4 border-l-cyan-500 border-border bg-background/80">
+        <CardContent className="space-y-2 pt-6 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Formula perhitungan</p>
           <p>
             Skor total = (Self × {Math.round(weights.self)}% + Atasan × {Math.round(weights.manager)}% + Rekan ×{" "}
             {Math.round(weights.peer)}% + Bawahan × {Math.round(weights.subordinate)}%)
           </p>
-          <p className="text-xs text-slate-500">Bobot dapat disesuaikan di halaman Konfigurasi.</p>
+          <p className="text-xs text-muted-foreground">Bobot dapat disesuaikan di halaman Konfigurasi.</p>
         </CardContent>
       </Card>
     </div>

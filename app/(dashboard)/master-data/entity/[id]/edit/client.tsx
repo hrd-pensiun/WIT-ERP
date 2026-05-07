@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Building2, Loader2, Save } from "lucide-react"
+import { ArrowLeft, Building2, Loader2, Save, Info, Calculator } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -247,7 +247,7 @@ export default function EntityEditClient({ id }: { id: string }) {
     return (
       <div className="space-y-4">
         <Link href="/master-data/entity">
-          <Button variant="ghost" size="sm" className="text-slate-400">
+          <Button variant="ghost" size="sm" className="text-muted-foreground">
             ← Kembali
           </Button>
         </Link>
@@ -273,14 +273,14 @@ export default function EntityEditClient({ id }: { id: string }) {
           <Button
             variant="ghost"
             size="icon"
-            className="text-slate-400 hover:text-slate-100"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Edit Entity</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Edit Entity</h1>
+          <p className="text-xs text-muted-foreground">
             EDIT-ENTITY : {formData.name || formData.code || "-"}
           </p>
         </div>
@@ -291,29 +291,37 @@ export default function EntityEditClient({ id }: { id: string }) {
         </div>
       )}
       <form onSubmit={handleSubmit}>
-        <Card className="border-slate-800 bg-slate-900">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-100">
-              <Building2 className="h-5 w-5 text-emerald-500" />
-              Pengaturan Entity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        <Card className="border-border bg-card overflow-hidden">
+          {/* Card header with entity title */}
+          <div className="flex items-center gap-3 px-4 pt-4 pb-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/20">
+              <Building2 className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Master Data</p>
+              <h2 className="text-sm font-semibold text-foreground leading-tight">Pengaturan Entity</h2>
+            </div>
+          </div>
+
+          <CardContent className="space-y-0 px-0 pb-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-slate-950 border border-slate-800">
-                <TabsTrigger value="general" className="data-[state=active]:bg-emerald-600">
+              {/* ── Tab bar ── */}
+              <TabsList variant="line" className="px-4">
+                <TabsTrigger value="general">
+                  <Info className="size-3.5" />
                   Informasi Umum
                 </TabsTrigger>
-                <TabsTrigger value="payroll" className="data-[state=active]:bg-emerald-600">
-                  Payroll, BPJS, Pajak
+                <TabsTrigger value="payroll">
+                  <Calculator className="size-3.5" />
+                  Payroll, BPJS &amp; Pajak
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="general" className="mt-4 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3">
+              <TabsContent value="general" className="px-4 pt-5 space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-background/50 px-4 py-3">
               <div className="space-y-1">
-                <Label className="text-slate-200">Kantor pusat</Label>
-                <p className="text-xs text-slate-500">
+                <Label>Kantor pusat</Label>
+                <p className="text-xs text-muted-foreground">
                   Tandai sebagai referensi default & sumber salin master data. Hanya
                   satu entity per tenant yang berstatus kantor pusat.
                 </p>
@@ -328,7 +336,7 @@ export default function EntityEditClient({ id }: { id: string }) {
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-slate-200">
+                <Label>
                   Kode <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -337,11 +345,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, code: e.target.value })
                   }
                   required
-                  className="border-slate-800 bg-slate-950 uppercase text-slate-100"
+                  className="border-border bg-background uppercase text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">
+                <Label>
                   Nama <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -350,11 +358,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">
+                <Label>
                   Tipe <span className="text-red-400">*</span>
                 </Label>
                 <Select
@@ -363,10 +371,10 @@ export default function EntityEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, type: value })
                   }
                 >
-                  <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                  <SelectTrigger className="border-border bg-background text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-slate-800 bg-slate-900">
+                  <SelectContent className="border-border bg-card">
                     <SelectItem value="branch">Cabang (Branch)</SelectItem>
                     <SelectItem value="unit_business">Unit Bisnis</SelectItem>
                     <SelectItem value="subsidiary">Anak Perusahaan</SelectItem>
@@ -374,70 +382,70 @@ export default function EntityEditClient({ id }: { id: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Status</Label>
+                <Label>Status</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
                     setFormData({ ...formData, status: value })
                   }
                 >
-                  <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                  <SelectTrigger className="border-border bg-background text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-slate-800 bg-slate-900">
+                  <SelectContent className="border-border bg-card">
                     <SelectItem value="active">Aktif</SelectItem>
                     <SelectItem value="inactive">Nonaktif</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">NPWP</Label>
+                <Label>NPWP</Label>
                 <Input
                   value={formData.npwp}
                   onChange={(e) =>
                     setFormData({ ...formData, npwp: e.target.value })
                   }
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Email</Label>
+                <Label>Email</Label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Telepon</Label>
+                <Label>Telepon</Label>
                 <Input
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-slate-200">Alamat</Label>
+              <Label>Alamat</Label>
               <Textarea
                 value={formData.address}
                 onChange={(e) =>
                   setFormData({ ...formData, address: e.target.value })
                 }
                 rows={3}
-                className="border-slate-800 bg-slate-950 text-slate-100"
+                className="border-border bg-background text-foreground"
               />
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-slate-200">Kota</Label>
+                <Label>Kota</Label>
                 <AutocompleteInput
                   datalistId={`edit-city-${id}`}
                   suggestions={INDONESIA_MAJOR_CITIES}
@@ -446,11 +454,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, city: e.target.value })
                   }
                   placeholder="Ketik atau pilih"
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Provinsi</Label>
+                <Label>Provinsi</Label>
                 <AutocompleteInput
                   datalistId={`edit-prov-${id}`}
                   suggestions={INDONESIA_PROVINCES}
@@ -459,38 +467,38 @@ export default function EntityEditClient({ id }: { id: string }) {
                     setFormData({ ...formData, province: e.target.value })
                   }
                   placeholder="Ketik atau pilih"
-                  className="border-slate-800 bg-slate-950 text-slate-100"
+                  className="border-border bg-background text-foreground"
                 />
               </div>
             </div>
 
-            <div className="border-t border-slate-800 pt-6">
-              <h3 className="mb-4 text-lg font-medium text-slate-100">
+            <div className="border-t border-border pt-6">
+              <h3 className="mb-4 text-lg font-medium text-foreground">
                 GPS / presensi
               </h3>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-slate-200">Latitude</Label>
+                  <Label>Latitude</Label>
                   <Input
                     value={formData.latitude}
                     onChange={(e) =>
                       setFormData({ ...formData, latitude: e.target.value })
                     }
-                    className="border-slate-800 bg-slate-950 text-slate-100"
+                    className="border-border bg-background text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-200">Longitude</Label>
+                  <Label>Longitude</Label>
                   <Input
                     value={formData.longitude}
                     onChange={(e) =>
                       setFormData({ ...formData, longitude: e.target.value })
                     }
-                    className="border-slate-800 bg-slate-950 text-slate-100"
+                    className="border-border bg-background text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-200">Radius (m)</Label>
+                  <Label>Radius (m)</Label>
                   <Input
                     type="number"
                     min={10}
@@ -502,11 +510,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                         radius_meters: e.target.value,
                       })
                     }
-                    className="border-slate-800 bg-slate-950 text-slate-100"
+                    className="border-border bg-background text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-200">Grace period (menit)</Label>
+                  <Label>Grace period (menit)</Label>
                   <Input
                     type="number"
                     min={0}
@@ -518,7 +526,7 @@ export default function EntityEditClient({ id }: { id: string }) {
                         grace_period_minutes: e.target.value,
                       })
                     }
-                    className="border-slate-800 bg-slate-950 text-slate-100"
+                    className="border-border bg-background text-foreground"
                   />
                 </div>
               </div>
@@ -526,42 +534,42 @@ export default function EntityEditClient({ id }: { id: string }) {
 
               </TabsContent>
 
-              <TabsContent value="payroll" className="mt-4 space-y-6">
+              <TabsContent value="payroll" className="px-4 pt-5 space-y-6">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Tanggal berlaku</Label>
+                    <Label>Tanggal berlaku</Label>
                     <Input
                       type="date"
                       value={payrollForm.effective_date}
                       onChange={(e) =>
                         setPayrollForm({ ...payrollForm, effective_date: e.target.value })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">UMR</Label>
+                    <Label>UMR</Label>
                     <Input
                       type="number"
                       value={payrollForm.umr_amount}
                       onChange={(e) =>
                         setPayrollForm({ ...payrollForm, umr_amount: e.target.value })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Metode PPh21</Label>
+                    <Label>Metode PPh21</Label>
                     <Select
                       value={payrollForm.pph21_method}
                       onValueChange={(value) =>
                         setPayrollForm({ ...payrollForm, pph21_method: value })
                       }
                     >
-                      <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                      <SelectTrigger className="border-border bg-background text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="border-slate-800 bg-slate-900">
+                      <SelectContent className="border-border bg-card">
                         <SelectItem value="ter">TER</SelectItem>
                         <SelectItem value="flat">Flat %</SelectItem>
                         <SelectItem value="gross">Gross</SelectItem>
@@ -574,7 +582,7 @@ export default function EntityEditClient({ id }: { id: string }) {
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-slate-200">BPJS TK karyawan (%)</Label>
+                    <Label>BPJS TK karyawan (%)</Label>
                     <Input
                       type="number"
                       step="0.0001"
@@ -585,11 +593,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                           bpjs_tk_employee_rate: e.target.value,
                         })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">BPJS TK perusahaan (%)</Label>
+                    <Label>BPJS TK perusahaan (%)</Label>
                     <Input
                       type="number"
                       step="0.0001"
@@ -600,11 +608,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                           bpjs_tk_company_rate: e.target.value,
                         })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Batas gaji BPJS TK (opsional)</Label>
+                    <Label>Batas gaji BPJS TK (opsional)</Label>
                     <Input
                       type="number"
                       value={payrollForm.bpjs_tk_salary_cap}
@@ -614,14 +622,14 @@ export default function EntityEditClient({ id }: { id: string }) {
                           bpjs_tk_salary_cap: e.target.value,
                         })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-slate-200">BPJS Kes karyawan (%)</Label>
+                    <Label>BPJS Kes karyawan (%)</Label>
                     <Input
                       type="number"
                       step="0.0001"
@@ -632,11 +640,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                           bpjs_health_employee_rate: e.target.value,
                         })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">BPJS Kes perusahaan (%)</Label>
+                    <Label>BPJS Kes perusahaan (%)</Label>
                     <Input
                       type="number"
                       step="0.0001"
@@ -647,11 +655,11 @@ export default function EntityEditClient({ id }: { id: string }) {
                           bpjs_health_company_rate: e.target.value,
                         })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Batas gaji BPJS Kes (opsional)</Label>
+                    <Label>Batas gaji BPJS Kes (opsional)</Label>
                     <Input
                       type="number"
                       value={payrollForm.bpjs_health_salary_cap}
@@ -661,14 +669,14 @@ export default function EntityEditClient({ id }: { id: string }) {
                           bpjs_health_salary_cap: e.target.value,
                         })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Rate PPh21 (%)</Label>
+                    <Label>Rate PPh21 (%)</Label>
                     <Input
                       type="number"
                       step="0.0001"
@@ -676,21 +684,21 @@ export default function EntityEditClient({ id }: { id: string }) {
                       onChange={(e) =>
                         setPayrollForm({ ...payrollForm, pph21_rate: e.target.value })
                       }
-                      className="border-slate-800 bg-slate-950 text-slate-100"
+                      className="border-border bg-background text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-200">Status config</Label>
+                    <Label>Status config</Label>
                     <Select
                       value={payrollForm.status}
                       onValueChange={(value) =>
                         setPayrollForm({ ...payrollForm, status: value })
                       }
                     >
-                      <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                      <SelectTrigger className="border-border bg-background text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="border-slate-800 bg-slate-900">
+                      <SelectContent className="border-border bg-card">
                         <SelectItem value="active">Aktif</SelectItem>
                         <SelectItem value="inactive">Nonaktif</SelectItem>
                       </SelectContent>
@@ -707,28 +715,28 @@ export default function EntityEditClient({ id }: { id: string }) {
                           })
                         }
                       />
-                      <Label className="text-slate-200">NPWP wajib untuk hitung pajak</Label>
+                      <Label>NPWP wajib untuk hitung pajak</Label>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-slate-200">Catatan konfigurasi</Label>
+                  <Label>Catatan konfigurasi</Label>
                   <Textarea
                     value={payrollForm.notes}
                     onChange={(e) =>
                       setPayrollForm({ ...payrollForm, notes: e.target.value })
                     }
                     rows={3}
-                    className="border-slate-800 bg-slate-950 text-slate-100"
+                    className="border-border bg-background text-foreground"
                   />
                 </div>
               </TabsContent>
             </Tabs>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-6">
+            <div className="flex items-center justify-end gap-3 border-t border-border px-4 py-4 mt-6">
               <Link href="/master-data/entity">
-                <Button type="button" variant="ghost" className="text-slate-400">
+                <Button type="button" variant="ghost" className="text-muted-foreground">
                   Batal
                 </Button>
               </Link>

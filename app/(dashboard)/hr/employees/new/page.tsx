@@ -156,7 +156,7 @@ export default function NewEmployeePage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/hr/employees">
@@ -165,11 +165,11 @@ export default function NewEmployeePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Users className="w-6 h-6 text-emerald-500" />
             Tambah Karyawan
           </h1>
-          <p className="text-slate-400">Isi data karyawan baru</p>
+          <p className="text-muted-foreground">Isi data karyawan baru</p>
         </div>
       </div>
 
@@ -181,16 +181,16 @@ export default function NewEmployeePage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="bg-slate-900 border-slate-800">
+          <TabsList>
             <TabsTrigger value="personal">Data Pribadi</TabsTrigger>
             <TabsTrigger value="employment">Kepegawaian</TabsTrigger>
             <TabsTrigger value="bank">Bank & Dokumen</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal" className="space-y-4">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-slate-100">Data Pribadi</CardTitle>
+                <CardTitle>Data Pribadi</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -198,7 +198,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.full_name}
                     onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="Nama lengkap karyawan"
                     required
                   />
@@ -209,7 +209,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.employee_number}
                     onChange={(e) => setFormData({...formData, employee_number: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="Auto-generate jika kosong"
                   />
                 </div>
@@ -220,7 +220,7 @@ export default function NewEmployeePage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="email@company.com"
                   />
                 </div>
@@ -230,7 +230,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="0812xxxxxxx"
                   />
                 </div>
@@ -241,17 +241,17 @@ export default function NewEmployeePage() {
                     type="date"
                     value={formData.date_of_birth}
                     onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Jenis Kelamin</Label>
                   <Select value={formData.gender} onValueChange={(v) => setFormData({...formData, gender: v})}>
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       <SelectItem value="male">Laki-laki</SelectItem>
                       <SelectItem value="female">Perempuan</SelectItem>
                     </SelectContent>
@@ -261,10 +261,10 @@ export default function NewEmployeePage() {
                 <div className="space-y-2">
                   <Label>Status Pernikahan</Label>
                   <Select value={formData.marital_status} onValueChange={(v) => setFormData({...formData, marital_status: v})}>
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       <SelectItem value="single">Belum Menikah</SelectItem>
                       <SelectItem value="married">Menikah</SelectItem>
                       <SelectItem value="divorced">Cerai</SelectItem>
@@ -277,7 +277,7 @@ export default function NewEmployeePage() {
                   <Textarea
                     value={formData.address}
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="Alamat lengkap"
                     rows={3}
                   />
@@ -287,9 +287,9 @@ export default function NewEmployeePage() {
           </TabsContent>
 
           <TabsContent value="employment" className="space-y-4">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-slate-100">Data Kepegawaian</CardTitle>
+                <CardTitle>Data Kepegawaian</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -298,10 +298,10 @@ export default function NewEmployeePage() {
                     value={formData.department_id || "__none__"}
                     onValueChange={(v) => setFormData({ ...formData, department_id: v === "__none__" ? "" : v })}
                   >
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih departemen" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       <SelectItem value="__none__">-</SelectItem>
                       {departments.map(d => (
                         <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
@@ -313,10 +313,10 @@ export default function NewEmployeePage() {
                 <div className="space-y-2">
                   <Label>Divisi</Label>
                   <Select value={formData.division_id} onValueChange={(v) => setFormData({...formData, division_id: v})}>
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih divisi" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       {divisions.map(d => (
                         <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                       ))}
@@ -336,10 +336,10 @@ export default function NewEmployeePage() {
                       })
                     }
                   >
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih atasan" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       <SelectItem value="__none__">-</SelectItem>
                       {eligibleManagers
                         .map((emp) => (
@@ -351,7 +351,7 @@ export default function NewEmployeePage() {
                     </SelectContent>
                   </Select>
                   {selectedGradeLevel == null ? (
-                    <p className="text-xs text-slate-500">Pilih jabatan/grade dulu agar daftar atasan akurat.</p>
+                    <p className="text-xs text-muted-foreground">Pilih jabatan/grade dulu agar daftar atasan akurat.</p>
                   ) : null}
                 </div>
 
@@ -371,10 +371,10 @@ export default function NewEmployeePage() {
                       })
                     }}
                   >
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih posisi" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       {positions.map(p => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}
@@ -390,10 +390,10 @@ export default function NewEmployeePage() {
                 <div className="space-y-2">
                   <Label>Grade</Label>
                   <Select value={formData.job_grade_id} onValueChange={(v) => setFormData({...formData, job_grade_id: v})}>
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih grade" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       {jobGrades.map(g => (
                         <SelectItem key={g.id} value={g.id}>{g.name} (Level {g.level})</SelectItem>
                       ))}
@@ -404,10 +404,10 @@ export default function NewEmployeePage() {
                 <div className="space-y-2">
                   <Label>Tipe Pekerjaan</Label>
                   <Select value={formData.employment_type} onValueChange={(v) => setFormData({...formData, employment_type: v})}>
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       <SelectItem value="permanent">Karyawan Tetap</SelectItem>
                       <SelectItem value="contract">Kontrak</SelectItem>
                       <SelectItem value="freelance">Freelance</SelectItem>
@@ -419,10 +419,10 @@ export default function NewEmployeePage() {
                 <div className="space-y-2">
                   <Label>Role Aplikasi</Label>
                   <Select value={formData.app_role} onValueChange={(v) => setFormData({...formData, app_role: v})}>
-                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Pilih role" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent>
                       <SelectItem value="employee">Employee</SelectItem>
                       <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="hr_admin">HR Admin</SelectItem>
@@ -437,7 +437,7 @@ export default function NewEmployeePage() {
                     type="date"
                     value={formData.join_date}
                     onChange={(e) => setFormData({...formData, join_date: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     required
                   />
                 </div>
@@ -447,7 +447,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.npwp}
                     onChange={(e) => setFormData({...formData, npwp: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="00.000.000.0-000.000"
                   />
                 </div>
@@ -456,9 +456,9 @@ export default function NewEmployeePage() {
           </TabsContent>
 
           <TabsContent value="bank" className="space-y-4">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-slate-100">Informasi Bank</CardTitle>
+                <CardTitle>Informasi Bank</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -466,7 +466,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.bank_name}
                     onChange={(e) => setFormData({...formData, bank_name: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="BCA, Mandiri, BNI, dll"
                   />
                 </div>
@@ -476,7 +476,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.bank_account_number}
                     onChange={(e) => setFormData({...formData, bank_account_number: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="xxxxxxxxxx"
                   />
                 </div>
@@ -486,7 +486,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.bank_account_name}
                     onChange={(e) => setFormData({...formData, bank_account_name: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="Nama sesuai rekening"
                   />
                 </div>
@@ -496,7 +496,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.emergency_contact_name}
                     onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="Nama kontak darurat"
                   />
                 </div>
@@ -506,7 +506,7 @@ export default function NewEmployeePage() {
                   <Input
                     value={formData.emergency_contact_phone}
                     onChange={(e) => setFormData({...formData, emergency_contact_phone: e.target.value})}
-                    className="bg-slate-950 border-slate-800"
+                    className="bg-background border-border"
                     placeholder="0812xxxxxxx"
                   />
                 </div>
@@ -518,7 +518,7 @@ export default function NewEmployeePage() {
         {/* Actions */}
         <div className="flex justify-end gap-4">
           <Link href="/hr/employees">
-            <Button type="button" variant="outline" className="border-slate-700">
+            <Button type="button" variant="outline" className="border-border">
               Batal
             </Button>
           </Link>
