@@ -133,6 +133,27 @@ export interface DatabaseExtended extends BaseDatabase {
         Insert: Omit<DatabaseExtended['public']['Tables']['leave_requests']['Row'], 'id' | 'created_at' | 'updated_at'> & { id?: string }
         Update: Partial<DatabaseExtended['public']['Tables']['leave_requests']['Insert']>
       }
+
+      employee_leave_balances: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_profile_id: string
+          leave_type_id: string
+          year: number
+          base_quota: number
+          custom_quota: number | null
+          carry_over_days: number
+          used_days: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+          updated_by: string | null
+        }
+        Insert: Omit<DatabaseExtended['public']['Tables']['employee_leave_balances']['Row'], 'id' | 'created_at' | 'updated_at'> & { id?: string }
+        Update: Partial<DatabaseExtended['public']['Tables']['employee_leave_balances']['Insert']>
+      }
       
       // CRM Module
       crm_leads: {
@@ -427,6 +448,12 @@ export type UserProfileInsert = Tables['user_profiles']['Insert']
 export type EmployeeAllowance = Tables['employee_allowances']['Row']
 export type AttendanceRecord = Tables['attendance_records']['Row']
 export type LeaveRequest = Tables['leave_requests']['Row']
+export type EmployeeLeaveBalance = Tables['employee_leave_balances']['Row']
+export type LeaveBalanceWithMeta = EmployeeLeaveBalance & {
+  remaining_days: number
+  effective_quota: number
+  hr_leave_types?: { code: string; name: string }
+}
 
 export type CRMLead = Tables['crm_leads']['Row']
 export type CRMOpportunity = Tables['crm_opportunities']['Row']

@@ -3,20 +3,25 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Loader2, Plus, Save, Trash2, User, UserCircle, Briefcase, Users, GraduationCap, TrendingUp, FolderOpen } from "lucide-react"
+import { ArrowLeft, Loader2, Plus, Save, Trash2, User, UserCircle, Briefcase, Users, GraduationCap, TrendingUp, FolderOpen, Pencil, History, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { useEmployees } from "@/hooks/useEmployees"
 import { useEmployeeProfileDetails } from "@/hooks/useEmployeeProfileDetails"
 import { useDepartments } from "@/hooks/useDepartments"
 import { useDivisions } from "@/hooks/useDivisions"
 import { usePositions } from "@/hooks/usePositions"
 import { useJobGrades } from "@/hooks/useJobGrades"
+import { useAuth } from "@/hooks/useAuth"
+import { useEmployeeCompensation, SALARY_REASONS } from "@/hooks/useEmployeeCompensation"
+import { useSalaryComponents } from "@/hooks/useSalaryComponents"
 
 const DEPARTMENT_OPTIONAL_MIN_LEVEL = 9
 
@@ -124,17 +129,80 @@ const EMPTY_PORTFOLIO_ITEM: PortfolioItem = {
   description: "",
 }
 
+function formatCurrency(n: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n)
+}
+
 export default function EmployeeEditClient({ id }: { id: string }) {
   const router = useRouter()
+  const { hasRole } = useAuth()
+  const isAdmin = hasRole(["hr_admin", "SuperAdmin"])
   const { employees, update, loading: hookLoading, fetchEmployees } = useEmployees()
   const { departments } = useDepartments()
   const { divisions } = useDivisions()
   const { positions } = usePositions()
   const { jobGrades } = useJobGrades()
   const { getProfileDetails, replaceProfileDetails } = useEmployeeProfileDetails()
+  const { salaryHistory, allowances: compAllowances, currentSalary, loading: compLoading, addSalaryEntry, addAllowance, updateAllowance, deleteAllowance, fetchAllowanceHistory } = useEmployeeCompensation(id)
+  const { components: salaryComponents } = useSalaryComponents()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("personal")
+
+  // Salary dialog
+  const [salaryDialogOpen, setSalaryDialogOpen] = useState(false)
+  const [salaryForm, setSalaryForm] = useState({ amount: "", effective_date: "", reason: "", reason_other: "", notes: "" })
+  const [salarySubmitting, setSalarySubmitting] = useState(false)
+
+  // Allowance dialog
+  const BLANK_ALLOWANCE = { salary_component_id: "", amount: "", effective_date: "", reason: "", reason_other: "", notes: "" }
+  const [allowanceDialogOpen, setAllowanceDialogOpen] = useState(false)
+  const [editingAllowanceId, setEditingAllowanceId] = useState<string | null>(null)
+  const [allowanceForm, setAllowanceForm] = useState(BLANK_ALLOWANCE)
+  const [allowanceSubmitting, setAllowanceSubmitting] = useState(false)
+
+  // History modal
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const [historyItems, setHistoryItems] = useState<any[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyTitle, setHistoryTitle] = useState("")
+
+  const openAddAllowance = () => { setEditingAllowanceId(null); setAllowanceForm(BLANK_ALLOWANCE); setAllowanceDialogOpen(true) }
+  const openEditAllowance = (a: any) => {
+    setEditingAllowanceId(a.id)
+    setAllowanceForm({ salary_component_id: a.salary_component_id, amount: String(a.amount), effective_date: a.effective_date || "", reason: "", reason_other: "", notes: a.notes || "" })
+    setAllowanceDialogOpen(true)
+  }
+  const openHistory = async (allowanceId: string, name: string) => {
+    setHistoryTitle(name); setHistoryModalOpen(true); setHistoryLoading(true)
+    setHistoryItems(await fetchAllowanceHistory(allowanceId))
+    setHistoryLoading(false)
+  }
+  const handleSalarySave = async () => {
+    setSalarySubmitting(true)
+    try {
+      await addSalaryEntry({ amount: Number(salaryForm.amount), effective_date: salaryForm.effective_date, reason: salaryForm.reason || undefined, reason_other: salaryForm.reason === "other" ? salaryForm.reason_other : undefined, notes: salaryForm.notes || undefined })
+      setSalaryDialogOpen(false)
+    } finally { setSalarySubmitting(false) }
+  }
+  const handleAllowanceSave = async () => {
+    setAllowanceSubmitting(true)
+    try {
+      const reason = allowanceForm.reason || undefined
+      const reason_other = allowanceForm.reason === "other" ? allowanceForm.reason_other : undefined
+      if (editingAllowanceId) {
+        await updateAllowance(editingAllowanceId, { amount: Number(allowanceForm.amount), effective_date: allowanceForm.effective_date, reason, reason_other, notes: allowanceForm.notes || undefined })
+      } else {
+        await addAllowance({ salary_component_id: allowanceForm.salary_component_id, amount: Number(allowanceForm.amount), effective_date: allowanceForm.effective_date || new Date().toISOString().slice(0, 10), reason, reason_other, notes: allowanceForm.notes || undefined })
+      }
+      setAllowanceDialogOpen(false)
+    } finally { setAllowanceSubmitting(false) }
+  }
+  const handleDeleteAllowance = async (a: any) => {
+    if (!confirm(`Hapus tunjangan "${(a as any).salary_components?.name}"?`)) return
+    await deleteAllowance(a.id)
+  }
+  const reasonLabel = (r: string) => SALARY_REASONS.find((x) => x.value === r)?.label || r
   const [rawDocuments, setRawDocuments] = useState<Record<string, unknown>>({})
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([
     { ...EMPTY_FAMILY_MEMBER },
@@ -663,6 +731,12 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                   <FolderOpen className="size-3.5" />
                   Portfolio
                 </TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger value="kompensasi">
+                    <DollarSign className="size-3.5" />
+                    Kompensasi
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="personal" className="px-4 pt-5">
@@ -1085,10 +1159,220 @@ export default function EmployeeEditClient({ id }: { id: string }) {
                   ))}
                 </div>
               </TabsContent>
+
+              {isAdmin && (
+                <TabsContent value="kompensasi" className="px-4 pt-5 space-y-6">
+                  {/* Gaji Pokok */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-emerald-500" />Gaji Pokok
+                        </CardTitle>
+                        <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSalaryForm({ amount: String(currentSalary?.amount || ""), effective_date: new Date().toISOString().slice(0, 10), reason: "", reason_other: "", notes: "" }); setSalaryDialogOpen(true) }}>
+                          <Pencil className="w-3 h-3 mr-1" />{currentSalary ? "Ubah Gaji" : "Set Gaji Manual"}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {compLoading ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground py-2"><Loader2 className="w-4 h-4 animate-spin" />Memuat...</div>
+                      ) : currentSalary ? (
+                        <div className="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
+                          <div>
+                            <p className="text-2xl font-bold text-foreground">{formatCurrency(currentSalary.amount)}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Berlaku: {currentSalary.effective_date}
+                              {currentSalary.reason && ` · ${reasonLabel(currentSalary.reason)}`}
+                              {currentSalary.reason === "other" && currentSalary.reason_other && `: ${currentSalary.reason_other}`}
+                            </p>
+                          </div>
+                          <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">Override Manual</Badge>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-muted/30 rounded-lg text-sm text-muted-foreground">
+                          Gaji diambil dari <strong>salary matrix</strong> berdasarkan grade karyawan. Set gaji manual untuk override.
+                        </div>
+                      )}
+                      {salaryHistory.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Riwayat Perubahan Gaji</p>
+                          <table className="w-full text-sm">
+                            <thead><tr className="border-b border-border">
+                              <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Tgl Efektif</th>
+                              <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Jumlah</th>
+                              <th className="text-left py-2 font-medium text-muted-foreground">Alasan</th>
+                            </tr></thead>
+                            <tbody>
+                              {salaryHistory.map((s, i) => (
+                                <tr key={s.id} className="border-b border-border/50">
+                                  <td className="py-2 pr-4 text-muted-foreground">{s.effective_date}</td>
+                                  <td className="py-2 pr-4 text-right font-medium">{formatCurrency(s.amount)}</td>
+                                  <td className="py-2 text-muted-foreground text-xs">
+                                    {reasonLabel(s.reason)}{s.reason === "other" && s.reason_other ? `: ${s.reason_other}` : ""}
+                                    {i === 0 && <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 text-xs">Aktif</Badge>}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Tunjangan */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">Tunjangan</CardTitle>
+                        <Button type="button" size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={openAddAllowance}>
+                          <Plus className="w-3 h-3 mr-1" />Tambah
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {compAllowances.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">Belum ada tunjangan.</p>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <thead><tr className="border-b border-border">
+                            <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Komponen</th>
+                            <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Sifat</th>
+                            <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Jumlah</th>
+                            <th className="text-right py-2 font-medium text-muted-foreground">Aksi</th>
+                          </tr></thead>
+                          <tbody>
+                            {compAllowances.map((a) => (
+                              <tr key={a.id} className="border-b border-border/50 hover:bg-muted/30">
+                                <td className="py-2 pr-4 font-medium text-foreground">
+                                  {(a as any).salary_components?.name || "-"}
+                                  <span className="ml-2 text-xs text-muted-foreground">{(a as any).salary_components?.type === "earning" ? "Tunjangan" : "Potongan"}</span>
+                                </td>
+                                <td className="py-2 pr-4">
+                                  <Badge className={(a as any).salary_components?.is_fixed === false ? "bg-yellow-500/20 text-yellow-400 text-xs" : "bg-muted text-muted-foreground text-xs"}>
+                                    {(a as any).salary_components?.is_fixed === false ? "Tidak Tetap" : "Tetap"}
+                                  </Badge>
+                                </td>
+                                <td className="py-2 pr-4 text-right">{formatCurrency(a.amount)}</td>
+                                <td className="py-2 text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => openEditAllowance(a)}><Pencil className="w-3 h-3" /></Button>
+                                    <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-blue-400" onClick={() => openHistory(a.id, (a as any).salary_components?.name || "Tunjangan")}><History className="w-3 h-3" /></Button>
+                                    <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-red-400" onClick={() => handleDeleteAllowance(a)}><Trash2 className="w-3 h-3" /></Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Dialog: Ubah Gaji */}
+                  <Dialog open={salaryDialogOpen} onOpenChange={setSalaryDialogOpen}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader><DialogTitle>{currentSalary ? "Ubah Gaji Pokok" : "Set Gaji Manual"}</DialogTitle></DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2"><Label>Jumlah (Rp) <span className="text-red-400">*</span></Label><Input type="number" min={0} value={salaryForm.amount} onChange={(e) => setSalaryForm({ ...salaryForm, amount: e.target.value })} placeholder="8500000" /></div>
+                        <div className="space-y-2"><Label>Tanggal Efektif <span className="text-red-400">*</span></Label><Input type="date" value={salaryForm.effective_date} onChange={(e) => setSalaryForm({ ...salaryForm, effective_date: e.target.value })} /></div>
+                        <div className="space-y-2">
+                          <Label>Alasan</Label>
+                          <Select value={salaryForm.reason} onValueChange={(v) => setSalaryForm({ ...salaryForm, reason: v, reason_other: "" })}>
+                            <SelectTrigger><SelectValue placeholder="Pilih alasan..." /></SelectTrigger>
+                            <SelectContent>{SALARY_REASONS.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        {salaryForm.reason === "other" && <div className="space-y-2"><Label>Keterangan Lainnya</Label><Input value={salaryForm.reason_other} onChange={(e) => setSalaryForm({ ...salaryForm, reason_other: e.target.value })} /></div>}
+                        <div className="space-y-2"><Label>Catatan</Label><Textarea value={salaryForm.notes} onChange={(e) => setSalaryForm({ ...salaryForm, notes: e.target.value })} rows={2} /></div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={() => setSalaryDialogOpen(false)} disabled={salarySubmitting}>Batal</Button>
+                        <Button type="button" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSalarySave} disabled={salarySubmitting || !salaryForm.amount || !salaryForm.effective_date}>
+                          {salarySubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Simpan
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Dialog: Tunjangan */}
+                  <Dialog open={allowanceDialogOpen} onOpenChange={setAllowanceDialogOpen}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader><DialogTitle>{editingAllowanceId ? "Edit Tunjangan" : "Tambah Tunjangan"}</DialogTitle></DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Komponen <span className="text-red-400">*</span></Label>
+                          <Select value={allowanceForm.salary_component_id} onValueChange={(v) => setAllowanceForm({ ...allowanceForm, salary_component_id: v })} disabled={!!editingAllowanceId}>
+                            <SelectTrigger><SelectValue placeholder="Pilih komponen..." /></SelectTrigger>
+                            <SelectContent>{salaryComponents.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.type === "earning" ? "Tunjangan" : "Potongan"})</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2"><Label>Jumlah (Rp) <span className="text-red-400">*</span></Label><Input type="number" min={0} value={allowanceForm.amount} onChange={(e) => setAllowanceForm({ ...allowanceForm, amount: e.target.value })} /></div>
+                        <div className="space-y-2"><Label>Tanggal Efektif</Label><Input type="date" value={allowanceForm.effective_date} onChange={(e) => setAllowanceForm({ ...allowanceForm, effective_date: e.target.value })} /></div>
+                        <div className="space-y-2">
+                          <Label>Alasan Perubahan</Label>
+                          <Select value={allowanceForm.reason} onValueChange={(v) => setAllowanceForm({ ...allowanceForm, reason: v, reason_other: "" })}>
+                            <SelectTrigger><SelectValue placeholder="Pilih alasan..." /></SelectTrigger>
+                            <SelectContent>{SALARY_REASONS.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        {allowanceForm.reason === "other" && <div className="space-y-2"><Label>Keterangan Lainnya</Label><Input value={allowanceForm.reason_other} onChange={(e) => setAllowanceForm({ ...allowanceForm, reason_other: e.target.value })} /></div>}
+                        <div className="space-y-2"><Label>Catatan</Label><Textarea value={allowanceForm.notes} onChange={(e) => setAllowanceForm({ ...allowanceForm, notes: e.target.value })} rows={2} /></div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={() => setAllowanceDialogOpen(false)} disabled={allowanceSubmitting}>Batal</Button>
+                        <Button type="button" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleAllowanceSave} disabled={allowanceSubmitting || !allowanceForm.amount}>
+                          {allowanceSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Simpan
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Modal: Riwayat Tunjangan */}
+                  <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader><DialogTitle>Riwayat — {historyTitle}</DialogTitle></DialogHeader>
+                      {historyLoading ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center"><Loader2 className="w-4 h-4 animate-spin" />Memuat...</div>
+                      ) : historyItems.length === 0 ? (
+                        <p className="text-muted-foreground text-sm py-4">Belum ada riwayat perubahan.</p>
+                      ) : (
+                        <div className="overflow-x-auto max-h-80">
+                          <table className="w-full text-sm">
+                            <thead><tr className="border-b border-border">
+                              <th className="text-left py-2 pr-3 font-medium text-muted-foreground">Tanggal</th>
+                              <th className="text-left py-2 pr-3 font-medium text-muted-foreground">Tipe</th>
+                              <th className="text-right py-2 pr-3 font-medium text-muted-foreground">Lama</th>
+                              <th className="text-right py-2 font-medium text-muted-foreground">Baru</th>
+                            </tr></thead>
+                            <tbody>
+                              {historyItems.map((h) => (
+                                <tr key={h.id} className="border-b border-border/50">
+                                  <td className="py-2 pr-3 text-muted-foreground">{new Date(h.created_at).toLocaleDateString("id-ID")}</td>
+                                  <td className="py-2 pr-3">
+                                    <Badge className={h.change_type === "create" ? "bg-emerald-500/20 text-emerald-400 text-xs" : h.change_type === "delete" ? "bg-red-500/20 text-red-400 text-xs" : "bg-blue-500/20 text-blue-400 text-xs"}>
+                                      {h.change_type === "create" ? "Tambah" : h.change_type === "delete" ? "Hapus" : "Ubah"}
+                                    </Badge>
+                                  </td>
+                                  <td className="py-2 pr-3 text-right text-muted-foreground">{h.old_amount != null ? formatCurrency(h.old_amount) : "—"}</td>
+                                  <td className="py-2 text-right">{h.new_amount != null ? formatCurrency(h.new_amount) : "—"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </TabsContent>
+              )}
             </Tabs>
             <div className="flex items-center justify-end gap-3 px-4 py-4 mt-4 border-t border-border">
               <Link href={`/hr/employees/${id}`}><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
-              <Button type="submit" disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</> : <><Save className="w-4 h-4 mr-2" />Simpan Perubahan</>}</Button>
+              {activeTab !== "kompensasi" && (
+                <Button type="submit" disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</> : <><Save className="w-4 h-4 mr-2" />Simpan Perubahan</>}</Button>
+              )}
             </div>
           </CardContent>
         </Card>

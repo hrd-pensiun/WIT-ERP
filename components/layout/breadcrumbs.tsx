@@ -43,6 +43,13 @@ const SEGMENT_LABELS: Record<string, string> = {
   edit: "Edit",
   generate: "Generate",
   login: "Login",
+  // Payroll module
+  compensation: "Kompensasi Karyawan",
+  processing: "Proses Penggajian",
+  approval: "Persetujuan Payroll",
+  slips: "Slip Gaji & Pembayaran",
+  tax: "Pajak & Potongan",
+  analytics: "Analitik Payroll",
 };
 
 function isIdentifier(segment: string): boolean {

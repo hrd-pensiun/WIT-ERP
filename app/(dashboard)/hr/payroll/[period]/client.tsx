@@ -37,7 +37,7 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/hr/payroll"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
+          <Link href="/payroll/processing"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Detail Payroll</h1>
             <p className="text-muted-foreground">

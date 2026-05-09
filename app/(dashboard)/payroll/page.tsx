@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
-export default function HrPayrollRedirect() {
+export default function PayrollIndexPage() {
   redirect("/payroll/processing")
 }

@@ -17,6 +17,7 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
+  Banknote,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
@@ -48,7 +49,20 @@ const navigation: NavItem[] = [
       { name: "Employees", href: "/hr/employees" },
       { name: "Attendance", href: "/hr/attendance" },
       { name: "Leave", href: "/hr/leave" },
-      { name: "Payroll", href: "/hr/payroll" },
+    ],
+  },
+  {
+    name: "Payroll",
+    href: "/payroll",
+    icon: Banknote,
+    children: [
+      { name: "Kompensasi Karyawan",   href: "/payroll/compensation" },
+      { name: "Proses Penggajian",      href: "/payroll/processing" },
+      { name: "Persetujuan Payroll",    href: "/payroll/approval" },
+      { name: "Slip Gaji & Pembayaran", href: "/payroll/slips" },
+      { name: "Pajak & Potongan",       href: "/payroll/tax" },
+      { name: "Laporan Payroll",        href: "/payroll/reports" },
+      { name: "Analitik Payroll",       href: "/payroll/analytics" },
     ],
   },
   {

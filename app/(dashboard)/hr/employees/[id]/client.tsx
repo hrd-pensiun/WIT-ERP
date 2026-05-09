@@ -12,17 +12,45 @@ import {
   Phone,
   User,
   Wallet,
+  History,
+  TrendingUp,
 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEmployees } from "@/hooks/useEmployees"
 import { useEmployeeProfileDetails } from "@/hooks/useEmployeeProfileDetails"
+import { useEmployeePayroll } from "@/hooks/useEmployeePayroll"
+import { useEmployeeCompensation, SALARY_REASONS } from "@/hooks/useEmployeeCompensation"
+
+function formatCurrency(n: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n)
+}
 
 export default function EmployeeDetailClient({ id }: { id: string }) {
   const { getEmployee } = useEmployees()
   const { getProfileDetails } = useEmployeeProfileDetails()
+  const { payrollHistory, latestPayroll, loading: payrollLoading } = useEmployeePayroll(id)
+  const { salaryHistory, allowances: compAllowances, currentSalary, loading: compLoading, fetchAllowanceHistory } = useEmployeeCompensation(id)
+
+  // History modal (read-only)
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const [historyItems, setHistoryItems] = useState<any[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyTitle, setHistoryTitle] = useState("")
+
+  const openHistory = async (allowanceId: string, name: string) => {
+    setHistoryTitle(name)
+    setHistoryModalOpen(true)
+    setHistoryLoading(true)
+    const items = await fetchAllowanceHistory(allowanceId)
+    setHistoryItems(items)
+    setHistoryLoading(false)
+  }
+
+  const reasonLabel = (r: string) => SALARY_REASONS.find((x) => x.value === r)?.label || r
   const [employee, setEmployee] = useState<any>(null)
   const [detailLoading, setDetailLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -154,6 +182,7 @@ export default function EmployeeDetailClient({ id }: { id: string }) {
           <TabsTrigger value="education">Pendidikan</TabsTrigger>
           <TabsTrigger value="career">Karier</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+          <TabsTrigger value="kompensasi">Kompensasi</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -276,6 +305,229 @@ export default function EmployeeDetailClient({ id }: { id: string }) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="kompensasi" className="mt-4 space-y-6">
+
+          {/* === Section A: Gaji Pokok === */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                Gaji Pokok
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {compLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />Memuat...
+                </div>
+              ) : currentSalary ? (
+                <div className="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{formatCurrency(currentSalary.amount)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Berlaku: {currentSalary.effective_date}
+                      {currentSalary.reason && ` · ${reasonLabel(currentSalary.reason)}`}
+                      {currentSalary.reason === "other" && currentSalary.reason_other && `: ${currentSalary.reason_other}`}
+                    </p>
+                  </div>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">Override Manual</Badge>
+                </div>
+              ) : (
+                <div className="p-4 bg-muted/30 rounded-lg text-sm text-muted-foreground">
+                  Gaji diambil dari <strong>salary matrix</strong> berdasarkan grade karyawan.
+                </div>
+              )}
+
+              {salaryHistory.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Riwayat Perubahan Gaji</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Tgl Efektif</th>
+                          <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Jumlah</th>
+                          <th className="text-left py-2 font-medium text-muted-foreground">Alasan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salaryHistory.map((s, i) => (
+                          <tr key={s.id} className="border-b border-border/50">
+                            <td className="py-2 pr-4 text-muted-foreground">{s.effective_date}</td>
+                            <td className="py-2 pr-4 text-right font-medium text-foreground">{formatCurrency(s.amount)}</td>
+                            <td className="py-2 text-muted-foreground text-xs">
+                              {reasonLabel(s.reason)}
+                              {s.reason === "other" && s.reason_other ? `: ${s.reason_other}` : ""}
+                              {i === 0 && <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 text-xs">Aktif</Badge>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* === Section B: Tunjangan === */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Tunjangan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {compAllowances.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Belum ada tunjangan.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Komponen</th>
+                        <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Sifat</th>
+                        <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Jumlah</th>
+                        <th className="text-right py-2 font-medium text-muted-foreground">Riwayat</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {compAllowances.map((a) => (
+                        <tr key={a.id} className="border-b border-border/50 hover:bg-muted/30">
+                          <td className="py-2 pr-4 font-medium text-foreground">
+                            {(a as any).salary_components?.name || "-"}
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {(a as any).salary_components?.type === "earning" ? "Tunjangan" : "Potongan"}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-4">
+                            <Badge className={(a as any).salary_components?.is_fixed === false ? "bg-yellow-500/20 text-yellow-400 text-xs" : "bg-muted text-muted-foreground text-xs"}>
+                              {(a as any).salary_components?.is_fixed === false ? "Tidak Tetap" : "Tetap"}
+                            </Badge>
+                          </td>
+                          <td className="py-2 pr-4 text-right">{formatCurrency(a.amount)}</td>
+                          <td className="py-2 text-right">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-blue-400" onClick={() => openHistory(a.id, (a as any).salary_components?.name || "Tunjangan")}>
+                              <History className="w-3 h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* === Section C: Payroll Terakhir === */}
+          {latestPayroll && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">
+                Payroll Terakhir — {(latestPayroll as any).payroll_periods?.name || "—"}
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "Gaji Pokok", value: latestPayroll.basic_salary },
+                  { label: "Total Tunjangan", value: latestPayroll.total_allowances },
+                  { label: "Total Potongan", value: latestPayroll.total_deductions },
+                  { label: "Gaji Bersih", value: latestPayroll.net_salary },
+                ].map(({ label, value }) => (
+                  <Card key={label}>
+                    <CardContent className="p-4">
+                      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                      <p className="font-bold text-foreground text-sm">{formatCurrency(value || 0)}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* === Section D: Riwayat Payroll === */}
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-base">Riwayat Payroll</CardTitle></CardHeader>
+            <CardContent>
+              {payrollLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                  <Loader2 className="w-4 h-4 animate-spin" />Memuat...
+                </div>
+              ) : payrollHistory.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Belum ada riwayat payroll.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Periode</th>
+                        <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Gaji Pokok</th>
+                        <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Gaji Bersih</th>
+                        <th className="text-center py-2 font-medium text-muted-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payrollHistory.map((p) => (
+                        <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
+                          <td className="py-2 pr-4 text-foreground">{(p as any).payroll_periods?.name || "—"}</td>
+                          <td className="py-2 pr-4 text-right text-muted-foreground">{formatCurrency(p.basic_salary || 0)}</td>
+                          <td className="py-2 pr-4 text-right font-medium text-foreground">{formatCurrency(p.net_salary || 0)}</td>
+                          <td className="py-2 text-center">
+                            <Badge className={p.status === "paid" ? "bg-emerald-500/20 text-emerald-400" : p.status === "approved" ? "bg-blue-500/20 text-blue-400" : "bg-muted text-muted-foreground"}>
+                              {p.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* === Modal: Riwayat Tunjangan (read-only) === */}
+          <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Riwayat — {historyTitle}</DialogTitle>
+              </DialogHeader>
+              {historyLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
+                  <Loader2 className="w-4 h-4 animate-spin" />Memuat...
+                </div>
+              ) : historyItems.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-4">Belum ada riwayat perubahan.</p>
+              ) : (
+                <div className="overflow-x-auto max-h-80">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 pr-3 font-medium text-muted-foreground">Tanggal</th>
+                        <th className="text-left py-2 pr-3 font-medium text-muted-foreground">Tipe</th>
+                        <th className="text-right py-2 pr-3 font-medium text-muted-foreground">Lama</th>
+                        <th className="text-right py-2 font-medium text-muted-foreground">Baru</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyItems.map((h) => (
+                        <tr key={h.id} className="border-b border-border/50">
+                          <td className="py-2 pr-3 text-muted-foreground">{new Date(h.created_at).toLocaleDateString("id-ID")}</td>
+                          <td className="py-2 pr-3">
+                            <Badge className={h.change_type === "create" ? "bg-emerald-500/20 text-emerald-400 text-xs" : h.change_type === "delete" ? "bg-red-500/20 text-red-400 text-xs" : "bg-blue-500/20 text-blue-400 text-xs"}>
+                              {h.change_type === "create" ? "Tambah" : h.change_type === "delete" ? "Hapus" : "Ubah"}
+                            </Badge>
+                          </td>
+                          <td className="py-2 pr-3 text-right text-muted-foreground">{h.old_amount != null ? formatCurrency(h.old_amount) : "—"}</td>
+                          <td className="py-2 text-right">{h.new_amount != null ? formatCurrency(h.new_amount) : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
         </TabsContent>
       </Tabs>
     </div>

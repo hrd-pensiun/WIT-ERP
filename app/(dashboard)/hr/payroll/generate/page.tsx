@@ -59,7 +59,7 @@ export default function GeneratePayrollPage() {
       if (summary.errors.length > 0) {
         console.warn("Payroll generation issues:", summary.errors)
       }
-      router.push(`/hr/payroll/${result.id}`)
+      router.push(`/payroll/processing`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate payroll")
     } finally {
@@ -77,7 +77,7 @@ export default function GeneratePayrollPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/hr/payroll"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
+        <Link href="/payroll/processing"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
         <div><h1 className="text-2xl font-bold text-foreground">Generate Payroll</h1><p className="text-muted-foreground text-sm">Buat payroll periode baru</p></div>
       </div>
       {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg">{error}</div>}
@@ -124,7 +124,7 @@ export default function GeneratePayrollPage() {
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
-              <Link href="/hr/payroll"><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
+              <Link href="/payroll/processing"><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
               <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">{loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generate detail payroll...</> : "Generate Payroll"}</Button>
             </div>
           </CardContent>
