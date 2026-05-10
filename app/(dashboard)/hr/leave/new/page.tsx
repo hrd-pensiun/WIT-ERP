@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLeave } from "@/hooks/useLeave"
 import { useLeaveBalance } from "@/hooks/useLeaveBalance"
 import { useEmployees } from "@/hooks/useEmployees"
+import { useWorkCalendar } from "@/hooks/useWorkCalendar"
+import { countWorkingDaysWithHolidays } from "@/lib/attendance-utils"
 import { insForge } from "@/lib/insforge"
 import { getTenantId } from "@/lib/tenant"
 import Link from "next/link"
@@ -22,9 +24,11 @@ export default function NewLeavePage() {
   const { createLeave, loading } = useLeave()
   const { employees } = useEmployees()
   const { fetchBalances, getRemaining } = useLeaveBalance()
+  const { fetchHolidaysInRange } = useWorkCalendar()
 
   const [error, setError] = useState<string | null>(null)
   const [leaveTypes, setLeaveTypes] = useState<any[]>([])
+  const [calculatedDays, setCalculatedDays] = useState<number>(0)
   const [formData, setFormData] = useState({
     user_profile_id: "",
     leave_type_id: "",
@@ -51,13 +55,18 @@ export default function NewLeavePage() {
     fetchBalances({ user_profile_id: formData.user_profile_id, year: currentYear })
   }, [formData.user_profile_id, currentYear, fetchBalances])
 
-  const calculateDays = () => {
-    if (!formData.start_date || !formData.end_date) return 0
-    const start = new Date(formData.start_date)
-    const end = new Date(formData.end_date)
-    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-    return diff > 0 ? diff : 0
-  }
+  // Recalculate working days (excluding weekends + holidays) when dates change
+  useEffect(() => {
+    if (!formData.start_date || !formData.end_date) { setCalculatedDays(0); return }
+    fetchHolidaysInRange(formData.start_date, formData.end_date).then((holidays) => {
+      const holidayDates = holidays.map((h: any) => h.date)
+      setCalculatedDays(
+        countWorkingDaysWithHolidays(formData.start_date, formData.end_date, holidayDates)
+      )
+    })
+  }, [formData.start_date, formData.end_date, fetchHolidaysInRange])
+
+  const calculateDays = () => calculatedDays
 
   const remaining =
     formData.user_profile_id && formData.leave_type_id

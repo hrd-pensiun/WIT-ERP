@@ -11,26 +11,33 @@ export function useAttendance(tenantId: string = getTenantId(), options?: { poll
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchAttendance = useCallback(async (filters?: { date?: string; employee_id?: string }) => {
+  const fetchAttendance = useCallback(async (filters?: {
+    date?: string
+    date_from?: string
+    date_to?: string
+    employee_id?: string
+  }) => {
     if (!insForge) {
       setError('Database not connected')
       return []
     }
-    
+
     setLoading(true)
     setError(null)
-    
+
     try {
-      let query = insForge
+      let query = (insForge as any)
         .from('attendance_records')
-        .select(`*, user_profiles:user_profile_id(full_name, employee_number)`)
+        .select(`*, user_profiles:user_profile_id(id, full_name, employee_number)`)
         .eq('tenant_id', tenantId)
-      
+
       if (filters?.date) query = query.eq('date', filters.date)
+      if (filters?.date_from) query = query.gte('date', filters.date_from)
+      if (filters?.date_to) query = query.lte('date', filters.date_to)
       if (filters?.employee_id) query = query.eq('user_profile_id', filters.employee_id)
-      
-      const { data, error: apiError } = await query.order('date', { ascending: false })
-      
+
+      const { data, error: apiError } = await query.order('date', { ascending: false }).order('user_profile_id')
+
       if (apiError) throw apiError
       setAttendance(data || [])
       return data || []

@@ -39,6 +39,7 @@ const navigation: NavItem[] = [
       { name: "Entity", href: "/master-data/entity" },
       { name: "Organization", href: "/master-data/organization" },
       { name: "Payroll Config", href: "/master-data/payroll" },
+      { name: "Kalender & Shift", href: "/master-data/hr" },
     ],
   },
   {

@@ -1,13 +1,17 @@
 "use client"
 
-import { useState, useRef, useMemo } from "react"
-import { Plus, Wallet, Calculator, Percent, Pencil, Trash2, Loader2, CheckCircle2, X, Building2, Users } from "lucide-react"
+import { useState, useRef, useMemo, useEffect, useCallback } from "react"
+import { Plus, Wallet, Calculator, Percent, Pencil, Trash2, Loader2, CheckCircle2, X, Building2, Users, CalendarDays, Edit2, Save, Info } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { useSalaryComponents } from "@/hooks/useSalaryComponents"
 import { useJobGrades } from "@/hooks/useJobGrades"
 import { useAllowanceMatrix } from "@/hooks/useAllowanceMatrix"
@@ -15,7 +19,9 @@ import { usePositionAllowanceEligibility } from "@/hooks/usePositionAllowanceEli
 import { usePositions } from "@/hooks/usePositions"
 import { useEntities } from "@/hooks/useEntities"
 import { useDivisions } from "@/hooks/useDivisions"
+import { usePayrollCutoffConfig, PayrollCutoffConfig, PayrollPeriodOverride } from "@/hooks/usePayrollCutoffConfig"
 import { getTenantId } from "@/lib/tenant"
+import { computeCutoffDates, cutoffLabel, lastDayOfMonth } from "@/lib/payroll-cutoff-utils"
 
 export default function PayrollConfigPage() {
   const [activeTab, setActiveTab] = useState("components")
@@ -70,6 +76,9 @@ export default function PayrollConfigPage() {
           </TabsTrigger>
           <TabsTrigger value="bopp" className="data-[state=active]:bg-emerald-600">
             BOPP Formula
+          </TabsTrigger>
+          <TabsTrigger value="cutoff" className="data-[state=active]:bg-emerald-600">
+            Cut-off &amp; Periode
           </TabsTrigger>
         </TabsList>
 
@@ -289,6 +298,11 @@ export default function PayrollConfigPage() {
               BOPP Formula configuration coming soon...
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Cut-off & Periode Tab */}
+        <TabsContent value="cutoff" className="mt-4">
+          <CutoffTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -898,5 +912,460 @@ function AllowanceMatrixTab({
         )}
       </CardContent>
     </Card>
+  )
+}
+
+// ─── Cut-off & Periode Tab ───────────────────────────────────────────────────
+
+const CURRENT_YEAR  = new Date().getFullYear()
+const CURRENT_MONTH = new Date().getMonth() + 1
+
+interface CutoffFormState {
+  paygroup_name: string
+  att_cutoff_start_day: string
+  att_cutoff_start_prev_month: boolean
+  att_cutoff_end_day: string
+  pay_cutoff_start_day: string
+  pay_cutoff_start_prev_month: boolean
+  pay_cutoff_end_day: string
+  enable_prorata: boolean
+  prorata_divisor: string
+  notes: string
+}
+
+function emptyCutoffForm(): CutoffFormState {
+  return {
+    paygroup_name: "",
+    att_cutoff_start_day: "21",
+    att_cutoff_start_prev_month: true,
+    att_cutoff_end_day: "20",
+    pay_cutoff_start_day: "1",
+    pay_cutoff_start_prev_month: false,
+    pay_cutoff_end_day: "31",
+    enable_prorata: true,
+    prorata_divisor: "30",
+    notes: "",
+  }
+}
+
+function configToForm(c: PayrollCutoffConfig): CutoffFormState {
+  return {
+    paygroup_name: c.paygroup_name ?? "",
+    att_cutoff_start_day: String(c.att_cutoff_start_day),
+    att_cutoff_start_prev_month: c.att_cutoff_start_prev_month,
+    att_cutoff_end_day: String(c.att_cutoff_end_day),
+    pay_cutoff_start_day: String(c.pay_cutoff_start_day),
+    pay_cutoff_start_prev_month: c.pay_cutoff_start_prev_month,
+    pay_cutoff_end_day: String(c.pay_cutoff_end_day),
+    enable_prorata: c.enable_prorata,
+    prorata_divisor: String(c.prorata_divisor),
+    notes: c.notes ?? "",
+  }
+}
+
+function previewDates(form: CutoffFormState, year = CURRENT_YEAR, month = CURRENT_MONTH) {
+  try {
+    return computeCutoffDates({
+      att_cutoff_start_day: Number(form.att_cutoff_start_day) || 21,
+      att_cutoff_start_prev_month: form.att_cutoff_start_prev_month,
+      att_cutoff_end_day: Number(form.att_cutoff_end_day) || 20,
+      pay_cutoff_start_day: Number(form.pay_cutoff_start_day) || 1,
+      pay_cutoff_start_prev_month: form.pay_cutoff_start_prev_month,
+      pay_cutoff_end_day: Number(form.pay_cutoff_end_day) || 31,
+    }, year, month)
+  } catch { return null }
+}
+
+function CutoffConfigDialog({
+  open, onClose, onSave, entityId, initialForm,
+}: {
+  open: boolean; onClose: () => void; onSave: (form: CutoffFormState) => Promise<void>
+  entityId: string; initialForm: CutoffFormState
+}) {
+  const [form, setForm] = useState<CutoffFormState>(initialForm)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  useEffect(() => { setForm(initialForm); setErr(null) }, [open, initialForm])
+
+  const p = (k: keyof CutoffFormState, v: any) => setForm((prev) => ({ ...prev, [k]: v }))
+  const preview = previewDates(form)
+
+  const handleSave = async () => {
+    setSaving(true); setErr(null)
+    try { await onSave(form); onClose() }
+    catch (e: any) { setErr(e.message) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Konfigurasi Cut-off</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {err && <p className="text-sm text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">{err}</p>}
+
+          <div className="space-y-1.5">
+            <Label>Nama Kelompok (Paygroup)</Label>
+            <Input value={form.paygroup_name} onChange={(e) => p("paygroup_name", e.target.value)}
+              placeholder="Kosongkan untuk berlaku ke semua karyawan" />
+            <p className="text-xs text-muted-foreground">Contoh: Staff, Operator, Kasir</p>
+          </div>
+
+          {/* Attendance cut-off */}
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground">Periode Absensi</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Mulai — hari ke-</Label>
+                <Input type="number" min={1} max={31} value={form.att_cutoff_start_day}
+                  onChange={(e) => p("att_cutoff_start_day", e.target.value)} />
+                <div className="flex items-center gap-2">
+                  <Switch size="sm" checked={form.att_cutoff_start_prev_month}
+                    onCheckedChange={(v) => p("att_cutoff_start_prev_month", v)} />
+                  <span className="text-xs text-muted-foreground">Bulan sebelumnya</span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Selesai — hari ke-</Label>
+                <Input type="number" min={1} max={31} value={form.att_cutoff_end_day}
+                  onChange={(e) => p("att_cutoff_end_day", e.target.value)} />
+                <p className="text-xs text-muted-foreground">Bulan ini</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Payroll cut-off */}
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground">Periode Gaji</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Mulai — hari ke-</Label>
+                <Input type="number" min={1} max={31} value={form.pay_cutoff_start_day}
+                  onChange={(e) => p("pay_cutoff_start_day", e.target.value)} />
+                <div className="flex items-center gap-2">
+                  <Switch size="sm" checked={form.pay_cutoff_start_prev_month}
+                    onCheckedChange={(v) => p("pay_cutoff_start_prev_month", v)} />
+                  <span className="text-xs text-muted-foreground">Bulan sebelumnya</span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Selesai — hari ke- (31 = akhir bulan)</Label>
+                <Input type="number" min={1} max={31} value={form.pay_cutoff_end_day}
+                  onChange={(e) => p("pay_cutoff_end_day", e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          {/* Preview */}
+          {preview && (
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
+              <p className="font-semibold text-emerald-400">Preview bulan ini ({CURRENT_YEAR}/{String(CURRENT_MONTH).padStart(2,"0")})</p>
+              <p className="text-muted-foreground">Absensi: <strong className="text-foreground">{preview.attStart}</strong> s/d <strong className="text-foreground">{preview.attEnd}</strong></p>
+              <p className="text-muted-foreground">Gaji: <strong className="text-foreground">{preview.payStart}</strong> s/d <strong className="text-foreground">{preview.payEnd}</strong></p>
+            </div>
+          )}
+
+          {/* Prorata */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+            <div>
+              <p className="text-sm font-medium text-foreground">Prorata Karyawan Baru</p>
+              <p className="text-xs text-muted-foreground">Gaji dihitung proporsional sesuai tanggal bergabung</p>
+            </div>
+            <Switch checked={form.enable_prorata} onCheckedChange={(v) => p("enable_prorata", v)} />
+          </div>
+          {form.enable_prorata && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Pembagi Prorata (hari)</Label>
+              <Input type="number" min={1} max={31} value={form.prorata_divisor}
+                onChange={(e) => p("prorata_divisor", e.target.value)} className="max-w-[120px]" />
+              <p className="text-xs text-muted-foreground">Standard: 30 hari. Formula: Gaji ÷ {form.prorata_divisor || 30} × Hari Kerja dalam Periode</p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Batal</Button>
+          <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+            {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+            Simpan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function OverrideDialog({
+  open, onClose, onSave, entityId, year, month,
+}: {
+  open: boolean; onClose: () => void
+  onSave: (data: Omit<PayrollPeriodOverride, "id" | "tenant_id">) => Promise<void>
+  entityId: string; year: number; month: number
+}) {
+  const monthStart = `${year}-${String(month).padStart(2,"0")}-01`
+  const monthEnd   = `${year}-${String(month).padStart(2,"0")}-${lastDayOfMonth(year, month)}`
+  const [form, setForm] = useState({ attStart: monthStart, attEnd: monthEnd, payStart: monthStart, payEnd: monthEnd, reason: "" })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]       = useState<string | null>(null)
+  useEffect(() => { setForm({ attStart: monthStart, attEnd: monthEnd, payStart: monthStart, payEnd: monthEnd, reason: "" }); setErr(null) }, [open])
+
+  const handleSave = async () => {
+    setSaving(true); setErr(null)
+    try {
+      await onSave({ entity_id: entityId, period_year: year, period_month: month, paygroup_name: null,
+        attendance_start_date: form.attStart, attendance_end_date: form.attEnd,
+        payroll_start_date: form.payStart, payroll_end_date: form.payEnd, reason: form.reason || null })
+      onClose()
+    } catch (e: any) { setErr(e.message) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Override Cut-off Bulan Ini</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-2">
+          {err && <p className="text-sm text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">{err}</p>}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label className="text-xs">Absensi Mulai</Label><Input type="date" value={form.attStart} onChange={(e) => setForm((p) => ({ ...p, attStart: e.target.value }))} /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Absensi Selesai</Label><Input type="date" value={form.attEnd} onChange={(e) => setForm((p) => ({ ...p, attEnd: e.target.value }))} /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Gaji Mulai</Label><Input type="date" value={form.payStart} onChange={(e) => setForm((p) => ({ ...p, payStart: e.target.value }))} /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Gaji Selesai</Label><Input type="date" value={form.payEnd} onChange={(e) => setForm((p) => ({ ...p, payEnd: e.target.value }))} /></div>
+          </div>
+          <div className="space-y-1.5"><Label className="text-xs">Alasan Override</Label><Input value={form.reason} onChange={(e) => setForm((p) => ({ ...p, reason: e.target.value }))} placeholder="Contoh: Penyesuaian Lebaran" /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Batal</Button>
+          <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+            {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}Simpan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function CutoffTab() {
+  const { entities } = useEntities()
+  const { configs, overrides, loading, fetchConfigs, upsertConfig, deleteConfig, fetchOverrides, upsertOverride, deleteOverride } = usePayrollCutoffConfig()
+
+  const [entityId, setEntityId] = useState<string>("")
+  const [overrideYear, setOverrideYear]   = useState(CURRENT_YEAR)
+  const [overrideMonth, setOverrideMonth] = useState(CURRENT_MONTH)
+  const [configDialogOpen, setConfigDialogOpen] = useState(false)
+  const [overrideDialogOpen, setOverrideDialogOpen] = useState(false)
+  const [editingConfig, setEditingConfig] = useState<PayrollCutoffConfig | null>(null)
+  const [actionErr, setActionErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!entityId) return
+    fetchConfigs(entityId)
+  }, [entityId]) // eslint-disable-line
+
+  useEffect(() => {
+    if (!entityId) return
+    fetchOverrides(entityId, overrideYear, overrideMonth)
+  }, [entityId, overrideYear, overrideMonth]) // eslint-disable-line
+
+  const entityConfigs = configs.filter((c) => c.entity_id === entityId)
+  const monthOverrides = overrides.filter(
+    (o) => o.entity_id === entityId && o.period_year === overrideYear && o.period_month === overrideMonth
+  )
+
+  const handleSaveConfig = async (form: CutoffFormState) => {
+    await upsertConfig({
+      entity_id: entityId,
+      paygroup_name: form.paygroup_name || null,
+      att_cutoff_start_day: Number(form.att_cutoff_start_day),
+      att_cutoff_start_prev_month: form.att_cutoff_start_prev_month,
+      att_cutoff_end_day: Number(form.att_cutoff_end_day),
+      pay_cutoff_start_day: Number(form.pay_cutoff_start_day),
+      pay_cutoff_start_prev_month: form.pay_cutoff_start_prev_month,
+      pay_cutoff_end_day: Number(form.pay_cutoff_end_day),
+      enable_prorata: form.enable_prorata,
+      prorata_divisor: Number(form.prorata_divisor) || 30,
+      is_default: true,
+      status: "active",
+      notes: form.notes || null,
+    })
+    setEditingConfig(null)
+  }
+
+  const MONTH_LABELS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+
+  return (
+    <div className="space-y-6">
+      {actionErr && <div className="text-sm text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">{actionErr}</div>}
+
+      {/* Entity selector */}
+      <div className="max-w-sm space-y-1.5">
+        <Label>Entitas</Label>
+        <Select value={entityId || undefined} onValueChange={setEntityId}>
+          <SelectTrigger><SelectValue placeholder="Pilih entitas..." /></SelectTrigger>
+          <SelectContent>{entities.map((e) => <SelectItem key={e.id} value={String(e.id)}>{e.name}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+
+      {entityId && (
+        <>
+          {/* ── Recurring Config ── */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-foreground flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-emerald-500" /> Konfigurasi Cut-off Berulang
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">Berlaku setiap bulan kecuali ada override</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => { setEditingConfig(null); setConfigDialogOpen(true) }}>
+                  <Plus className="w-4 h-4 mr-1" /> Tambah
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">Memuat...</span>
+                </div>
+              ) : entityConfigs.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground text-sm border border-dashed border-border rounded-lg">
+                  Belum ada konfigurasi — klik <strong>Tambah</strong> untuk membuat aturan cut-off
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-2 px-3 font-semibold text-foreground">Kelompok</th>
+                      <th className="py-2 px-3 font-semibold text-foreground">Absensi</th>
+                      <th className="py-2 px-3 font-semibold text-foreground">Gaji</th>
+                      <th className="py-2 px-3 font-semibold text-foreground text-center">Prorata</th>
+                      <th className="py-2 px-3 w-20" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entityConfigs.map((cfg) => {
+                      const preview = computeCutoffDates(cfg, CURRENT_YEAR, CURRENT_MONTH)
+                      return (
+                        <tr key={cfg.id} className="border-b border-border/50 hover:bg-muted/20">
+                          <td className="py-3 px-3">
+                            <span className="font-medium text-foreground">{cfg.paygroup_name ?? "Semua"}</span>
+                          </td>
+                          <td className="py-3 px-3 text-muted-foreground text-xs">
+                            <div>{cutoffLabel(cfg.att_cutoff_start_day, cfg.att_cutoff_start_prev_month, cfg.att_cutoff_end_day)}</div>
+                            <div className="text-foreground/60">{preview.attStart} – {preview.attEnd}</div>
+                          </td>
+                          <td className="py-3 px-3 text-muted-foreground text-xs">
+                            <div>{cutoffLabel(cfg.pay_cutoff_start_day, cfg.pay_cutoff_start_prev_month, cfg.pay_cutoff_end_day)}</div>
+                            <div className="text-foreground/60">{preview.payStart} – {preview.payEnd}</div>
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            {cfg.enable_prorata
+                              ? <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">÷{cfg.prorata_divisor} hari</Badge>
+                              : <span className="text-muted-foreground text-xs">—</span>}
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex gap-1 justify-end">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                onClick={() => { setEditingConfig(cfg); setConfigDialogOpen(true) }}>
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-400"
+                                onClick={async () => { try { await deleteConfig(cfg.id) } catch(e: any) { setActionErr(e.message) } }}>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ── Override Per Bulan ── */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-foreground">Override Per Bulan</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">Untuk penyesuaian khusus (Lebaran, dll.)</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={String(overrideMonth)} onValueChange={(v) => setOverrideMonth(Number(v))}>
+                    <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>{MONTH_LABELS.map((l,i) => <SelectItem key={i+1} value={String(i+1)}>{l}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Input type="number" value={overrideYear} onChange={(e) => setOverrideYear(Number(e.target.value))} className="w-20 h-8 text-xs" />
+                  <Button size="sm" variant="outline" onClick={() => setOverrideDialogOpen(true)}>
+                    <Plus className="w-4 h-4 mr-1" /> Override
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {monthOverrides.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground text-sm">Tidak ada override untuk bulan ini</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-2 px-3 font-semibold text-foreground">Kelompok</th>
+                      <th className="py-2 px-3 font-semibold text-foreground">Absensi Override</th>
+                      <th className="py-2 px-3 font-semibold text-foreground">Gaji Override</th>
+                      <th className="py-2 px-3 font-semibold text-foreground">Alasan</th>
+                      <th className="py-2 px-3 w-12" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthOverrides.map((ovr) => (
+                      <tr key={ovr.id} className="border-b border-border/50 hover:bg-muted/20">
+                        <td className="py-3 px-3 text-foreground">{ovr.paygroup_name ?? "Semua"}</td>
+                        <td className="py-3 px-3 text-xs text-muted-foreground">{ovr.attendance_start_date} – {ovr.attendance_end_date}</td>
+                        <td className="py-3 px-3 text-xs text-muted-foreground">{ovr.payroll_start_date} – {ovr.payroll_end_date}</td>
+                        <td className="py-3 px-3 text-xs text-muted-foreground">{ovr.reason ?? "—"}</td>
+                        <td className="py-3 px-3">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-400"
+                            onClick={async () => { try { await deleteOverride(ovr.id) } catch(e: any) { setActionErr((e as any).message) } }}>
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {!entityId && (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
+          Pilih entitas untuk mengatur konfigurasi cut-off
+        </div>
+      )}
+
+      <CutoffConfigDialog
+        open={configDialogOpen}
+        onClose={() => { setConfigDialogOpen(false); setEditingConfig(null) }}
+        onSave={handleSaveConfig}
+        entityId={entityId}
+        initialForm={editingConfig ? configToForm(editingConfig) : emptyCutoffForm()}
+      />
+      <OverrideDialog
+        open={overrideDialogOpen}
+        onClose={() => setOverrideDialogOpen(false)}
+        onSave={async (data) => { await upsertOverride(data) }}
+        entityId={entityId}
+        year={overrideYear}
+        month={overrideMonth}
+      />
+    </div>
   )
 }
