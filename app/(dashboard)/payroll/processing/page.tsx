@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Users,
   Banknote,
+  Trash2,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,7 +47,8 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ProcessingPage() {
   const router = useRouter()
-  const { periods, loading, error, fetchPeriods } = usePayroll()
+  const { periods, loading, error, fetchPeriods, deletePeriod } = usePayroll()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const [filterYear, setFilterYear] = useState<string>("all")
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -200,7 +202,10 @@ export default function ProcessingPage() {
                         <Calendar className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-foreground">{label}</p>
+                        <p className="font-semibold text-foreground">{period.period_name || label}</p>
+                        {period.period_name && (
+                          <p className="text-xs text-muted-foreground">{label}</p>
+                        )}
                         <p className="text-xs text-muted-foreground mt-0.5">{formatDateRange(period)}</p>
                         {period.payment_date && (
                           <p className="text-xs text-muted-foreground mt-0.5">
@@ -231,7 +236,19 @@ export default function ProcessingPage() {
                       <StatusBadge status={period.status} />
                       <PeriodActions
                         period={period}
+                        deleting={deletingId === period.id}
                         onView={() => router.push(`/hr/payroll/${period.id}`)}
+                        onDelete={async () => {
+                          const name = period.period_name || `${period.period_month}/${period.period_year}`
+                          if (!confirm(`Hapus periode "${name}"? Semua data gaji di dalamnya akan ikut terhapus.`)) return
+                          setDeletingId(period.id)
+                          try {
+                            await deletePeriod(period.id)
+                            await fetchPeriods()
+                          } finally {
+                            setDeletingId(null)
+                          }
+                        }}
                       />
                     </div>
                   </div>
@@ -246,7 +263,12 @@ export default function ProcessingPage() {
   )
 }
 
-function PeriodActions({ period, onView }: { period: any; onView: () => void }) {
+function PeriodActions({ period, deleting, onView, onDelete }: {
+  period: any
+  deleting: boolean
+  onView: () => void
+  onDelete: () => void
+}) {
   const router = useRouter()
   const status = period.status as string
 
@@ -281,6 +303,18 @@ function PeriodActions({ period, onView }: { period: any; onView: () => void }) 
           <Download className="w-3.5 h-3.5" />
         </Button>
       )}
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onDelete}
+        disabled={deleting}
+        className="h-7 px-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+      >
+        {deleting
+          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          : <Trash2 className="w-3.5 h-3.5" />
+        }
+      </Button>
     </div>
   )
 }

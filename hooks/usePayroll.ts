@@ -91,7 +91,7 @@ export function usePayroll(tenantId: string = getTenantId(), options?: { pollInt
       try {
         const { data, error: apiError } = await insForge
           .from("payroll_details")
-          .select("*, user_profiles:user_profile_id(full_name, employee_number)")
+          .select("*, user_profiles:user_profile_id(full_name, employee_number, ptkp_status, tax_position)")
           .eq("tenant_id", tenantId)
           .eq("payroll_period_id", periodId)
           .order("created_at", { ascending: false })

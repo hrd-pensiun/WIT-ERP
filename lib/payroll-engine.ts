@@ -11,6 +11,7 @@ type GenerateInput = {
   attendanceEnd?: string    // attendance cut-off end   (fallback = periodEnd)
   prorataEnabled?: boolean  // default true
   prorataDivisor?: number   // default 30
+  employeeIds?: string[]    // if set, only generate for these employees
 }
 
 type EngineResult = {
@@ -172,7 +173,12 @@ export async function generatePayrollDetailsForPeriod(
       .map((g: any) => [g.id, toNumber(g.min_salary)])
   )
 
-  for (const emp of employees || []) {
+  // Filter by specific employee IDs if provided
+  const filteredEmployees = input.employeeIds?.length
+    ? (employees || []).filter((e: any) => input.employeeIds!.includes(e.id))
+    : (employees || [])
+
+  for (const emp of filteredEmployees) {
     try {
       const { data: exists, error: existsErr } = await insForge
         .from("payroll_details")
@@ -420,9 +426,9 @@ export async function generatePayrollDetailsForPeriod(
         }
       }
 
-      // Attendance deduction: 1 day absent = effectiveBasicSalary / working_days
+      // Attendance deduction: only when no active fine config (fine config takes over absence handling)
       const attendanceDeductionAmount =
-        workingDays > 0 ? (effectiveBasicSalary / workingDays) * absentDays : 0
+        !fineConfig && workingDays > 0 ? (effectiveBasicSalary / workingDays) * absentDays : 0
 
       const bpjsTkBase = capAmount(
         effectiveBasicSalary,

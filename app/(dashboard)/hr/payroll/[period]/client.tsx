@@ -6,6 +6,7 @@ import {
   ArrowLeft, Wallet, Download, Loader2, SlidersHorizontal,
   CheckCircle2, ChevronRight, Plus, Trash2,
   CalendarCheck, CalendarX, Clock, CalendarDays, Info,
+  Pencil, X, History, ShieldCheck,
 } from "lucide-react"
 import { insForge } from "@/lib/insforge"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter,
 } from "@/components/ui/sheet"
 import { usePayroll } from "@/hooks/usePayroll"
+import { useAuth } from "@/hooks/useAuth"
 import { generatePayrollDetailsForPeriod } from "@/lib/payroll-engine"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -119,8 +121,16 @@ function Formula({ children }: { children: React.ReactNode }) {
 }
 
 function EditableAmount({
-  value, onChange, className,
-}: { value: string; onChange: (v: string) => void; className?: string }) {
+  value, onChange, className, readOnly,
+}: { value: string; onChange: (v: string) => void; className?: string; readOnly?: boolean }) {
+  if (readOnly) {
+    const num = parseIDR(value)
+    return (
+      <span className={`text-right text-sm text-foreground font-medium tabular-nums ${className ?? ""}`}>
+        {num > 0 ? fmtIDR(num) : "—"}
+      </span>
+    )
+  }
   return (
     <input
       type="text"
@@ -131,6 +141,38 @@ function EditableAmount({
       placeholder="0"
     />
   )
+}
+
+const PTKP_LABELS: Record<string, string> = {
+  "TK/0": "Tidak Kawin, 0 Tanggungan",
+  "TK/1": "Tidak Kawin, 1 Tanggungan",
+  "TK/2": "Tidak Kawin, 2 Tanggungan",
+  "TK/3": "Tidak Kawin, 3 Tanggungan",
+  "K/0":  "Kawin, 0 Tanggungan",
+  "K/1":  "Kawin, 1 Tanggungan",
+  "K/2":  "Kawin, 2 Tanggungan",
+  "K/3":  "Kawin, 3 Tanggungan",
+  "K/I/0":"Kawin, Penghasilan Istri Digabung, 0 Tanggungan",
+  "K/I/1":"Kawin, Penghasilan Istri Digabung, 1 Tanggungan",
+}
+
+const TAX_POSITION_LABELS: Record<string, string> = {
+  staff:      "Staff / Karyawan",
+  manager:    "Manajer",
+  director:   "Direktur",
+  komisaris:  "Komisaris",
+}
+
+function fmtRelativeTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1)   return "baru saja"
+  if (mins < 60)  return `${mins} menit lalu`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24)   return `${hrs} jam lalu`
+  const days = Math.floor(hrs / 24)
+  if (days < 7)   return `${days} hari lalu`
+  return new Date(iso).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })
 }
 
 function KalibrasiSheet({
@@ -148,32 +190,67 @@ function KalibrasiSheet({
   onSaved: (updated: any) => void
   updateDetail: (id: string, patch: Record<string, any>) => Promise<void>
 }) {
-  const [state, setState] = useState<KalibrasiState>(() => buildState(row))
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [att, setAtt] = useState<AttSummary | null>(null)
+  const { user } = useAuth()
+  const [isEditing, setIsEditing]   = useState(false)
+  const [state, setState]           = useState<KalibrasiState>(() => buildState(row))
+  const [saving, setSaving]         = useState(false)
+  const [error, setError]           = useState<string | null>(null)
+  const [att, setAtt]               = useState<AttSummary | null>(null)
+  const [attRecords, setAttRecords] = useState<any[]>([])
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([])
+  const [logs, setLogs]             = useState<any[]>([])
 
-  useEffect(() => { setState(buildState(row)) }, [row?.id])
+  // Reset edit mode + state when row changes
+  useEffect(() => {
+    setState(buildState(row))
+    setIsEditing(false)
+    setError(null)
+  }, [row?.id])
 
-  // Fetch attendance summary for this employee in the period window
+  // Fetch audit logs
+  const fetchLogs = () => {
+    if (!row?.id || !insForge) return
+    ;(insForge as any)
+      .from("payroll_calibration_logs")
+      .select("*")
+      .eq("payroll_detail_id", row.id)
+      .order("edited_at", { ascending: false })
+      .then(({ data }: any) => setLogs(data || []))
+  }
+
+  useEffect(() => { if (open) fetchLogs() }, [row?.id, open]) // eslint-disable-line
+
+  // Fetch attendance + leave for the period
   useEffect(() => {
     if (!row?.user_profile_id || !periodData) return
+    const tenantId = periodData.tenant_id || "00000000-0000-0000-0000-000000000000"
     const start = String(periodData.attendance_start_date || periodData.start_date).slice(0, 10)
     const end   = String(periodData.attendance_end_date   || periodData.end_date).slice(0, 10)
     ;(async () => {
       try {
-        const { data } = await (insForge as any)
+        const { data: recs } = await (insForge as any)
           .from("attendance_records")
-          .select("status, check_in_status")
-          .eq("tenant_id", periodData.tenant_id || "00000000-0000-0000-0000-000000000000")
+          .select("date, status, check_in_status, check_in, check_out, work_hours")
+          .eq("tenant_id", tenantId)
           .eq("user_profile_id", row.user_profile_id)
           .gte("date", start)
           .lte("date", end)
-        if (!data) return
-        const absent  = data.filter((r: any) => r.status === "absent").length
-        const late    = data.filter((r: any) => r.check_in_status === "late").length
-        const present = data.filter((r: any) => r.status === "present").length
-        setAtt({ workingDays: data.length, present, late, absent })
+          .order("date", { ascending: true })
+        if (!recs) return
+        setAttRecords(recs)
+        const absent  = recs.filter((r: any) => r.status === "absent").length
+        const late    = recs.filter((r: any) => r.check_in_status === "late").length
+        const present = recs.filter((r: any) => r.status === "present").length
+        setAtt({ workingDays: recs.length, present, late, absent })
+
+        const { data: leaves } = await (insForge as any)
+          .from("leave_requests")
+          .select("start_date, end_date, days_requested, status, hr_leave_types:leave_type_id(name)")
+          .eq("tenant_id", tenantId)
+          .eq("user_profile_id", row.user_profile_id)
+          .gte("start_date", start)
+          .lte("end_date", end)
+        setLeaveRequests(leaves || [])
       } catch { /* ignore */ }
     })()
   }, [row?.user_profile_id, row?.id, periodData])
@@ -199,6 +276,12 @@ function KalibrasiSheet({
   const removeCustomDeduction = (idx: number) =>
     setState((prev) => ({ ...prev, customDeductions: prev.customDeductions.filter((_, i) => i !== idx) }))
 
+  const handleCancelEdit = () => {
+    setState(buildState(row))
+    setIsEditing(false)
+    setError(null)
+  }
+
   const handleSave = async () => {
     setSaving(true); setError(null)
     try {
@@ -211,6 +294,16 @@ function KalibrasiSheet({
         { name: "PPh21", amount: t.pph21 },
         ...state.customDeductions.filter((d) => d.name.trim()),
       ]
+
+      // Build change summary for audit log
+      const prevBasic  = row.basic_salary || 0
+      const prevNet    = row.net_salary || 0
+      const changes: string[] = []
+      if (t.basic !== prevBasic) changes.push(`Gaji Pokok: ${fmtIDR(prevBasic)} → ${fmtIDR(t.basic)}`)
+      if (Math.abs(t.netSalary - prevNet) > 1) changes.push(`Net Salary: ${fmtIDR(prevNet)} → ${fmtIDR(t.netSalary)}`)
+      if (t.pph21 !== parseIDR(buildState(row).pph21)) changes.push(`PPh21: ${fmtIDR(t.pph21)}`)
+      const summary = changes.length > 0 ? changes.join(" | ") : "Kalibrasi disimpan (tanpa perubahan nilai)"
+
       await updateDetail(row.id, {
         basic_salary: t.basic, allowance_details: allowanceDetails, total_allowances: t.totalAllowances,
         deduction_details: deductionDetails, total_deductions: t.totalDeductions,
@@ -218,8 +311,31 @@ function KalibrasiSheet({
         attendance_deduction_amount: t.attendance, gross_salary: t.grossSalary,
         net_salary: t.netSalary, take_home_pay: t.netSalary,
       })
-      onSaved({ ...row, ...{ basic_salary: t.basic, total_allowances: t.totalAllowances, total_deductions: t.totalDeductions, gross_salary: t.grossSalary, net_salary: t.netSalary } })
-      onClose()
+
+      // Insert audit log
+      if (insForge) {
+        // Resolve editor name from user_profiles
+        let editorName = user?.email ?? "Unknown"
+        if (user?.id) {
+          const { data: prof } = await (insForge as any)
+            .from("user_profiles")
+            .select("full_name")
+            .eq("user_id", user.id)
+            .maybeSingle()
+          if (prof?.full_name) editorName = prof.full_name
+        }
+        await (insForge as any).from("payroll_calibration_logs").insert({
+          payroll_detail_id: row.id,
+          edited_by_user_id: user?.id ?? null,
+          edited_by_name: editorName,
+          summary,
+          snapshot: { basic_salary: t.basic, gross_salary: t.grossSalary, net_salary: t.netSalary, total_deductions: t.totalDeductions },
+        })
+        fetchLogs()
+      }
+
+      onSaved({ ...row, basic_salary: t.basic, total_allowances: t.totalAllowances, total_deductions: t.totalDeductions, gross_salary: t.grossSalary, net_salary: t.netSalary })
+      setIsEditing(false)
     } catch (err: any) {
       setError(err.message ?? "Gagal menyimpan")
     } finally {
@@ -228,260 +344,396 @@ function KalibrasiSheet({
   }
 
   const dpp = Math.max(0, totals.grossSalary - totals.attendance - totals.bpjsTk - totals.bpjsKes)
+  const ro  = !isEditing  // readOnly shorthand
+
+  const ptkpStatus   = row?.user_profiles?.ptkp_status   ?? null
+  const taxPosition  = row?.user_profiles?.tax_position  ?? null
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <SheetContent side="right" className="w-full sm:w-1/2 sm:max-w-none flex flex-col p-0 gap-0">
+    <Sheet open={open} onOpenChange={(v) => { if (!v) { handleCancelEdit(); onClose() } }}>
+      <SheetContent side="right" className="flex flex-col p-0 gap-0" style={{ width: "80%", maxWidth: "none" }}>
 
         {/* Header */}
         <SheetHeader className="px-6 py-4 border-b border-border shrink-0">
-          <SheetTitle className="text-base">
-            Kalibrasi — {row?.user_profiles?.full_name ?? "—"}
-          </SheetTitle>
-          <p className="text-xs text-muted-foreground">
-            {row?.user_profiles?.employee_number} · Periode {row?._periodLabel}
-          </p>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-
-          {/* ── Ringkasan Absensi ── */}
-          <section className="rounded-lg border border-border bg-muted/20 p-4">
-            <SectionLabel>Ringkasan Absensi</SectionLabel>
-            {att ? (
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { icon: <CalendarDays className="w-3.5 h-3.5" />, label: "Hari Kerja", value: att.workingDays, color: "text-foreground" },
-                  { icon: <CalendarCheck className="w-3.5 h-3.5" />, label: "Hadir", value: att.present, color: "text-emerald-500" },
-                  { icon: <Clock className="w-3.5 h-3.5" />, label: "Terlambat", value: att.late, color: "text-yellow-500" },
-                  { icon: <CalendarX className="w-3.5 h-3.5" />, label: "Absen", value: att.absent, color: "text-red-400" },
-                ].map(({ icon, label, value, color }) => (
-                  <div key={label} className="text-center">
-                    <div className={`flex justify-center mb-1 ${color}`}>{icon}</div>
-                    <p className={`text-xl font-bold ${color}`}>{value}</p>
-                    <p className="text-[10px] text-muted-foreground">{label}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">Memuat data absensi...</p>
-            )}
-            {att && att.workingDays > 0 && (
-              <div className="mt-3 pt-3 border-t border-border/50 flex gap-4 text-xs text-muted-foreground">
-                <span>
-                  <span className="text-foreground font-medium">Gaji/hari</span>:{" "}
-                  {fmtIDR(Math.round(parseIDR(state.basicSalary) / att.workingDays))}
-                </span>
-                {att.absent > 0 && (
-                  <span className="text-red-400">
-                    Potongan absensi: {att.absent} hari × {fmtIDR(Math.round(parseIDR(state.basicSalary) / att.workingDays))}
-                  </span>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* ── Gaji Pokok ── */}
-          <section>
-            <SectionLabel>Gaji Pokok</SectionLabel>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground w-6 shrink-0">Rp</span>
-              <EditableAmount
-                value={state.basicSalary}
-                onChange={(v) => setState((p) => ({ ...p, basicSalary: v }))}
-                className="flex-1"
-              />
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <SheetTitle className="text-base">
+                Kalibrasi — {row?.user_profiles?.full_name ?? "—"}
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {row?.user_profiles?.employee_number} · Periode {row?._periodLabel}
+              </p>
             </div>
-          </section>
-
-          {/* ── Tunjangan ── */}
-          <section>
-            <SectionLabel>Tunjangan</SectionLabel>
-            <div className="space-y-2">
-              {state.allowances.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">Tidak ada tunjangan</p>
+            <div className="flex items-center gap-2 shrink-0">
+              {!isEditing ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-8"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Edit
+                </Button>
               ) : (
-                state.allowances.map((a, idx) => (
-                  <div key={idx}>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm text-foreground truncate block">{a.name}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium ${
-                          a.is_fixed === false
-                            ? "bg-blue-500/10 text-blue-400"
-                            : "bg-muted text-muted-foreground"
-                        }`}>
-                          {a.is_fixed === false ? "Variabel" : "Tetap"}
-                        </span>
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0">Rp</span>
-                      <EditableAmount
-                        value={a.amount > 0 ? fmtInput(String(Math.round(a.amount))) : ""}
-                        onChange={(v) => setAllowanceAmount(idx, v)}
-                        className="w-36"
-                      />
-                    </div>
-                    {a.is_fixed === false && att && att.workingDays > 0 && (
-                      <Formula>
-                        Rp {fmtInput(String(Math.round(a.amount / (att.present + att.late || 1))))} /hari × {att.present + att.late} hari hadir
-                      </Formula>
-                    )}
-                  </div>
-                ))
+                <>
+                  <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-muted-foreground" onClick={handleCancelEdit} disabled={saving}>
+                    <X className="w-3.5 h-3.5" /> Batal
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
+                    {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Menyimpan...</> : <><CheckCircle2 className="w-3.5 h-3.5" />Simpan</>}
+                  </Button>
+                </>
               )}
             </div>
-            <div className="mt-3 pt-2 border-t border-border/50 space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Tunjangan</span>
-                <span className="font-medium text-emerald-600">{fmtIDR(totals.totalAllowances)}</span>
-              </div>
-              <div className="flex justify-between text-sm font-semibold">
-                <span className="text-foreground">Gross Salary</span>
-                <span className="text-foreground">{fmtIDR(totals.grossSalary)}</span>
-              </div>
+          </div>
+          {isEditing && (
+            <div className="mt-2 flex items-center gap-1.5 rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 text-xs text-yellow-500">
+              <Pencil className="w-3 h-3 shrink-0" />
+              Mode edit aktif — perubahan belum tersimpan
             </div>
-          </section>
+          )}
+        </SheetHeader>
 
-          {/* ── Potongan ── */}
-          <section>
-            <SectionLabel>Potongan</SectionLabel>
-            <div className="space-y-3">
+        {/* ── Two-column body ── */}
+        <div className="flex-1 flex overflow-hidden">
 
-              {/* Potongan Absensi */}
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground flex-1">Potongan Absensi</span>
-                  <span className="text-xs text-muted-foreground shrink-0">Rp</span>
-                  <EditableAmount
-                    value={state.attendanceDeduction}
-                    onChange={(v) => setState((p) => ({ ...p, attendanceDeduction: v }))}
-                    className="w-36"
-                  />
+          {/* ── LEFT: Attendance detail + cuti ── */}
+          <div className="w-[42%] border-r border-border overflow-y-auto px-5 py-5 space-y-5 shrink-0">
+
+            {/* Summary cards */}
+            <section>
+              <SectionLabel>Ringkasan Absensi</SectionLabel>
+              {att ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { icon: <CalendarDays className="w-4 h-4" />, label: "Hari Kerja", value: att.workingDays, color: "text-foreground", bg: "bg-muted/40" },
+                    { icon: <CalendarCheck className="w-4 h-4" />, label: "Hadir", value: att.present, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+                    { icon: <Clock className="w-4 h-4" />, label: "Terlambat", value: att.late, color: "text-yellow-500", bg: "bg-yellow-500/10" },
+                    { icon: <CalendarX className="w-4 h-4" />, label: "Tidak Hadir", value: att.absent, color: "text-red-400", bg: "bg-red-500/10" },
+                  ].map(({ icon, label, value, color, bg }) => (
+                    <div key={label} className={`rounded-lg ${bg} px-3 py-2.5 flex items-center gap-3`}>
+                      <div className={color}>{icon}</div>
+                      <div>
+                        <p className={`text-lg font-bold leading-none ${color}`}>{value}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                {att && att.workingDays > 0 && att.absent > 0 && (
-                  <Formula>
-                    {fmtIDR(parseIDR(state.basicSalary))} ÷ {att.workingDays} hari × {att.absent} hari absen
-                  </Formula>
+              ) : (
+                <p className="text-xs text-muted-foreground">Memuat...</p>
+              )}
+              {att && att.workingDays > 0 && (
+                <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                  <p>Gaji/hari: <span className="text-foreground font-medium">{fmtIDR(Math.round(parseIDR(state.basicSalary) / att.workingDays))}</span></p>
+                  {att.absent > 0 && (
+                    <p className="text-red-400">Potongan absensi: {att.absent} hari × {fmtIDR(Math.round(parseIDR(state.basicSalary) / att.workingDays))}</p>
+                  )}
+                </div>
+              )}
+            </section>
+
+            {/* Log Absensi harian */}
+            <section>
+              <SectionLabel>Log Absensi</SectionLabel>
+              {attRecords.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Tidak ada data absensi</p>
+              ) : (
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-muted/30 border-b border-border">
+                        <th className="text-left px-3 py-2 font-medium text-muted-foreground">Tanggal</th>
+                        <th className="text-center px-2 py-2 font-medium text-muted-foreground">Masuk</th>
+                        <th className="text-center px-2 py-2 font-medium text-muted-foreground">Pulang</th>
+                        <th className="text-center px-2 py-2 font-medium text-muted-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {attRecords.map((r: any, i: number) => {
+                        const isAbsent = r.status === "absent"
+                        const isLate   = r.check_in_status === "late"
+                        const fmtT = (ts: string | null) => ts ? new Date(ts).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—"
+                        const fmtD = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short" })
+                        return (
+                          <tr key={i} className={`border-b border-border/40 ${i % 2 === 0 ? "" : "bg-muted/10"}`}>
+                            <td className="px-3 py-1.5 text-foreground whitespace-nowrap">{fmtD(r.date)}</td>
+                            <td className={`px-2 py-1.5 text-center tabular-nums ${isLate ? "text-yellow-500" : "text-foreground"}`}>{isAbsent ? "—" : fmtT(r.check_in)}</td>
+                            <td className="px-2 py-1.5 text-center tabular-nums text-foreground">{isAbsent ? "—" : fmtT(r.check_out)}</td>
+                            <td className="px-2 py-1.5 text-center">
+                              {isAbsent
+                                ? <span className="text-red-400 font-medium">Absen</span>
+                                : isLate
+                                  ? <span className="text-yellow-500 font-medium">Telat</span>
+                                  : <span className="text-emerald-500">✓</span>
+                              }
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {/* Cuti */}
+            <section>
+              <SectionLabel>Cuti di Periode Ini</SectionLabel>
+              {leaveRequests.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Tidak ada pengajuan cuti</p>
+              ) : (
+                <div className="space-y-2">
+                  {leaveRequests.map((lr: any, i: number) => {
+                    const statusColor = lr.status === "approved" ? "text-emerald-500" : lr.status === "rejected" ? "text-red-400" : "text-yellow-500"
+                    const fmtD = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short" })
+                    return (
+                      <div key={i} className="flex items-start justify-between rounded-lg border border-border px-3 py-2.5 gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{lr.hr_leave_types?.name ?? "Cuti"}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{fmtD(lr.start_date)} – {fmtD(lr.end_date)} · {lr.days_requested} hari</p>
+                        </div>
+                        <span className={`text-[10px] font-semibold uppercase shrink-0 ${statusColor}`}>{lr.status}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* ── Riwayat Kalibrasi ── */}
+            <section>
+              <SectionLabel>
+                <span className="flex items-center gap-1.5"><History className="w-3 h-3" />Riwayat Kalibrasi</span>
+              </SectionLabel>
+              {logs.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Belum ada riwayat perubahan</p>
+              ) : (
+                <div className="space-y-2">
+                  {logs.map((log, i) => (
+                    <div key={i} className="rounded-lg border border-border px-3 py-2.5 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-foreground truncate">{log.edited_by_name || "—"}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">{fmtRelativeTime(log.edited_at)}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">{log.summary}</p>
+                      {log.snapshot && (
+                        <p className="text-[10px] text-muted-foreground/60 tabular-nums">
+                          Net: {fmtIDR(log.snapshot.net_salary ?? 0)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* ── RIGHT: Kalibrasi form ── */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+            {/* ── Info Pajak ── */}
+            <section className="rounded-lg border border-border bg-muted/10 px-4 py-3 space-y-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status Pajak</p>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">PTKP</p>
+                  <p className="font-semibold text-foreground">{ptkpStatus ?? "—"}</p>
+                  {ptkpStatus && PTKP_LABELS[ptkpStatus] && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{PTKP_LABELS[ptkpStatus]}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Posisi Pajak</p>
+                  <p className="font-semibold text-foreground">{taxPosition ?? "—"}</p>
+                  {taxPosition && TAX_POSITION_LABELS[taxPosition] && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{TAX_POSITION_LABELS[taxPosition]}</p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* ── Gaji Pokok ── */}
+            <section>
+              <SectionLabel>Gaji Pokok</SectionLabel>
+              <div className="flex items-center gap-2">
+                {!ro && <span className="text-sm text-muted-foreground w-6 shrink-0">Rp</span>}
+                <EditableAmount
+                  value={state.basicSalary}
+                  onChange={(v) => setState((p) => ({ ...p, basicSalary: v }))}
+                  className="flex-1"
+                  readOnly={ro}
+                />
+              </div>
+            </section>
+
+            {/* ── Tunjangan ── */}
+            <section>
+              <SectionLabel>Tunjangan</SectionLabel>
+              <div className="space-y-2">
+                {state.allowances.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">Tidak ada tunjangan</p>
+                ) : (
+                  state.allowances.map((a, idx) => (
+                    <div key={idx}>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-foreground truncate block">{a.name}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium ${
+                            a.is_fixed === false ? "bg-blue-500/10 text-blue-400" : "bg-muted text-muted-foreground"
+                          }`}>
+                            {a.is_fixed === false ? "Variabel" : "Tetap"}
+                          </span>
+                        </div>
+                        {!ro && <span className="text-xs text-muted-foreground shrink-0">Rp</span>}
+                        <EditableAmount
+                          value={a.amount > 0 ? fmtInput(String(Math.round(a.amount))) : ""}
+                          onChange={(v) => setAllowanceAmount(idx, v)}
+                          className="w-36"
+                          readOnly={ro}
+                        />
+                      </div>
+                      {a.is_fixed === false && att && att.workingDays > 0 && (
+                        <Formula>
+                          Rp {fmtInput(String(Math.round(a.amount / (att.present + att.late || 1))))} /hari × {att.present + att.late} hari hadir
+                        </Formula>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="mt-3 pt-2 border-t border-border/50 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Tunjangan</span>
+                  <span className="font-medium text-emerald-600">{fmtIDR(totals.totalAllowances)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-semibold">
+                  <span className="text-foreground">Gross Salary</span>
+                  <span className="text-foreground">{fmtIDR(totals.grossSalary)}</span>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Potongan ── */}
+            <section>
+              <SectionLabel>Potongan</SectionLabel>
+              <div className="space-y-3">
+
+                {/* Potongan Absensi */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground flex-1">Potongan Absensi</span>
+                    {!ro && <span className="text-xs text-muted-foreground shrink-0">Rp</span>}
+                    <EditableAmount value={state.attendanceDeduction} onChange={(v) => setState((p) => ({ ...p, attendanceDeduction: v }))} className="w-36" readOnly={ro} />
+                  </div>
+                  {att && att.workingDays > 0 && att.absent > 0 && (
+                    <Formula>{fmtIDR(parseIDR(state.basicSalary))} ÷ {att.workingDays} hari × {att.absent} hari absen</Formula>
+                  )}
+                </div>
+
+                {/* BPJS TK */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground flex-1">BPJS Tenaga Kerja</span>
+                    {!ro && <span className="text-xs text-muted-foreground shrink-0">Rp</span>}
+                    <EditableAmount value={state.bpjsTk} onChange={(v) => setState((p) => ({ ...p, bpjsTk: v }))} className="w-36" readOnly={ro} />
+                  </div>
+                  <Formula>{fmtIDR(parseIDR(state.basicSalary))} × {pct(parseIDR(state.bpjsTk), parseIDR(state.basicSalary))} (iuran karyawan)</Formula>
+                </div>
+
+                {/* BPJS Kesehatan */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground flex-1">BPJS Kesehatan</span>
+                    {!ro && <span className="text-xs text-muted-foreground shrink-0">Rp</span>}
+                    <EditableAmount value={state.bpjsKes} onChange={(v) => setState((p) => ({ ...p, bpjsKes: v }))} className="w-36" readOnly={ro} />
+                  </div>
+                  <Formula>{fmtIDR(parseIDR(state.basicSalary))} × {pct(parseIDR(state.bpjsKes), parseIDR(state.basicSalary))} (iuran karyawan)</Formula>
+                </div>
+
+                {/* PPh21 */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground flex-1">PPh21</span>
+                    {!ro && <span className="text-xs text-muted-foreground shrink-0">Rp</span>}
+                    <EditableAmount value={state.pph21} onChange={(v) => setState((p) => ({ ...p, pph21: v }))} className="w-36" readOnly={ro} />
+                  </div>
+                  <Formula>DPP {fmtIDR(dpp)} × {pct(parseIDR(state.pph21), dpp)}</Formula>
+                  <div className="mt-1 text-[10px] text-muted-foreground/60 flex items-start gap-1">
+                    <Info className="w-2.5 h-2.5 mt-0.5 shrink-0" />
+                    <span>DPP = Gross − Potongan Absensi − BPJS TK − BPJS Kes</span>
+                  </div>
+                </div>
+
+                {/* Custom deductions */}
+                {state.customDeductions.map((d, idx) => (
+                  ro ? (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-sm text-foreground flex-1">{d.name || "Potongan lainnya"}</span>
+                      <span className="text-sm text-foreground font-medium tabular-nums">{d.amount > 0 ? fmtIDR(d.amount) : "—"}</span>
+                    </div>
+                  ) : (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={d.name}
+                        onChange={(e) => setCustomDeduction(idx, "name", e.target.value)}
+                        placeholder="Nama potongan lainnya"
+                        className="flex-1 text-sm rounded-md px-3 py-1.5 border border-border bg-background text-foreground focus:outline-none focus:border-emerald-500"
+                      />
+                      <span className="text-xs text-muted-foreground shrink-0">Rp</span>
+                      <EditableAmount
+                        value={d.amount > 0 ? fmtInput(String(Math.round(d.amount))) : ""}
+                        onChange={(v) => setCustomDeduction(idx, "amount", v)}
+                        className="w-36"
+                      />
+                      <button onClick={() => removeCustomDeduction(idx)} className="text-muted-foreground hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )
+                ))}
+
+                {isEditing && (
+                  <button onClick={addCustomDeduction} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    <Plus className="w-3.5 h-3.5" /> Tambah potongan lainnya
+                  </button>
                 )}
               </div>
 
-              {/* BPJS TK */}
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground flex-1">BPJS Tenaga Kerja</span>
-                  <span className="text-xs text-muted-foreground shrink-0">Rp</span>
-                  <EditableAmount
-                    value={state.bpjsTk}
-                    onChange={(v) => setState((p) => ({ ...p, bpjsTk: v }))}
-                    className="w-36"
-                  />
-                </div>
-                <Formula>
-                  {fmtIDR(parseIDR(state.basicSalary))} × {pct(parseIDR(state.bpjsTk), parseIDR(state.basicSalary))} (iuran karyawan)
-                </Formula>
+              <div className="mt-3 pt-2 border-t border-border/50 flex justify-between text-sm">
+                <span className="text-muted-foreground">Total Potongan</span>
+                <span className="font-medium text-red-500">{fmtIDR(totals.totalDeductions)}</span>
               </div>
+            </section>
 
-              {/* BPJS Kesehatan */}
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground flex-1">BPJS Kesehatan</span>
-                  <span className="text-xs text-muted-foreground shrink-0">Rp</span>
-                  <EditableAmount
-                    value={state.bpjsKes}
-                    onChange={(v) => setState((p) => ({ ...p, bpjsKes: v }))}
-                    className="w-36"
-                  />
-                </div>
-                <Formula>
-                  {fmtIDR(parseIDR(state.basicSalary))} × {pct(parseIDR(state.bpjsKes), parseIDR(state.basicSalary))} (iuran karyawan)
-                </Formula>
+            {/* ── Kalkulasi Akhir ── */}
+            <section className="rounded-lg border border-border bg-muted/10 p-4 space-y-2 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Gross Salary</span><span>{fmtIDR(totals.grossSalary)}</span>
               </div>
-
-              {/* PPh21 */}
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground flex-1">PPh21</span>
-                  <span className="text-xs text-muted-foreground shrink-0">Rp</span>
-                  <EditableAmount
-                    value={state.pph21}
-                    onChange={(v) => setState((p) => ({ ...p, pph21: v }))}
-                    className="w-36"
-                  />
-                </div>
-                <Formula>
-                  DPP {fmtIDR(dpp)} × {pct(parseIDR(state.pph21), dpp)}
-                </Formula>
-                <div className="mt-1 text-[10px] text-muted-foreground/60 flex items-start gap-1">
-                  <Info className="w-2.5 h-2.5 mt-0.5 shrink-0" />
-                  <span>DPP = Gross − Potongan Absensi − BPJS TK − BPJS Kes</span>
-                </div>
+              <div className="flex justify-between text-red-400">
+                <span>Total Potongan</span><span>− {fmtIDR(totals.totalDeductions)}</span>
               </div>
+              <div className="flex justify-between font-bold text-base text-foreground border-t border-border pt-2 mt-1">
+                <span>Take Home Pay</span>
+                <span className="text-emerald-500">{fmtIDR(totals.netSalary)}</span>
+              </div>
+            </section>
 
-              {/* Custom deductions */}
-              {state.customDeductions.map((d, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={d.name}
-                    onChange={(e) => setCustomDeduction(idx, "name", e.target.value)}
-                    placeholder="Nama potongan lainnya"
-                    className="flex-1 text-sm rounded-md px-3 py-1.5 border border-border bg-background text-foreground focus:outline-none focus:border-emerald-500"
-                  />
-                  <span className="text-xs text-muted-foreground shrink-0">Rp</span>
-                  <EditableAmount
-                    value={d.amount > 0 ? fmtInput(String(Math.round(d.amount))) : ""}
-                    onChange={(v) => setCustomDeduction(idx, "amount", v)}
-                    className="w-36"
-                  />
-                  <button onClick={() => removeCustomDeduction(idx)} className="text-muted-foreground hover:text-red-400 transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-
-              <button
-                onClick={addCustomDeduction}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" /> Tambah potongan lainnya
-              </button>
-            </div>
-
-            <div className="mt-3 pt-2 border-t border-border/50 flex justify-between text-sm">
-              <span className="text-muted-foreground">Total Potongan</span>
-              <span className="font-medium text-red-500">{fmtIDR(totals.totalDeductions)}</span>
-            </div>
-          </section>
-
-          {/* ── Kalkulasi Akhir ── */}
-          <section className="rounded-lg border border-border bg-muted/10 p-4 space-y-2 text-sm">
-            <div className="flex justify-between text-muted-foreground">
-              <span>Gross Salary</span><span>{fmtIDR(totals.grossSalary)}</span>
-            </div>
-            <div className="flex justify-between text-red-400">
-              <span>Total Potongan</span><span>− {fmtIDR(totals.totalDeductions)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-base text-foreground border-t border-border pt-2 mt-1">
-              <span>Take Home Pay</span>
-              <span className="text-emerald-500">{fmtIDR(totals.netSalary)}</span>
-            </div>
-          </section>
-
-          {error && (
-            <div className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+          </div>
         </div>
 
-        <SheetFooter className="px-6 py-4 border-t border-border shrink-0 flex gap-2">
-          <Button variant="ghost" onClick={onClose} disabled={saving} className="flex-1">Batal</Button>
-          <Button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
-            {saving
-              ? <><Loader2 className="w-4 h-4 animate-spin" />Menyimpan...</>
-              : <><CheckCircle2 className="w-4 h-4" />Simpan Kalibrasi</>
-            }
-          </Button>
+        <SheetFooter className="px-6 py-4 border-t border-border shrink-0">
+          <Button variant="ghost" onClick={() => { handleCancelEdit(); onClose() }} className="flex-1">Tutup</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
@@ -499,6 +751,7 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
   const [approveError, setApproveError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     getPeriod(period).then(setPeriodData).catch(() => setPeriodData(null))
@@ -547,6 +800,23 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
     }
   }
 
+  const handleDeleteRow = async (id: string, name: string) => {
+    if (!confirm(`Hapus data payroll untuk ${name}? Tindakan ini tidak dapat dibatalkan.`)) return
+    setDeletingId(id)
+    try {
+      const { error } = await (insForge as any)
+        .from("payroll_details")
+        .delete()
+        .eq("id", id)
+      if (error) throw error
+      setPayrollData((prev) => prev.filter((r) => r.id !== id))
+    } catch (err: any) {
+      alert(err.message ?? "Gagal menghapus data payroll")
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const handleApprove = async () => {
     if (!confirm(`Setujui semua ${draftCount} entri draft? Tindakan ini tidak dapat dibatalkan.`)) return
     setApproving(true)
@@ -571,7 +841,9 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
             <Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Detail Payroll</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {periodData?.period_name || `Payroll ${periodLabel}`}
+            </h1>
             <p className="text-muted-foreground text-sm">Periode: {periodLabel}</p>
           </div>
         </div>
@@ -682,14 +954,26 @@ export default function PayrollPeriodClient({ period }: { period: string }) {
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => setSelectedRow({ ...row, _periodLabel: periodLabel })}
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors whitespace-nowrap"
-                        >
-                          <SlidersHorizontal className="w-3.5 h-3.5" />
-                          Kalibrasi
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setSelectedRow({ ...row, _periodLabel: periodLabel })}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors whitespace-nowrap"
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                            Kalibrasi
+                            <ChevronRight className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRow(row.id, row.user_profiles?.full_name ?? "karyawan ini")}
+                            disabled={deletingId === row.id}
+                            className="flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-red-400 border border-border rounded-md hover:border-red-400/50 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                          >
+                            {deletingId === row.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <Trash2 className="w-3.5 h-3.5" />
+                            }
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

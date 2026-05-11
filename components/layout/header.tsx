@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Search, Menu, Sun, Moon } from "lucide-react";
+import { Bell, Search, Menu, Sun, Moon, User, Clock, Settings, LogOut, ChevronDown, CalendarPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { insForge } from "@/lib/insforge";
 import { getTenantId } from "@/lib/tenant";
+import { ClockModal } from "@/components/attendance/clock-modal";
 
 type HeaderProfile = {
   full_name?: string | null
@@ -14,10 +24,12 @@ type HeaderProfile = {
 }
 
 export function Header() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
+  const router = useRouter()
   const [profile, setProfile] = useState<HeaderProfile | null>(null)
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [clockOpen, setClockOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -122,16 +134,54 @@ export function Header() {
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full ring-1 ring-background" />
         </Button>
 
-        <div className="hidden md:flex items-center gap-2.5 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 cursor-default">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15 text-[0.65rem] font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/25 shrink-0">
-            {avatarInitials}
-          </div>
-          <div className="min-w-0">
-            <p className="max-w-[160px] truncate text-xs font-medium text-foreground leading-tight">{displayName}</p>
-            <p className="max-w-[160px] truncate text-[0.7rem] text-muted-foreground leading-tight">{displayPosition}</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="hidden md:flex items-center gap-2.5 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 hover:bg-muted/70 transition-colors outline-none">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15 text-[0.65rem] font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/25 shrink-0">
+                {avatarInitials}
+              </div>
+              <div className="min-w-0">
+                <p className="max-w-[140px] truncate text-xs font-medium text-foreground leading-tight">{displayName}</p>
+                <p className="max-w-[140px] truncate text-[0.7rem] text-muted-foreground leading-tight">{displayPosition}</p>
+              </div>
+              <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" strokeWidth={1.5} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel className="font-normal">
+              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{displayPosition}</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer gap-2">
+              <User className="w-4 h-4" strokeWidth={1.5} />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setClockOpen(true)} className="cursor-pointer gap-2">
+              <Clock className="w-4 h-4" strokeWidth={1.5} />
+              Clock In / Clock Out
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/hr/leave/new")} className="cursor-pointer gap-2">
+              <CalendarPlus className="w-4 h-4" strokeWidth={1.5} />
+              Ajukan Cuti
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer gap-2">
+              <Settings className="w-4 h-4" strokeWidth={1.5} />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={async () => { try { await signOut() } finally { router.replace("/login") } }}
+              className="cursor-pointer gap-2 text-red-500 focus:text-red-500 focus:bg-red-500/10"
+            >
+              <LogOut className="w-4 h-4" strokeWidth={1.5} />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      <ClockModal open={clockOpen} onClose={() => setClockOpen(false)} />
     </header>
   );
 }
