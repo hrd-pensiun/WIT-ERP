@@ -141,30 +141,30 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-100">Settings</h1>
-        <p className="text-slate-400 mt-1">Informasi akun login dan profil karyawan.</p>
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-1">Informasi akun login dan profil karyawan.</p>
       </div>
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100 flex items-center gap-2">
+          <CardTitle className="text-foreground flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-emerald-500" />
             Akun Login
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {authLoading ? (
-            <p className="text-slate-400 text-sm">Memuat akun...</p>
+            <p className="text-muted-foreground text-sm">Memuat akun...</p>
           ) : !user ? (
             <p className="text-red-400 text-sm">User belum terautentikasi.</p>
           ) : (
             <>
-              <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <span className="text-slate-400 text-sm">Email Login</span>
-                <span className="text-slate-100 text-sm font-medium">{user.email || "-"}</span>
+              <div className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-4 py-3">
+                <span className="text-muted-foreground text-sm">Email Login</span>
+                <span className="text-foreground text-sm font-medium">{user.email || "-"}</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <span className="text-slate-400 text-sm">Role Aktif</span>
+              <div className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-4 py-3">
+                <span className="text-muted-foreground text-sm">Role Aktif</span>
                 <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
                   {effectiveRole}
                 </Badge>
@@ -174,17 +174,17 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle className="text-slate-100 flex items-center gap-2">
+            <CardTitle className="text-foreground flex items-center gap-2">
               <User className="w-5 h-5 text-cyan-500" />
               Profil Karyawan
             </CardTitle>
             <Button
               type="button"
               variant="outline"
-              className="border-slate-700 text-slate-200"
+              className="border-border text-foreground"
               onClick={handleRelinkProfile}
               disabled={relinkLoading || !user}
             >
@@ -194,12 +194,12 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           {relinkMessage ? (
-            <div className="mb-4 rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-slate-300">
+            <div className="mb-4 rounded-lg border border-border bg-background/60 px-4 py-3 text-sm text-foreground">
               {relinkMessage}
             </div>
           ) : null}
           {loadingProfile ? (
-            <p className="text-slate-400 text-sm">Memuat profil karyawan...</p>
+            <p className="text-muted-foreground text-sm">Memuat profil karyawan...</p>
           ) : profileError ? (
             <p className="text-red-400 text-sm">{profileError}</p>
           ) : !profile ? (
@@ -208,59 +208,59 @@ export default function SettingsPage() {
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1">Nama Lengkap</p>
-                <p className="text-slate-100">{profile.full_name || "-"}</p>
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1">Nama Lengkap</p>
+                <p>{profile.full_name || "-"}</p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1">Nomor Karyawan</p>
-                <p className="text-slate-100">{profile.employee_number || "-"}</p>
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1">Nomor Karyawan</p>
+                <p>{profile.employee_number || "-"}</p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" />
                   Email Profil
                 </p>
-                <p className="text-slate-100">{profile.email || "-"}</p>
+                <p>{profile.email || "-"}</p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1">Role Profil</p>
-                <p className="text-slate-100">{profile.app_role || "-"}</p>
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1">Role Profil</p>
+                <p>{profile.app_role || "-"}</p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1">Link ke Auth User</p>
-                <p className="text-slate-100">{profile.user_id || "Belum ter-link"}</p>
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1">Link ke Auth User</p>
+                <p>{profile.user_id || "Belum ter-link"}</p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5" />
                   Departemen / Divisi
                 </p>
-                <p className="text-slate-100">
+                <p>
                   {profile.departments?.name || "-"} / {profile.divisions?.name || "-"}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <Briefcase className="w-3.5 h-3.5" />
                   Jabatan / Grade
                 </p>
-                <p className="text-slate-100">
+                <p>
                   {profile.hr_positions?.name || "-"} / {profile.hr_job_grades?.name || "-"}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <CalendarDays className="w-3.5 h-3.5" />
                   Join Date
                 </p>
-                <p className="text-slate-100">
+                <p>
                   {profile.join_date ? new Date(profile.join_date).toLocaleDateString("id-ID") : "-"}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <p className="text-xs text-slate-500 mb-1">Status</p>
-                <p className="text-slate-100">{profile.status || "-"}</p>
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1">Status</p>
+                <p>{profile.status || "-"}</p>
               </div>
             </div>
           )}

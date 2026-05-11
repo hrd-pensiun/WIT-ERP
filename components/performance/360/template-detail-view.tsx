@@ -46,7 +46,7 @@ function statusBadge(status: "active" | "draft") {
       <Badge className="border-emerald-500/30 bg-emerald-500/15 font-normal text-emerald-400">Aktif</Badge>
     )
   }
-  return <Badge variant="secondary" className="bg-slate-800 font-normal text-slate-300">Draft</Badge>
+  return <Badge variant="secondary" className="bg-muted font-normal text-foreground">Draft</Badge>
 }
 
 function questionTypeLabel(dbType: string) {
@@ -197,10 +197,10 @@ export function Template360DetailView({ id }: { id: string }) {
   if (!detail || error) {
     return (
       <Performance360Shell title="Preview template" backHref="/performance/360/template">
-        <Card className="border-slate-800 bg-slate-900">
-          <CardContent className="py-12 text-center text-slate-400">
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
             <p>{error ?? "Template tidak ditemukan."}</p>
-            <Button asChild variant="outline" className="mt-4 border-slate-700">
+            <Button asChild variant="outline" className="mt-4 border-border">
               <Link href="/performance/360/template">Kembali ke daftar</Link>
             </Button>
           </CardContent>
@@ -229,13 +229,13 @@ export function Template360DetailView({ id }: { id: string }) {
       backHref="/performance/360/template"
       action={
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="border-slate-700 text-slate-200" asChild>
+          <Button variant="outline" className="border-border text-foreground" asChild>
             <Link href={`/performance/360/template/${id}/edit`}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit template
             </Link>
           </Button>
-          <Badge variant="outline" className="h-9 shrink-0 border-slate-600 px-3 py-2 text-slate-300">
+          <Badge variant="outline" className="h-9 shrink-0 border-border px-3 py-2 text-foreground">
             Skala 1–{scale}
           </Badge>
           {statusBadge(detail.status)}
@@ -243,54 +243,54 @@ export function Template360DetailView({ id }: { id: string }) {
       }
     >
       <Tabs defaultValue="summary" className="w-full gap-6">
-        <TabsList variant="line" className="h-auto flex-wrap rounded-lg border border-slate-800 bg-slate-900/90 p-1">
-          <TabsTrigger value="summary" className="data-active:border-slate-700">
+        <TabsList variant="line" className="h-auto flex-wrap rounded-lg border /90 p-1">
+          <TabsTrigger value="summary" className="data-active:border-border">
             Rangkuman & pertanyaan
           </TabsTrigger>
-          <TabsTrigger value="matrix" className="gap-2 data-active:border-slate-700">
+          <TabsTrigger value="matrix" className="gap-2 data-active:border-border">
             <Layers className="h-4 w-4" />
             Estimasi penilaian
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="summary" className="mt-0 space-y-6">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base text-slate-100">Ringkasan penilaian</CardTitle>
-              <CardDescription className="text-slate-500">
+              <CardTitle className="text-base text-foreground">Ringkasan penilaian</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 Konten tetap template ini. Alur siklus & assignment konkret bisa berbeda per implementasi HR.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              <div className="flex flex-wrap gap-x-10 gap-y-2 border-t border-slate-800 pt-4">
+              <div className="flex flex-wrap gap-x-10 gap-y-2 border-t border-border pt-4">
                 <div>
-                  <p className="text-slate-500">Periode penilaian</p>
-                  <p className="font-medium text-slate-200">{formatTemplatePeriodLabel(detail)}</p>
+                  <p className="text-muted-foreground">Periode penilaian</p>
+                  <p className="font-medium text-foreground">{formatTemplatePeriodLabel(detail)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Terakhir diperbarui</p>
-                  <p className="font-medium text-slate-200">
+                  <p className="text-muted-foreground">Terakhir diperbarui</p>
+                  <p className="font-medium text-foreground">
                     {detail.updated_at ? new Date(detail.updated_at).toLocaleString("id-ID") : "—"}
                   </p>
                 </div>
               </div>
               {detail.description ? (
-                <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Deskripsi</p>
-                  <p className="mt-2 whitespace-pre-wrap text-slate-300">{detail.description}</p>
+                <div className="rounded-lg border border-border bg-background/60 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deskripsi</p>
+                  <p className="mt-2 whitespace-pre-wrap text-foreground">{detail.description}</p>
                 </div>
               ) : null}
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <div>
-                <CardTitle className="flex items-center gap-2 text-base text-slate-100">
+                <CardTitle className="flex items-center gap-2 text-base text-foreground">
                   <Eye className="h-4 w-4 text-cyan-400" />
                   Pratinjau pertanyaan
                 </CardTitle>
-                <CardDescription className="mt-1 text-slate-500">
+                <CardDescription className="mt-1 text-muted-foreground">
                   {questions.length} pertanyaan dalam template — bisa dikelompok per bagian; urutan sama untuk setiap formulir dalam
                   siklus.
                 </CardDescription>
@@ -298,19 +298,19 @@ export function Template360DetailView({ id }: { id: string }) {
             </CardHeader>
             <CardContent className="overflow-x-auto">
               {questions.length === 0 ? (
-                <p className="py-8 text-center text-sm text-slate-500">Tidak ada pertanyaan dalam template ini.</p>
+                <p className="py-8 text-center text-sm text-muted-foreground">Tidak ada pertanyaan dalam template ini.</p>
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-slate-800 hover:bg-transparent">
-                      <TableHead className="w-10 text-slate-300">#</TableHead>
-                      <TableHead className="text-slate-300">Pertanyaan</TableHead>
-                      <TableHead className="text-slate-300">Kategori</TableHead>
-                      <TableHead className="text-slate-300">Tipe input</TableHead>
-                      <TableHead className="min-w-[130px] text-slate-300">Untuk peran</TableHead>
-                      <TableHead className="text-right text-slate-300">Bobot</TableHead>
-                      <TableHead className="min-w-[120px] text-slate-300">Alasan</TableHead>
-                      <TableHead className="text-slate-300">Cuplikan bagi penilai</TableHead>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="w-10 text-foreground">#</TableHead>
+                      <TableHead className="text-foreground">Pertanyaan</TableHead>
+                      <TableHead className="text-foreground">Kategori</TableHead>
+                      <TableHead className="text-foreground">Tipe input</TableHead>
+                      <TableHead className="min-w-[130px] text-foreground">Untuk peran</TableHead>
+                      <TableHead className="text-right text-foreground">Bobot</TableHead>
+                      <TableHead className="min-w-[120px] text-foreground">Alasan</TableHead>
+                      <TableHead className="text-foreground">Cuplikan bagi penilai</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -321,7 +321,7 @@ export function Template360DetailView({ id }: { id: string }) {
                           group.label != null ? (
                             <TableRow
                               key={`sec-${gIdx}`}
-                              className="border-slate-800 bg-slate-950/90 hover:bg-slate-950/90"
+                              className="border-border bg-background/90 hover:bg-background/90"
                             >
                               <TableCell
                                 colSpan={8}
@@ -344,15 +344,15 @@ export function Template360DetailView({ id }: { id: string }) {
                             : "—"
                           const appliesRoleCell = perf360RaterRoleLabel(coercePerf360RaterRole(q.applies_to_role))
                           return (
-                            <TableRow key={q.id} className="border-slate-800">
-                              <TableCell className="text-slate-500">{rowNum}</TableCell>
-                              <TableCell className="max-w-[280px] font-medium text-slate-200">{q.question_text}</TableCell>
-                              <TableCell className="text-slate-400">{q.category}</TableCell>
-                              <TableCell className="text-slate-400">{questionTypeLabel(q.question_type)}</TableCell>
-                              <TableCell className="text-xs text-slate-400">{appliesRoleCell}</TableCell>
-                              <TableCell className="text-right text-slate-300">{String(q.weight)}</TableCell>
-                              <TableCell className="text-xs text-slate-400">{reasonCell}</TableCell>
-                              <TableCell className="text-xs text-slate-500">{caption}</TableCell>
+                            <TableRow key={q.id} className="border-border">
+                              <TableCell className="text-muted-foreground">{rowNum}</TableCell>
+                              <TableCell className="max-w-[280px] font-medium text-foreground">{q.question_text}</TableCell>
+                              <TableCell className="text-muted-foreground">{q.category}</TableCell>
+                              <TableCell className="text-muted-foreground">{questionTypeLabel(q.question_type)}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{appliesRoleCell}</TableCell>
+                              <TableCell className="text-right text-foreground">{String(q.weight)}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{reasonCell}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{caption}</TableCell>
                             </TableRow>
                           )
                         })
@@ -367,10 +367,10 @@ export function Template360DetailView({ id }: { id: string }) {
         </TabsContent>
 
         <TabsContent value="matrix" className="mt-0">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base text-slate-100">Estimasi penilaian 360</CardTitle>
-              <CardDescription className="space-y-2 text-slate-500">
+              <CardTitle className="text-base text-foreground">Estimasi penilaian 360</CardTitle>
+              <CardDescription className="space-y-2 text-muted-foreground">
                 <p>
                   Pratinjau mengikuti kolom dan aturan minimal penilai pada spesifikasi tabel estimasi 360 (level jabatan, estimasi form
                   masuk, breakdown, status OK/peringatan).
@@ -380,9 +380,9 @@ export function Template360DetailView({ id }: { id: string }) {
                   <Link href="/performance/360/mapping-penilaian" className="text-cyan-400 hover:underline">
                     Mapping penilaian
                   </Link>
-                  : level sama; untuk level <span className="text-slate-400">7–9</span> bisa lintas departemen; selain itu harus dept
+                  : level sama; untuk level <span className="text-muted-foreground">7–9</span> bisa lintas departemen; selain itu harus dept
                   sama. Angka peer bersifat perkiraan (tanda&nbsp;~). Atasan dari mapping atau{" "}
-                  <code className="text-slate-400">reports_to</code>.
+                  <code className="text-muted-foreground">reports_to</code>.
                 </p>
               </CardDescription>
             </CardHeader>
@@ -409,48 +409,48 @@ export function Template360DetailView({ id }: { id: string }) {
                   <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
                 </div>
               ) : matrixRows.length === 0 ? (
-                <p className="py-10 text-center text-sm text-slate-500">
+                <p className="py-10 text-center text-sm text-muted-foreground">
                   Tidak ada karyawan aktif untuk tenant ini.
                 </p>
               ) : (
                 <div className="space-y-6">
-                  <div className="overflow-x-auto rounded-lg border border-slate-800">
+                  <div className="overflow-x-auto rounded-lg border border-border">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-slate-800 bg-slate-950/80 hover:bg-transparent">
-                          <TableHead className="text-slate-300">Nama</TableHead>
-                          <TableHead className="text-slate-300">Jabatan</TableHead>
-                          <TableHead className="text-right tabular-nums text-slate-300">Level</TableHead>
-                          <TableHead className="text-right tabular-nums text-slate-300">
+                        <TableRow className="border-border bg-background/80 hover:bg-transparent">
+                          <TableHead className="text-foreground">Nama</TableHead>
+                          <TableHead className="text-foreground">Jabatan</TableHead>
+                          <TableHead className="text-right tabular-nums text-foreground">Level</TableHead>
+                          <TableHead className="text-right tabular-nums text-foreground">
                             <span className="block">Est.form</span>
-                            <span className="block text-[11px] font-normal text-slate-500">total masuk</span>
+                            <span className="block text-[11px] font-normal text-muted-foreground">total masuk</span>
                           </TableHead>
-                          <TableHead className="min-w-[200px] text-slate-300">
+                          <TableHead className="min-w-[200px] text-foreground">
                             Breakdown{" "}
-                            <span className="block text-[11px] font-normal text-slate-500">Diri | Atasan | Peer | Bawahan</span>
+                            <span className="block text-[11px] font-normal text-muted-foreground">Diri | Atasan | Peer | Bawahan</span>
                           </TableHead>
-                          <TableHead className="text-slate-300">Status</TableHead>
+                          <TableHead className="text-foreground">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {matrixRows.map((r) => {
                           const st = estimationStatusForRow(r)
                           return (
-                            <TableRow key={`in-${r.profile_id}`} className="border-slate-800">
-                              <TableCell className="font-medium text-slate-200">{r.full_name}</TableCell>
-                              <TableCell className="max-w-[200px] text-slate-400">{r.position_label}</TableCell>
-                              <TableCell className="text-right tabular-nums text-slate-300">
+                            <TableRow key={`in-${r.profile_id}`} className="border-border">
+                              <TableCell className="font-medium text-foreground">{r.full_name}</TableCell>
+                              <TableCell className="max-w-[200px] text-muted-foreground">{r.position_label}</TableCell>
+                              <TableCell className="text-right tabular-nums text-foreground">
                                 {r.job_grade_level != null ? r.job_grade_level : "—"}
                               </TableCell>
-                              <TableCell className="text-right tabular-nums text-slate-200">
+                              <TableCell className="text-right tabular-nums text-foreground">
                                 {r.inbound_total !== null ? r.inbound_total : "—"}
                               </TableCell>
-                              <TableCell className="font-mono text-xs tabular-nums text-slate-400">
+                              <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
                                 {inboundBreakdownDoc(r)}
                               </TableCell>
                               <TableCell className="text-sm">
                                 {st.kind === "na" ? (
-                                  <span className="text-slate-600">Belum mapping</span>
+                                  <span className="text-muted-foreground">Belum mapping</span>
                                 ) : st.kind === "ok" ? (
                                   <span className="text-emerald-400/95">✅ OK</span>
                                 ) : st.kind === "unknown_level" ? (
@@ -464,38 +464,38 @@ export function Template360DetailView({ id }: { id: string }) {
                             </TableRow>
                           )
                         })}
-                        <TableRow className="border-slate-800 bg-slate-950/50 font-medium hover:bg-slate-950/50">
-                          <TableCell colSpan={3} className="text-slate-400">
+                        <TableRow className="border-border bg-background/50 font-medium hover:bg-background/50">
+                          <TableCell colSpan={3} className="text-muted-foreground">
                             Total
                           </TableCell>
-                          <TableCell className="text-right tabular-nums text-slate-200">{totalFormsEstimate}</TableCell>
-                          <TableCell colSpan={2} className="text-slate-600" />
+                          <TableCell className="text-right tabular-nums text-foreground">{totalFormsEstimate}</TableCell>
+                          <TableCell colSpan={2} className="text-muted-foreground" />
                         </TableRow>
                       </TableBody>
                     </Table>
                   </div>
 
-                  <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-4 text-sm">
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Ringkasan</p>
-                    <ul className="mt-3 space-y-1.5 text-slate-300">
+                  <div className="rounded-lg border border-border bg-background/40 p-4 text-sm">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ringkasan</p>
+                    <ul className="mt-3 space-y-1.5 text-foreground">
                       <li>
                         Total karyawan aktif (baris){": "}
-                        <span className="tabular-nums text-slate-100">{matrixRows.length}</span>
+                        <span className="tabular-nums text-foreground">{matrixRows.length}</span>
                       </li>
                       <li>
                         Total formulir (estimasi, yang sudah mapping){": "}
-                        <span className="tabular-nums text-slate-100">{totalFormsEstimate}</span>
+                        <span className="tabular-nums text-foreground">{totalFormsEstimate}</span>
                       </li>
                       <li>
                         Rata-rata penilai/orang (hanya yang ter-mapping){": "}
-                        <span className="tabular-nums text-slate-100">
+                        <span className="tabular-nums text-foreground">
                           {configuredInboundRows.length ? avgRaters.toFixed(1) : "—"}
                         </span>
                       </li>
                     </ul>
-                    <div className="mt-4 border-t border-slate-800 pt-3">
-                      <p className="text-xs font-medium text-slate-500">Ringkasan status</p>
-                      <p className="mt-2 text-slate-300">
+                    <div className="mt-4 border-t border-border pt-3">
+                      <p className="text-xs font-medium text-muted-foreground">Ringkasan status</p>
+                      <p className="mt-2 text-foreground">
                         <span className="text-emerald-400/95">✅ OK</span>
                         {": "}
                         <span className="tabular-nums">{okCount}</span> orang
@@ -506,10 +506,10 @@ export function Template360DetailView({ id }: { id: string }) {
                           penilai untuk level mereka
                         </p>
                       ) : (
-                        <p className="mt-1 text-slate-500">⚠️ WARNING: 0 orang</p>
+                        <p className="mt-1 text-muted-foreground">⚠️ WARNING: 0 orang</p>
                       )}
                       {unknownLevelRows.length > 0 ? (
-                        <p className="mt-2 text-xs text-slate-500">
+                        <p className="mt-2 text-xs text-muted-foreground">
                           Tanpa angka level (set grade di master atau lengkapi pemetaan grade ke jabatan):{" "}
                           {unknownLevelRows.map(({ r }) => r.full_name).join(", ")}
                         </p>
@@ -528,15 +528,15 @@ export function Template360DetailView({ id }: { id: string }) {
                           const isCeoTier = r.job_grade_level != null && r.job_grade_level >= 10
                           return (
                             <li key={`rec-${r.profile_id}`}>
-                              <span className="font-medium text-slate-100">{r.full_name}</span>
+                              <span className="font-medium text-foreground">{r.full_name}</span>
                               {" — "}perlu sekira {need} penilai tambahan untuk memenuhi minimal {min}.
                               {isCeoTier ? (
-                                <span className="text-slate-400">
+                                <span className="text-muted-foreground">
                                   {" "}
                                   Opsi: tambahkan stakeholder eksternal (mis. dewan) atau konsultan.
                                 </span>
                               ) : (
-                                <span className="text-slate-400">
+                                <span className="text-muted-foreground">
                                   {" "}
                                   Opsi: tambah mapping peer atau atasan di halaman Mapping; pastikan beberapa rekan satu level satu
                                   departemen atau (level 7–9) nominasi lintas dept.
@@ -547,7 +547,7 @@ export function Template360DetailView({ id }: { id: string }) {
                         })}
                         {unknownLevelRows.map(({ r }) => (
                           <li key={`rec-lvl-${r.profile_id}`}>
-                            <span className="font-medium text-slate-100">{r.full_name}</span>
+                            <span className="font-medium text-foreground">{r.full_name}</span>
                             {": "}
                             lengkapi level jabatan di Master Data atau data karyawan agar bisa validasi MIN.
                           </li>
@@ -556,27 +556,27 @@ export function Template360DetailView({ id }: { id: string }) {
                     </div>
                   )}
 
-                  <details className="rounded-lg border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm">
-                    <summary className="cursor-pointer text-slate-300 marker:text-slate-500">
+                  <details className="rounded-lg border /80 px-4 py-3 text-sm">
+                    <summary className="cursor-pointer text-foreground marker:text-muted-foreground">
                       Penilaian yang Anda lakukan (estimasi beban outbound)
                     </summary>
-                    <div className="mt-4 overflow-x-auto rounded-lg border border-slate-800">
+                    <div className="mt-4 overflow-x-auto rounded-lg border border-border">
                       <Table>
                         <TableHeader>
-                          <TableRow className="border-slate-800 hover:bg-transparent bg-slate-950/80">
-                            <TableHead className="text-slate-300">Nama</TableHead>
-                            <TableHead className="text-slate-300">Jabatan</TableHead>
-                            <TableHead className="text-right tabular-nums text-slate-300">Total keluar</TableHead>
-                            <TableHead className="min-w-[220px] text-slate-300">Rincian</TableHead>
+                          <TableRow className="border-border hover:bg-transparent bg-background/80">
+                            <TableHead className="text-foreground">Nama</TableHead>
+                            <TableHead className="text-foreground">Jabatan</TableHead>
+                            <TableHead className="text-right tabular-nums text-foreground">Total keluar</TableHead>
+                            <TableHead className="min-w-[220px] text-foreground">Rincian</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {matrixRows.map((r) => (
-                            <TableRow key={`out-${r.profile_id}`} className="border-slate-800">
-                              <TableCell className="font-medium text-slate-200">{r.full_name}</TableCell>
-                              <TableCell className="text-slate-400">{r.position_label}</TableCell>
-                              <TableCell className="text-right tabular-nums text-slate-200">{r.outbound_total}</TableCell>
-                              <TableCell className="text-xs leading-relaxed text-slate-500">{outboundBreakdownText(r)}</TableCell>
+                            <TableRow key={`out-${r.profile_id}`} className="border-border">
+                              <TableCell className="font-medium text-foreground">{r.full_name}</TableCell>
+                              <TableCell className="text-muted-foreground">{r.position_label}</TableCell>
+                              <TableCell className="text-right tabular-nums text-foreground">{r.outbound_total}</TableCell>
+                              <TableCell className="text-xs leading-relaxed text-muted-foreground">{outboundBreakdownText(r)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -585,7 +585,7 @@ export function Template360DetailView({ id }: { id: string }) {
                   </details>
                 </div>
               )}
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-muted-foreground">
                 Angka bersifat estimasi untuk pratinjau (satu pool karyawan aktif di tenant); bisa berbeda pada siklus nyata dengan
                 daftar nominasi peer khusus atau banyak periode paralel.
               </p>

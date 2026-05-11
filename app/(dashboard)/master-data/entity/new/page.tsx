@@ -126,13 +126,13 @@ export default function NewEntityPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/master-data/entity">
-          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Tambah Entity</h1>
-          <p className="text-slate-400 text-sm">Buat cabang atau unit bisnis baru</p>
+          <h1 className="text-2xl font-bold text-foreground">Tambah Entity</h1>
+          <p className="text-muted-foreground text-sm">Buat cabang atau unit bisnis baru</p>
         </div>
       </div>
 
@@ -143,9 +143,9 @@ export default function NewEntityPage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-slate-100 flex items-center gap-2">
+            <CardTitle className="text-foreground flex items-center gap-2">
               <Building2 className="w-5 h-5 text-emerald-500" />
               Informasi Entity
             </CardTitle>
@@ -154,7 +154,7 @@ export default function NewEntityPage() {
             {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="code" className="text-slate-200">
+                <Label htmlFor="code">
                   Kode <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -163,12 +163,12 @@ export default function NewEntityPage() {
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="e.g., JKT01"
                   required
-                  className="bg-slate-950 border-slate-800 text-slate-100 uppercase"
+                  className="bg-background border-border text-foreground uppercase"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-200">
+                <Label htmlFor="name">
                   Nama Entity <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -177,22 +177,22 @@ export default function NewEntityPage() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Kantor Pusat Jakarta"
                   required
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type" className="text-slate-200">
+                <Label htmlFor="type">
                   Tipe <span className="text-red-400">*</span>
                 </Label>
                 <Select
                   value={formData.type}
                   onValueChange={(value) => setFormData({ ...formData, type: value })}
                 >
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+                  <SelectTrigger className="bg-background border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800">
+                  <SelectContent>
                     <SelectItem value="branch">Cabang (Branch)</SelectItem>
                     <SelectItem value="unit_business">Unit Bisnis</SelectItem>
                     <SelectItem value="subsidiary">Anak Perusahaan</SelectItem>
@@ -200,10 +200,10 @@ export default function NewEntityPage() {
                 </Select>
               </div>
 
-              <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3">
+              <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-background/50 px-4 py-3">
                 <div>
-                  <Label className="text-slate-200">Kantor pusat</Label>
-                  <p className="text-xs text-slate-500">
+                  <Label>Kantor pusat</Label>
+                  <p className="text-xs text-muted-foreground">
                     Penanda referensi; hanya satu entity per tenant.
                   </p>
                 </div>
@@ -216,7 +216,7 @@ export default function NewEntityPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="npwp" className="text-slate-200">
+                <Label htmlFor="npwp">
                   NPWP
                 </Label>
                 <Input
@@ -224,14 +224,14 @@ export default function NewEntityPage() {
                   value={formData.npwp}
                   onChange={(e) => setFormData({ ...formData, npwp: e.target.value })}
                   placeholder="99.999.999.9-999.999"
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
             </div>
 
             {/* Address */}
             <div className="space-y-2">
-              <Label htmlFor="address" className="text-slate-200">
+              <Label htmlFor="address">
                 Alamat
               </Label>
               <Textarea
@@ -240,13 +240,13 @@ export default function NewEntityPage() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Alamat lengkap..."
                 rows={3}
-                className="bg-slate-950 border-slate-800 text-slate-100"
+                className="bg-background border-border text-foreground"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="city" className="text-slate-200">
+                <Label htmlFor="city">
                   Kota
                 </Label>
                 <AutocompleteInput
@@ -256,12 +256,12 @@ export default function NewEntityPage() {
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   placeholder="Ketik atau pilih"
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="province" className="text-slate-200">
+                <Label htmlFor="province">
                   Provinsi
                 </Label>
                 <AutocompleteInput
@@ -271,12 +271,12 @@ export default function NewEntityPage() {
                   value={formData.province}
                   onChange={(e) => setFormData({ ...formData, province: e.target.value })}
                   placeholder="Ketik atau pilih"
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-slate-200">
+                <Label htmlFor="phone">
                   Telepon
                 </Label>
                 <Input
@@ -284,13 +284,13 @@ export default function NewEntityPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="021-12345678"
-                  className="bg-slate-950 border-slate-800 text-slate-100"
+                  className="bg-background border-border text-foreground"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-200">
+              <Label htmlFor="email">
                 Email
               </Label>
               <Input
@@ -299,14 +299,14 @@ export default function NewEntityPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="kantor@company.com"
-                className="bg-slate-950 border-slate-800 text-slate-100"
+                className="bg-background border-border text-foreground"
               />
             </div>
 
             {/* Copy master dari entity lain */}
-            <div className="border-t border-slate-800 pt-6 space-y-4">
-              <h3 className="text-lg font-medium text-slate-100">Salin master data (copy-on-create)</h3>
-              <p className="text-sm text-slate-500">
+            <div className="border-t border-border pt-6 space-y-4">
+              <h3 className="text-lg font-medium text-foreground">Salin master data (copy-on-create)</h3>
+              <p className="text-sm text-muted-foreground">
                 Duplikasi shift kerja, komponen gaji (per entity), kalender kerja, dan job title dari entity sumber.
                 Kode di baris baru diberi sufiks unik agar memenuhi constraint database.
               </p>
@@ -316,7 +316,7 @@ export default function NewEntityPage() {
                   checked={copyMasterEnabled}
                   onCheckedChange={(v) => setCopyMasterEnabled(Boolean(v))}
                 />
-                <Label htmlFor="copy-master" className="text-slate-200 cursor-pointer">
+                <Label htmlFor="copy-master" className="text-foreground cursor-pointer">
                   Aktifkan penyalinan setelah entity dibuat
                 </Label>
               </div>
@@ -336,12 +336,12 @@ export default function NewEntityPage() {
             </div>
 
             {/* GPS Settings */}
-            <div className="border-t border-slate-800 pt-6">
-              <h3 className="text-lg font-medium text-slate-100 mb-4">Pengaturan GPS (Presensi)</h3>
+            <div className="border-t border-border pt-6">
+              <h3 className="text-lg font-medium text-foreground mb-4">Pengaturan GPS (Presensi)</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="latitude" className="text-slate-200">
+                  <Label htmlFor="latitude">
                     Latitude
                   </Label>
                   <Input
@@ -349,12 +349,12 @@ export default function NewEntityPage() {
                     value={formData.latitude}
                     onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                     placeholder="-6.2088"
-                    className="bg-slate-950 border-slate-800 text-slate-100"
+                    className="bg-background border-border text-foreground"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="longitude" className="text-slate-200">
+                  <Label htmlFor="longitude">
                     Longitude
                   </Label>
                   <Input
@@ -362,12 +362,12 @@ export default function NewEntityPage() {
                     value={formData.longitude}
                     onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
                     placeholder="106.8456"
-                    className="bg-slate-950 border-slate-800 text-slate-100"
+                    className="bg-background border-border text-foreground"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="radius" className="text-slate-200">
+                  <Label htmlFor="radius">
                     Radius (meter)
                   </Label>
                   <Input
@@ -377,12 +377,12 @@ export default function NewEntityPage() {
                     max="500"
                     value={formData.radius_meters}
                     onChange={(e) => setFormData({ ...formData, radius_meters: e.target.value })}
-                    className="bg-slate-950 border-slate-800 text-slate-100"
+                    className="bg-background border-border text-foreground"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="grace_period" className="text-slate-200">
+                  <Label htmlFor="grace_period">
                     Grace Period (menit)
                   </Label>
                   <Input
@@ -392,16 +392,16 @@ export default function NewEntityPage() {
                     max="60"
                     value={formData.grace_period_minutes}
                     onChange={(e) => setFormData({ ...formData, grace_period_minutes: e.target.value })}
-                    className="bg-slate-950 border-slate-800 text-slate-100"
+                    className="bg-background border-border text-foreground"
                   />
                 </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
               <Link href="/master-data/entity">
-                <Button type="button" variant="ghost" className="text-slate-400">
+                <Button type="button" variant="ghost" className="text-muted-foreground">
                   Batal
                 </Button>
               </Link>

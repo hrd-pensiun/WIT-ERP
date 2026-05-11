@@ -105,13 +105,13 @@ export function Matrix360View() {
       title="Dashboard"
       subtitle={`${filterSummary} — Matrix & perhitungan skor (demo) · ${employeeLine} · ${periodLine}`}
     >
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardContent className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="filters" className="border-0">
               <AccordionTrigger className="py-1 hover:no-underline">
                 <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                  <span className="text-base font-medium text-slate-200">Filter</span>
+                  <span className="text-base font-medium text-foreground">Filter</span>
                   {scope.filtersLoading ? (
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin text-emerald-500" aria-hidden />
                   ) : null}
@@ -125,13 +125,13 @@ export function Matrix360View() {
                   trailing={
                     <>
                       <div className="min-w-0 space-y-2">
-                        <Label className="text-slate-400 text-xs">Karyawan</Label>
+                        <Label className="text-muted-foreground text-xs">Karyawan</Label>
                         <Select
                           value={employee || undefined}
                           onValueChange={setEmployee}
                           disabled={employeesLoading || filteredEmployees.length === 0}
                         >
-                          <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
+                          <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-background border-border text-foreground">
                             <SelectValue
                               placeholder={
                                 employeesLoading
@@ -142,7 +142,7 @@ export function Matrix360View() {
                               }
                             />
                           </SelectTrigger>
-                          <SelectContent className="bg-slate-900 border-slate-800 max-h-[min(320px,50vh)]">
+                          <SelectContent className="max-h-[min(320px,50vh)]">
                             {filteredEmployees.map((e) => (
                               <SelectItem key={e.id} value={e.id}>
                                 {employeeFilterLabel(e)}
@@ -152,13 +152,13 @@ export function Matrix360View() {
                         </Select>
                       </div>
                       <div className="min-w-0 space-y-2">
-                        <Label className="text-slate-400 text-xs">Periode (dari template)</Label>
+                        <Label className="text-muted-foreground text-xs">Periode (dari template)</Label>
                         <Select
                           value={templateId || undefined}
                           onValueChange={setTemplateId}
                           disabled={templatesLoading || templates.length === 0}
                         >
-                          <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-slate-950 border-slate-800 text-slate-100">
+                          <SelectTrigger className="h-9 w-full min-w-0 overflow-hidden bg-background border-border text-foreground">
                             <SelectValue
                               placeholder={
                                 templatesLoading
@@ -169,7 +169,7 @@ export function Matrix360View() {
                               }
                             />
                           </SelectTrigger>
-                          <SelectContent className="bg-slate-900 border-slate-800 max-h-[min(320px,50vh)]">
+                          <SelectContent className="max-h-[min(320px,50vh)]">
                             {templates.map((t) => (
                               <SelectItem key={t.id} value={t.id}>
                                 {formatTemplatePeriodLabel(t)} — {t.name}

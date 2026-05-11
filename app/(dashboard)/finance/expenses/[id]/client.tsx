@@ -53,11 +53,11 @@ export default function ExpenseDetailClient({ id }: { id: string }) {
 
   if (!expense) {
     return (
-      <div className="p-6 space-y-6 max-w-3xl mx-auto">
+      <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Link href="/finance/expenses"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Pengeluaran tidak ditemukan</h1>
+            <h1 className="text-2xl font-bold text-foreground">Pengeluaran tidak ditemukan</h1>
           </div>
         </div>
       </div>
@@ -83,22 +83,22 @@ export default function ExpenseDetailClient({ id }: { id: string }) {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/finance/expenses"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Detail Pengeluaran</h1>
-            <p className="text-slate-400">{expense.expense_number || expense.id.slice(0, 8)}</p>
+            <h1 className="text-2xl font-bold text-foreground">Detail Pengeluaran</h1>
+            <p className="text-muted-foreground">{expense.expense_number || expense.id.slice(0, 8)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-slate-700"><FileText className="w-4 h-4 mr-2" />Lampiran</Button>
+          <Button variant="outline" className="border-border"><FileText className="w-4 h-4 mr-2" />Lampiran</Button>
           <Button variant="destructive" onClick={handleDelete}>Hapus</Button>
         </div>
       </div>
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
@@ -106,25 +106,25 @@ export default function ExpenseDetailClient({ id }: { id: string }) {
                 <Receipt className="w-6 h-6 text-emerald-500" />
               </div>
               <div>
-                <h2 className="font-bold text-slate-100">{expense.description}</h2>
-                <p className="text-sm text-slate-400">{expense.vendor_name || '-'}</p>
+                <h2 className="font-bold text-foreground">{expense.description}</h2>
+                <p className="text-sm text-muted-foreground">{expense.vendor_name || '-'}</p>
               </div>
             </div>
-            <Badge variant="outline" className="border-slate-700 text-slate-400">{getCategoryLabel(expense.category)}</Badge>
+            <Badge variant="outline" className="border-border text-muted-foreground">{getCategoryLabel(expense.category)}</Badge>
           </div>
 
-          <div className="border-t border-slate-800 pt-4 grid grid-cols-2 gap-4">
-            <div><p className="text-sm text-slate-500">Tanggal</p><p className="text-slate-200">{expense.expense_date}</p></div>
-            <div><p className="text-sm text-slate-500">Metode Pembayaran</p><p className="text-slate-200">{getPaymentMethodLabel(expense.payment_method)}</p></div>
-            <div><p className="text-sm text-slate-500">Nomor Pengeluaran</p><p className="text-slate-200">{expense.expense_number || expense.id.slice(0, 8)}</p></div>
-            <div><p className="text-sm text-slate-500">Jumlah</p><p className="text-2xl font-bold text-emerald-400">Rp {totalAmount.toLocaleString('id-ID')}</p></div>
+          <div className="border-t border-border pt-4 grid grid-cols-2 gap-4">
+            <div><p className="text-sm text-muted-foreground">Tanggal</p><p>{expense.expense_date}</p></div>
+            <div><p className="text-sm text-muted-foreground">Metode Pembayaran</p><p>{getPaymentMethodLabel(expense.payment_method)}</p></div>
+            <div><p className="text-sm text-muted-foreground">Nomor Pengeluaran</p><p>{expense.expense_number || expense.id.slice(0, 8)}</p></div>
+            <div><p className="text-sm text-muted-foreground">Jumlah</p><p className="text-2xl font-bold text-emerald-400">Rp {totalAmount.toLocaleString('id-ID')}</p></div>
             <div>
-              <p className="text-sm text-slate-500 mb-1">Payment Status</p>
+              <p className="text-sm text-muted-foreground mb-1">Payment Status</p>
               <Select value={expense.payment_status || "unpaid"} onValueChange={handleUpdateStatus} disabled={saving}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100 h-9">
+                <SelectTrigger className="bg-background border-border text-foreground h-9">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800">
+                <SelectContent>
                   <SelectItem value="unpaid">Unpaid</SelectItem>
                   <SelectItem value="partial">Partial</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
@@ -134,9 +134,9 @@ export default function ExpenseDetailClient({ id }: { id: string }) {
           </div>
 
           {expense.notes && (
-            <div className="border-t border-slate-800 pt-4">
-              <p className="text-sm text-slate-500 mb-1">Catatan</p>
-              <p className="text-slate-300">{expense.notes}</p>
+            <div className="border-t border-border pt-4">
+              <p className="text-sm text-muted-foreground mb-1">Catatan</p>
+              <p>{expense.notes}</p>
             </div>
           )}
         </CardContent>

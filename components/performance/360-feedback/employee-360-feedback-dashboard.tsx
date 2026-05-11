@@ -548,13 +548,13 @@ export function Employee360FeedbackDashboard() {
       }
       action={
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="border-slate-700 text-slate-300" asChild>
+          <Button variant="outline" size="sm" className="border-border text-foreground" asChild>
             <Link href="/performance/360/template">
               <Settings2 className="mr-1.5 h-4 w-4" />
               Template
             </Link>
           </Button>
-          <Button variant="outline" size="sm" className="border-slate-700 text-slate-300" asChild>
+          <Button variant="outline" size="sm" className="border-border text-foreground" asChild>
             <Link href="/performance/360/dashboard">
               <BarChart3 className="mr-1.5 h-4 w-4" />
               Dashboard HR
@@ -563,17 +563,17 @@ export function Employee360FeedbackDashboard() {
         </div>
       }
     >
-      <div className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/40 px-3 py-2.5 text-sm text-slate-500">
+      <div className="flex items-start gap-3 rounded-lg border /40 px-3 py-2.5 text-sm text-muted-foreground">
         <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden />
         <p>
           {mockMode ? (
             <>
-              Tab <span className="text-slate-400">Daftar form</span> membuka form isi (demo) dari baris yang belum selesai.
+              Tab <span className="text-muted-foreground">Daftar form</span> membuka form isi (demo) dari baris yang belum selesai.
               Hasil &amp; insight memakai data ilustrasi hingga agregasi kompetensi tersedia di backend.
             </>
           ) : (
             <>
-              Pilih <span className="text-slate-400">periode</span> (template 360) untuk melihat form penilaian yang dihitung dari roster.
+              Pilih <span className="text-muted-foreground">periode</span> (template 360) untuk melihat form penilaian yang dihitung dari roster.
               Secara default hanya form di mana Anda penilai yang ditampilkan.
               Mode pratinjau semua form hanya tersedia untuk role HR/Admin tertentu jika profil belum lengkap.
               {pf360.showAllForms ? (
@@ -589,7 +589,7 @@ export function Employee360FeedbackDashboard() {
       <Tabs defaultValue="form-list" className="gap-4">
         <TabsList
           variant="line"
-          className="h-auto w-full flex-wrap justify-start gap-0 rounded-none border-b border-slate-800 bg-transparent p-0"
+          className="h-auto w-full flex-wrap justify-start gap-0 rounded-none border-b border-border bg-transparent p-0"
         >
           <TabsTrigger
             value="form-list"
@@ -617,12 +617,12 @@ export function Employee360FeedbackDashboard() {
         <TabsContent value="form-list" className="mt-6 space-y-6">
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Status</Label>
+              <Label className="text-xs text-muted-foreground">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                <SelectTrigger className="border-border bg-background text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900">
+                <SelectContent>
                   <SelectItem value="all">Semua</SelectItem>
                   <SelectItem value="pending">Menunggu</SelectItem>
                   <SelectItem value="in_progress">Berjalan</SelectItem>
@@ -632,12 +632,12 @@ export function Employee360FeedbackDashboard() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Tipe penilai</Label>
+              <Label className="text-xs text-muted-foreground">Tipe penilai</Label>
               <Select value={raterFilter} onValueChange={setRaterFilter}>
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                <SelectTrigger className="border-border bg-background text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900">
+                <SelectContent>
                   <SelectItem value="all">Semua</SelectItem>
                   <SelectItem value="self">Self</SelectItem>
                   <SelectItem value="superior">Atasan</SelectItem>
@@ -647,16 +647,16 @@ export function Employee360FeedbackDashboard() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Periode</Label>
+              <Label className="text-xs text-muted-foreground">Periode</Label>
               <Select
                 value={mockMode ? periodId : templateId}
                 onValueChange={mockMode ? setPeriodId : setTemplateId}
                 disabled={!mockMode && !pf360.templates.length}
               >
-                <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+                <SelectTrigger className="border-border bg-background text-foreground">
                   <SelectValue placeholder={mockMode ? undefined : "Pilih template"} />
                 </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900">
+                <SelectContent>
                   {mockMode
                     ? CYCLES.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
@@ -680,32 +680,32 @@ export function Employee360FeedbackDashboard() {
           ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-slate-100">Progres</CardTitle>
+                <CardTitle className="text-base text-foreground">Progres</CardTitle>
                 <CardDescription>Form selesai dalam siklus ini</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-2xl font-bold text-emerald-400">
                   {progressStats.completed} dari {progressStats.total} selesai{" "}
-                  <span className="text-lg font-semibold text-slate-400">({progressStats.pct}%)</span>
+                  <span className="text-lg font-semibold text-muted-foreground">({progressStats.pct}%)</span>
                 </p>
                 <Progress
                   value={progressStats.pct}
-                  className="h-2 bg-slate-800 [&>[data-slot=progress-indicator]]:bg-emerald-500"
+                  className="h-2 bg-muted [&>[data-slot=progress-indicator]]:bg-emerald-500"
                 />
               </CardContent>
             </Card>
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-slate-100">Deadline terdekat</CardTitle>
+                <CardTitle className="text-base text-foreground">Deadline terdekat</CardTitle>
                 <CardDescription>Ringkasan urgensi</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-2xl font-bold text-amber-400">
                   {deadlineStats.overdue > 0 ? "Ada terlambat" : `${deadlineStats.soonest} hari`}
                 </p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   Status:{" "}
                   <span className="text-red-400">{deadlineStats.overdue} terlambat</span>
                   {", "}
@@ -718,24 +718,24 @@ export function Employee360FeedbackDashboard() {
             </Card>
           </div>
 
-          <Card className="overflow-hidden border-slate-800 bg-slate-900">
+          <Card className="overflow-hidden ">
             {!mockMode && pf360.loading ? (
-              <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
+              <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
                 Memuat form &amp; roster…
               </div>
             ) : !mockMode && !templateId ? (
-              <div className="px-4 py-12 text-center text-sm text-slate-500">
+              <div className="px-4 py-12 text-center text-sm text-muted-foreground">
                 Belum ada template 360. Buat dan aktifkan template di halaman Template.
               </div>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-800 hover:bg-transparent">
-                    <TableHead className="text-slate-400">Form penilaian</TableHead>
-                    <TableHead className="text-slate-400">Penilai</TableHead>
-                    <TableHead className="text-slate-400">Status</TableHead>
-                    <TableHead className="text-right text-slate-400">Deadline</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Form penilaian</TableHead>
+                    <TableHead className="text-muted-foreground">Penilai</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-right text-muted-foreground">Deadline</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -744,20 +744,20 @@ export function Employee360FeedbackDashboard() {
                         <TableRow
                           key={row.id}
                           className={cn(
-                            "border-slate-800",
-                            row.status !== "completed" && "cursor-pointer hover:bg-slate-950/80"
+                            "border-border",
+                            row.status !== "completed" && "cursor-pointer hover:bg-background/80"
                           )}
                           onClick={() => openForm(row)}
                         >
-                          <TableCell className="font-medium text-slate-200">{row.formLabel}</TableCell>
-                          <TableCell className="text-slate-400">
+                          <TableCell className="font-medium text-foreground">{row.formLabel}</TableCell>
+                          <TableCell className="text-muted-foreground">
                             {row.raterName}
-                            <span className="text-slate-600"> — {row.raterRoleLabel}</span>
+                            <span className="text-muted-foreground"> — {row.raterRoleLabel}</span>
                           </TableCell>
                           <TableCell>
                             <FormStatusBadge status={row.status} overdue={row.overdue} />
                           </TableCell>
-                          <TableCell className="text-right text-slate-400">
+                          <TableCell className="text-right text-muted-foreground">
                             {row.status === "completed" ? (
                               "—"
                             ) : row.overdue ? (
@@ -774,22 +774,22 @@ export function Employee360FeedbackDashboard() {
                         <TableRow
                           key={row.assignmentKey}
                           className={cn(
-                            "border-slate-800",
-                            row.status !== "completed" && "cursor-pointer hover:bg-slate-950/80"
+                            "border-border",
+                            row.status !== "completed" && "cursor-pointer hover:bg-background/80"
                           )}
                           onClick={() => openForm(row)}
                         >
-                          <TableCell className="font-medium text-slate-200">
+                          <TableCell className="font-medium text-foreground">
                             <span className="block">{row.formLabel}</span>
-                            <span className="text-xs font-normal text-slate-500">
+                            <span className="text-xs font-normal text-muted-foreground">
                               Dinilai: {row.assessedName}
                             </span>
                           </TableCell>
-                          <TableCell className="text-slate-400">{row.raterDisplayName}</TableCell>
+                          <TableCell className="text-muted-foreground">{row.raterDisplayName}</TableCell>
                           <TableCell>
                             <FormStatusBadge status={row.status} overdue={row.overdue} />
                           </TableCell>
-                          <TableCell className="text-right text-slate-400">
+                          <TableCell className="text-right text-muted-foreground">
                             {row.status === "completed" ? (
                               "—"
                             ) : row.overdue ? (
@@ -803,8 +803,8 @@ export function Employee360FeedbackDashboard() {
                         </TableRow>
                       ))}
                   {!mockMode && templateId && !filteredRows.length ? (
-                    <TableRow className="border-slate-800 hover:bg-transparent">
-                      <TableCell colSpan={4} className="py-12 text-center text-slate-500">
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">
                         Tidak ada baris (cek roster atau pengaturan rater di template).
                       </TableCell>
                     </TableRow>
@@ -813,7 +813,7 @@ export function Employee360FeedbackDashboard() {
               </Table>
             )}
           </Card>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-muted-foreground">
             {mockMode
               ? "Klik baris (belum selesai) untuk membuka form isi demo. Baris selesai hanya untuk baca status."
               : pf360.showAllForms
@@ -823,10 +823,10 @@ export function Employee360FeedbackDashboard() {
         </TabsContent>
 
         <TabsContent value="latest" className="mt-6 space-y-6">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-slate-100">Informasi profil</CardTitle>
-              <CardDescription className="text-slate-500">
+              <CardTitle className="text-foreground">Informasi profil</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 {mockMode
                   ? "Profil contoh untuk preview hasil 360."
                   : "Profil dinamis dari user yang sedang login."}
@@ -834,47 +834,47 @@ export function Employee360FeedbackDashboard() {
             </CardHeader>
             <CardContent className="-mx-1 overflow-x-auto px-1">
               <div className="grid min-w-[920px] grid-cols-4 gap-3">
-                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">Nama</p>
-                <p className="mt-1 text-sm font-medium text-slate-100">
+                <div className="rounded-lg border border-border bg-background/70 px-3 py-2.5">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Nama</p>
+                <p className="mt-1 text-sm font-medium text-foreground">
                   {mockMode ? "Igor Tolic Kadiv" : pf360.viewerProfile?.full_name ?? "—"}
                 </p>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Divisi</p>
-                  <p className="mt-1 text-sm font-medium text-slate-100">
+                <div className="rounded-lg border border-border bg-background/70 px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Divisi</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {mockMode ? "Product Engineering" : pf360.viewerProfile?.division_name ?? "—"}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Departemen</p>
-                  <p className="mt-1 text-sm font-medium text-slate-100">
+                <div className="rounded-lg border border-border bg-background/70 px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Departemen</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {mockMode ? "Engineering" : pf360.viewerProfile?.department_name ?? "—"}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Total score</p>
+                <div className="rounded-lg border border-border bg-background/70 px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Total score</p>
                   <p className="mt-1 text-sm font-medium text-emerald-400">3.9 / 5.0</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-slate-100">
+              <CardTitle className="text-foreground">
                 {mockMode
                   ? (CYCLES.find((c) => c.id === periodId)?.label ?? "Hasil terbaru")
                   : selectedTemplateForLatest
                     ? formatTemplatePeriodLabel(selectedTemplateForLatest)
                     : "Pilih periode (template)"}
               </CardTitle>
-              <CardDescription className="space-y-1 text-slate-400">
+              <CardDescription className="space-y-1 text-muted-foreground">
                 {mockMode ? (
                   <>
                     <p>Matrix skor mengikuti tampilan dashboard HR (data ilustrasi).</p>
                     <p className="mt-1">
-                      Samakan periode dengan pilihan di tab <span className="text-slate-500">Daftar form</span> jika perlu.
+                      Samakan periode dengan pilihan di tab <span className="text-muted-foreground">Daftar form</span> jika perlu.
                     </p>
                   </>
                 ) : !templateId || !selectedTemplateForLatest ? (
@@ -884,11 +884,11 @@ export function Employee360FeedbackDashboard() {
                     {selectedTemplateForLatest.name ? (
                       <>
                         Template:{" "}
-                        <span className="text-slate-300">{selectedTemplateForLatest.name}</span>.{" "}
+                        <span className="text-foreground">{selectedTemplateForLatest.name}</span>.{" "}
                       </>
                     ) : null}
                     Angka di bawah merupakan demo; agregasi dari{" "}
-                    <span className="font-mono text-slate-500">submission</span> akan menggantikan saat tersedia.
+                    <span className="font-mono text-muted-foreground">submission</span> akan menggantikan saat tersedia.
                   </p>
                 )}
               </CardDescription>
@@ -896,7 +896,7 @@ export function Employee360FeedbackDashboard() {
           </Card>
 
           {scoreLoading ? (
-            <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-4 py-4 text-sm text-slate-400">
+            <div className="rounded-lg border /80 px-4 py-4 text-sm text-muted-foreground">
               Memuat ringkasan skor terbaru...
             </div>
           ) : null}
@@ -910,9 +910,9 @@ export function Employee360FeedbackDashboard() {
         </TabsContent>
 
         <TabsContent value="insights" className="mt-6 space-y-6">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-100">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <LineChartIcon className="h-5 w-5 text-cyan-400" />
                 Tren skor (3+ siklus)
               </CardTitle>
@@ -931,7 +931,7 @@ export function Employee360FeedbackDashboard() {
                   <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981" }} />
                 </LineChart>
               </ResponsiveContainer>
-              <p className="mt-4 text-sm text-slate-400">
+              <p className="mt-4 text-sm text-muted-foreground">
                 Q1 2024: 4.0 (↑ +0.2) · Q2 2024: 4.2 (↑ +0.2) —{" "}
                 <span className="text-emerald-400">cenderung meningkat</span>.
               </p>
@@ -939,49 +939,49 @@ export function Employee360FeedbackDashboard() {
           </Card>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-base text-slate-100">Kekuatan (skor tertinggi)</CardTitle>
+                <CardTitle className="text-base text-foreground">Kekuatan (skor tertinggi)</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm text-slate-400">
+              <CardContent className="space-y-4 text-sm text-muted-foreground">
                 <div>
-                  <p className="font-medium text-slate-200">1. Technical Competence (4.5)</p>
+                  <p className="font-medium text-foreground">1. Technical Competence (4.5)</p>
                   <p className="mt-1">Konsisten dari penilai — pertahankan dan bagikan pengetahuan.</p>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-200">2. Accountability (4.3)</p>
+                  <p className="font-medium text-foreground">2. Accountability (4.3)</p>
                   <p className="mt-1">Tanggung jawab jelas — cocok untuk memimpin proyek.</p>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-200">3. Teamwork (4.2)</p>
+                  <p className="font-medium text-foreground">3. Teamwork (4.2)</p>
                   <p className="mt-1">Kolaborasi baik — fokus mentoring junior.</p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-slate-800 bg-slate-900">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-base text-slate-100">Area pengembangan</CardTitle>
+                <CardTitle className="text-base text-foreground">Area pengembangan</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm text-slate-400">
+              <CardContent className="space-y-4 text-sm text-muted-foreground">
                 <div>
-                  <p className="font-medium text-slate-200">1. Leadership &amp; Delegation (4.0)</p>
+                  <p className="font-medium text-foreground">1. Leadership &amp; Delegation (4.0)</p>
                   <p className="mt-1">Selisih dengan kekuatan utama: 0.5 — coaching / pelatihan kepemimpinan (3–6 bulan).</p>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-200">2. Communication (3.8)</p>
+                  <p className="font-medium text-foreground">2. Communication (3.8)</p>
                   <p className="mt-1">Kursus presentasi atau pembicaraan publik — kuartal berikutnya.</p>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-200">3. Continuous Learning (4.1)</p>
+                  <p className="font-medium text-foreground">3. Continuous Learning (4.1)</p>
                   <p className="mt-1">Program learning internal — progres berkelanjutan.</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base text-slate-100">
+              <CardTitle className="flex items-center gap-2 text-base text-foreground">
                 <Users className="h-5 w-5 text-cyan-400" />
                 Self vs penilai lain
               </CardTitle>
@@ -1000,32 +1000,32 @@ export function Employee360FeedbackDashboard() {
                   <Bar dataKey="score" fill="#059669" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-              <p className="mt-3 text-sm text-slate-400">
+              <p className="mt-3 text-sm text-muted-foreground">
                 Persepsi diri sedikit lebih tinggi dari rekan — peluang untuk mendengarkan umpan balik terbuka.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base text-slate-100">Perbandingan dengan rata-rata organisasi</CardTitle>
+              <CardTitle className="text-base text-foreground">Perbandingan dengan rata-rata organisasi</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-800 hover:bg-transparent">
-                    <TableHead className="text-slate-400">Kompetensi</TableHead>
-                    <TableHead className="text-slate-400">Anda</TableHead>
-                    <TableHead className="text-slate-400">Rata org</TableHead>
-                    <TableHead className="text-slate-400">Selisih</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Kompetensi</TableHead>
+                    <TableHead className="text-muted-foreground">Anda</TableHead>
+                    <TableHead className="text-muted-foreground">Rata org</TableHead>
+                    <TableHead className="text-muted-foreground">Selisih</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {ORG_COMPARE.map((row) => (
-                    <TableRow key={row.competency} className="border-slate-800">
-                      <TableCell className="text-slate-200">{row.competency}</TableCell>
-                      <TableCell className="font-mono text-slate-300">{row.you.toFixed(1)}</TableCell>
-                      <TableCell className="font-mono text-slate-500">{row.org.toFixed(1)}</TableCell>
+                    <TableRow key={row.competency} className="border-border">
+                      <TableCell className="text-foreground">{row.competency}</TableCell>
+                      <TableCell className="font-mono text-foreground">{row.you.toFixed(1)}</TableCell>
+                      <TableCell className="font-mono text-muted-foreground">{row.org.toFixed(1)}</TableCell>
                       <TableCell
                         className={cn(
                           "font-mono",
@@ -1039,18 +1039,18 @@ export function Employee360FeedbackDashboard() {
                   ))}
                 </TableBody>
               </Table>
-              <p className="mt-3 text-sm text-slate-500">
+              <p className="mt-3 text-sm text-muted-foreground">
                 Skor keseluruhan Anda 4.2 vs rata-rata org 3.9 (+0.3, di atas rata-rata).
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-emerald-600 bg-slate-950/80 border-slate-800">
+          <Card className="border-l-4 border-l-emerald-600 bg-background/80 border-border">
             <CardHeader>
-              <CardTitle className="text-slate-100">Rencana pengembangan (disarankan)</CardTitle>
+              <CardTitle className="text-foreground">Rencana pengembangan (disarankan)</CardTitle>
               <CardDescription>Berdasarkan skor &amp; tema umpan balik — akan dipersonalisasi oleh HR</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm text-slate-400">
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
               <div>
                 <p className="font-medium text-emerald-400">Prioritas 1: Leadership &amp; Delegation</p>
                 <ul className="mt-2 list-inside list-disc space-y-1">
@@ -1070,19 +1070,19 @@ export function Employee360FeedbackDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base text-slate-100">Tindakan disarankan</CardTitle>
+              <CardTitle className="text-base text-foreground">Tindakan disarankan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Kuartal ini</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Kuartal ini</p>
               <div className="flex items-center gap-3">
                 <Checkbox
                   id="cq1"
                   checked={chkQ.q1}
                   onCheckedChange={(v) => setChkQ((s) => ({ ...s, q1: Boolean(v) }))}
                 />
-                <Label htmlFor="cq1" className="text-slate-300">
+                <Label htmlFor="cq1" className="text-foreground">
                   Jadwalkan 1-on-1 dengan atasan untuk membahas rencana
                 </Label>
               </div>
@@ -1092,7 +1092,7 @@ export function Employee360FeedbackDashboard() {
                   checked={chkQ.q2}
                   onCheckedChange={(v) => setChkQ((s) => ({ ...s, q2: Boolean(v) }))}
                 />
-                <Label htmlFor="cq2" className="text-slate-300">
+                <Label htmlFor="cq2" className="text-foreground">
                   Daftar pelatihan kepemimpinan (akhir bulan)
                 </Label>
               </div>
@@ -1102,18 +1102,18 @@ export function Employee360FeedbackDashboard() {
                   checked={chkQ.q3}
                   onCheckedChange={(v) => setChkQ((s) => ({ ...s, q3: Boolean(v) }))}
                 />
-                <Label htmlFor="cq3" className="text-slate-300">
+                <Label htmlFor="cq3" className="text-foreground">
                   Tentukan buddy akuntabilitas
                 </Label>
               </div>
-              <p className="pt-4 text-xs font-medium uppercase tracking-wide text-slate-500">Kuartal berikutnya</p>
+              <p className="pt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">Kuartal berikutnya</p>
               <div className="flex items-center gap-3">
                 <Checkbox
                   id="cn1"
                   checked={chkQ.n1}
                   onCheckedChange={(v) => setChkQ((s) => ({ ...s, n1: Boolean(v) }))}
                 />
-                <Label htmlFor="cn1" className="text-slate-300">
+                <Label htmlFor="cn1" className="text-foreground">
                   Pengecekan pertengahan siklus
                 </Label>
               </div>
@@ -1123,7 +1123,7 @@ export function Employee360FeedbackDashboard() {
                   checked={chkQ.n2}
                   onCheckedChange={(v) => setChkQ((s) => ({ ...s, n2: Boolean(v) }))}
                 />
-                <Label htmlFor="cn2" className="text-slate-300">
+                <Label htmlFor="cn2" className="text-foreground">
                   Sesuaikan rencana setelah umpan balik
                 </Label>
               </div>
@@ -1133,7 +1133,7 @@ export function Employee360FeedbackDashboard() {
                   checked={chkQ.n3}
                   onCheckedChange={(v) => setChkQ((s) => ({ ...s, n3: Boolean(v) }))}
                 />
-                <Label htmlFor="cn3" className="text-slate-300">
+                <Label htmlFor="cn3" className="text-foreground">
                   Mulai siklus penilaian Q3
                 </Label>
               </div>
@@ -1157,17 +1157,17 @@ export function Employee360FeedbackDashboard() {
       >
         <SheetContent
           side="right"
-          className="max-sm:w-full max-sm:max-w-full w-full overflow-y-auto border-slate-800 bg-slate-900 sm:!w-[50vw] sm:!max-w-[50vw] sm:min-w-0"
+          className="max-sm:w-full max-sm:max-w-full w-full overflow-y-auto sm:!w-[50vw] sm:!max-w-[50vw] sm:min-w-0"
         >
           <SheetHeader>
-            <SheetTitle className="text-slate-100">
+            <SheetTitle className="text-foreground">
               {sheetPayload?.mode === "mock"
                 ? sheetPayload.row.formLabel
                 : sheetPayload?.mode === "live"
                   ? sheetPayload.row.formLabel
                   : "Form"}
             </SheetTitle>
-            <SheetDescription className="text-slate-500">
+            <SheetDescription className="text-muted-foreground">
               {sheetPayload?.mode === "mock" ? (
                 <>
                   Penilai: {sheetPayload.row.raterName} ({sheetPayload.row.raterRoleLabel})
@@ -1183,7 +1183,7 @@ export function Employee360FeedbackDashboard() {
             {sheetPayload?.mode === "mock" ? <ThreeSixtyFillFormDemo /> : null}
             {sheetPayload?.mode === "live" && pf360.template ? (
               pf360.questionsForTemplate === null ? (
-                <div className="flex items-center gap-2 py-12 text-slate-400">
+                <div className="flex items-center gap-2 py-12 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
                   Memuat pertanyaan…
                 </div>

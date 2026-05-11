@@ -94,7 +94,7 @@ function RatingRow({
             "h-10 w-10 rounded-full border text-sm font-medium transition-colors",
             value === n
               ? "border-emerald-500 bg-emerald-600 text-white"
-              : "border-slate-700 bg-slate-950 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400"
+              : "border-border bg-background text-muted-foreground hover:border-emerald-500/50 hover:text-emerald-400"
           )}
         >
           {n}
@@ -151,13 +151,13 @@ export function ThreeSixtyFillFormDemo() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-100">Isi penilaian (demo)</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-lg font-semibold text-foreground">Isi penilaian (demo)</h2>
+          <p className="text-sm text-muted-foreground">
             Struktur mengikuti template (reason_mode, applies_to_role).
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-500">Progres</span>
+          <span className="text-muted-foreground">Progres</span>
           <span className="font-semibold text-emerald-400">{Math.round(formProgressPct)}%</span>
         </div>
       </div>
@@ -166,24 +166,24 @@ export function ThreeSixtyFillFormDemo() {
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300">{formError}</p>
       ) : null}
 
-      <Card className="border-slate-800 bg-slate-900">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base text-slate-100">Pertanyaan</CardTitle>
-          <CardDescription className="text-slate-500">
+          <CardTitle className="text-base text-foreground">Pertanyaan</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Simulasi role penilai mempengaruhi pertanyaan yang tampil.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-10">
           <div className="max-w-sm space-y-2">
-            <Label className="text-slate-200">Role penilai</Label>
+            <Label className="text-foreground">Role penilai</Label>
             <Select
               value={activeRaterRole}
               onValueChange={(v) => setActiveRaterRole(coercePerf360RaterRole(v))}
             >
-              <SelectTrigger className="border-slate-800 bg-slate-950 text-slate-100">
+              <SelectTrigger className="border-border bg-background text-foreground">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="border-slate-800 bg-slate-900">
+              <SelectContent>
                 {PERF360_RATER_ROLE_OPTIONS.filter((o) => o.value !== "all").map((o) => (
                   <SelectItem key={o.value} value={o.value}>
                     {o.label}
@@ -191,8 +191,8 @@ export function ThreeSixtyFillFormDemo() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-slate-500">
-              Aktif: <span className="text-slate-400">{perf360RaterRoleLabel(activeRaterRole)}</span>
+            <p className="text-xs text-muted-foreground">
+              Aktif: <span className="text-muted-foreground">{perf360RaterRoleLabel(activeRaterRole)}</span>
             </p>
           </div>
           {(() => {
@@ -205,36 +205,36 @@ export function ThreeSixtyFillFormDemo() {
               return (
                 <div key={q.id} className="space-y-3">
                   {showSection ? (
-                    <h3 className="border-b border-slate-800 pb-2 text-sm font-semibold tracking-tight text-cyan-400/95">
+                    <h3 className="border-b border-border pb-2 text-sm font-semibold tracking-tight text-cyan-400/95">
                       {q.section}
                     </h3>
                   ) : null}
                   <div className="space-y-3 pl-0 sm:pl-1">
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="font-mono text-xs text-slate-500">{idx + 1}.</span>
-                      <Label className="text-slate-200">{q.text}</Label>
+                      <span className="font-mono text-xs text-muted-foreground">{idx + 1}.</span>
+                      <Label className="text-foreground">{q.text}</Label>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                       <span>
-                        Alasan: <span className="text-slate-400">{perf360ReasonModeLabel(mode)}</span>
+                        Alasan: <span className="text-muted-foreground">{perf360ReasonModeLabel(mode)}</span>
                       </span>
                       {mode !== "none" ? (
-                        <span className="rounded border border-slate-700 px-2 py-0.5 font-mono text-slate-500">
+                        <span className="rounded border border-border px-2 py-0.5 font-mono text-muted-foreground">
                           applies_to_role=
                           <span className="text-cyan-500/90">{coercePerf360RaterRole(q.applies_to_role)}</span>
                         </span>
                       ) : null}
                     </div>
                     <RatingRow value={a.rating} onChange={(n) => setRating(q.id, n)} />
-                    <p className="text-xs text-slate-500">Skala 1–5</p>
+                    <p className="text-xs text-muted-foreground">Skala 1–5</p>
                     {mode !== "none" ? (
                       <div className="space-y-2 pt-1">
-                        <Label className="text-slate-200">
+                        <Label className="text-foreground">
                           Alasan / komentar
                           {mode === "required" ? (
                             <span className="text-red-400"> *</span>
                           ) : (
-                            <span className="font-normal text-slate-500"> (opsional)</span>
+                            <span className="font-normal text-muted-foreground"> (opsional)</span>
                           )}
                         </Label>
                         <Textarea
@@ -247,13 +247,13 @@ export function ThreeSixtyFillFormDemo() {
                           }
                           rows={3}
                           className={cn(
-                            "border-slate-800 bg-slate-950 text-slate-100",
+                            "border-border bg-background text-foreground",
                             mode === "required" && !a.reason.trim() && "border-amber-500/40"
                           )}
                         />
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-600 italic">Tanpa kolom alasan tambahan.</p>
+                      <p className="text-xs text-muted-foreground italic">Tanpa kolom alasan tambahan.</p>
                     )}
                   </div>
                 </div>
@@ -261,7 +261,7 @@ export function ThreeSixtyFillFormDemo() {
             })
           })()}
           {visibleQuestions.length === 0 ? (
-            <p className="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-3 text-sm text-slate-500">
+            <p className="rounded-lg border border-border bg-background/70 px-3 py-3 text-sm text-muted-foreground">
               Tidak ada pertanyaan untuk role ini.
             </p>
           ) : null}
@@ -269,7 +269,7 @@ export function ThreeSixtyFillFormDemo() {
       </Card>
 
       <div className="flex flex-wrap justify-end gap-3">
-        <Button variant="outline" type="button" className="border-slate-700">
+        <Button variant="outline" type="button" className="border-border">
           Simpan progres
         </Button>
         <Button

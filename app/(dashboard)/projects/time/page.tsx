@@ -41,22 +41,22 @@ export default function TimeTrackingPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Time Tracking</h1>
-          <p className="text-slate-400 mt-1">Track time spent on projects and tasks</p>
+          <h1 className="text-2xl font-bold text-foreground">Time Tracking</h1>
+          <p className="text-muted-foreground mt-1">Track time spent on projects and tasks</p>
         </div>
       </div>
 
       {/* Timer Card */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Timer Display */}
             <div className="flex-1 flex items-center justify-center lg:justify-start">
               <div className="text-center">
-                <div className="text-6xl font-mono font-bold text-slate-100 tracking-wider">
+                <div className="text-6xl font-mono font-bold text-foreground tracking-wider">
                   {formatTime(elapsed)}
                 </div>
-                <p className="text-slate-500 mt-2">Total Time Tracked Today</p>
+                <p className="text-muted-foreground mt-2">Total Time Tracked Today</p>
               </div>
             </div>
 
@@ -64,7 +64,7 @@ export default function TimeTrackingPage() {
             <div className="flex-1 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Select value={selectedProject} onValueChange={setSelectedProject}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700">
+                  <SelectTrigger className="bg-muted border-border">
                     <SelectValue placeholder={loading ? "Loading..." : "Select Project"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -75,7 +75,7 @@ export default function TimeTrackingPage() {
                 </Select>
 
                 <Select value={selectedTask} onValueChange={setSelectedTask}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700">
+                  <SelectTrigger className="bg-muted border-border">
                     <SelectValue placeholder="Select Task" />
                   </SelectTrigger>
                   <SelectContent>
@@ -92,7 +92,7 @@ export default function TimeTrackingPage() {
                 placeholder="What are you working on?"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="bg-slate-800 border-slate-700"
+                className="bg-muted border-border"
               />
 
               <div className="flex gap-2">
@@ -103,7 +103,7 @@ export default function TimeTrackingPage() {
                   </Button>
                 ) : (
                   <>
-                    <Button variant="outline" className="flex-1 border-slate-700">
+                    <Button variant="outline" className="flex-1 border-border">
                       <Pause className="w-4 h-4 mr-2" />
                       Pause
                     </Button>
@@ -120,12 +120,12 @@ export default function TimeTrackingPage() {
       </Card>
 
       {/* Recent Entries */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100">Recent Time Entries</CardTitle>
+          <CardTitle>Recent Time Entries</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-muted-foreground">
             <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Belum ada time entry</p>
           </div>

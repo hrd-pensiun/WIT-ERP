@@ -54,38 +54,38 @@ export default function NewExpensePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/finance/expenses"><Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100"><ArrowLeft className="w-5 h-5" /></Button></Link>
-        <div><h1 className="text-2xl font-bold text-slate-100">Pengeluaran Baru</h1><p className="text-slate-400 text-sm">Catat pengeluaran baru</p></div>
+        <Link href="/finance/expenses"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
+        <div><h1 className="text-2xl font-bold text-foreground">Pengeluaran Baru</h1><p className="text-muted-foreground text-sm">Catat pengeluaran baru</p></div>
       </div>
       {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg">{error}</div>}
       <form onSubmit={handleSubmit}>
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader><CardTitle className="text-slate-100 flex items-center gap-2"><Receipt className="w-5 h-5 text-emerald-500" /> Informasi Pengeluaran</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle className="text-foreground flex items-center gap-2"><Receipt className="w-5 h-5 text-emerald-500" /> Informasi Pengeluaran</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2"><Label className="text-slate-200">Nomor Pengeluaran <span className="text-red-400">*</span></Label><Input value={formData.expense_number} onChange={(e) => setFormData({ ...formData, expense_number: e.target.value })} placeholder="EXP-2026-0001" required className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-              <div className="space-y-2"><Label className="text-slate-200">Tanggal <span className="text-red-400">*</span></Label><Input type="date" value={formData.expense_date} onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} required className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+              <div className="space-y-2"><Label>Nomor Pengeluaran <span className="text-red-400">*</span></Label><Input value={formData.expense_number} onChange={(e) => setFormData({ ...formData, expense_number: e.target.value })} placeholder="EXP-2026-0001" required className="bg-background border-border text-foreground" /></div>
+              <div className="space-y-2"><Label>Tanggal <span className="text-red-400">*</span></Label><Input type="date" value={formData.expense_date} onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })} required className="bg-background border-border text-foreground" /></div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Kategori</Label>
+                <Label>Kategori</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="operational">Operasional</SelectItem><SelectItem value="marketing">Marketing</SelectItem><SelectItem value="salary">Gaji</SelectItem><SelectItem value="rent">Sewa</SelectItem><SelectItem value="utilities">Utilities</SelectItem><SelectItem value="travel">Perjalanan</SelectItem><SelectItem value="other">Lainnya</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="operational">Operasional</SelectItem><SelectItem value="marketing">Marketing</SelectItem><SelectItem value="salary">Gaji</SelectItem><SelectItem value="rent">Sewa</SelectItem><SelectItem value="utilities">Utilities</SelectItem><SelectItem value="travel">Perjalanan</SelectItem><SelectItem value="other">Lainnya</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label className="text-slate-200">Jumlah (Rp) <span className="text-red-400">*</span></Label><Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-              <div className="space-y-2"><Label className="text-slate-200">Vendor/Nama Toko</Label><Input value={formData.vendor_name} onChange={(e) => setFormData({ ...formData, vendor_name: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+              <div className="space-y-2"><Label>Jumlah (Rp) <span className="text-red-400">*</span></Label><Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required className="bg-background border-border text-foreground" /></div>
+              <div className="space-y-2"><Label>Vendor/Nama Toko</Label><Input value={formData.vendor_name} onChange={(e) => setFormData({ ...formData, vendor_name: e.target.value })} className="bg-background border-border text-foreground" /></div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Metode Pembayaran</Label>
+                <Label>Metode Pembayaran</Label>
                 <Select value={formData.payment_method} onValueChange={(value) => setFormData({ ...formData, payment_method: value })}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="cash">Cash</SelectItem><SelectItem value="transfer">Transfer Bank</SelectItem><SelectItem value="credit_card">Kartu Kredit</SelectItem><SelectItem value="debit_card">Kartu Debit</SelectItem><SelectItem value="e_wallet">E-Wallet</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="cash">Cash</SelectItem><SelectItem value="transfer">Transfer Bank</SelectItem><SelectItem value="credit_card">Kartu Kredit</SelectItem><SelectItem value="debit_card">Kartu Debit</SelectItem><SelectItem value="e_wallet">E-Wallet</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="space-y-2"><Label className="text-slate-200">Deskripsi</Label><Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-            <div className="space-y-2"><Label className="text-slate-200">Catatan</Label><Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-            <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-800">
-              <Link href="/finance/expenses"><Button type="button" variant="ghost" className="text-slate-400">Batal</Button></Link>
+            <div className="space-y-2"><Label>Deskripsi</Label><Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="bg-background border-border text-foreground" /></div>
+            <div className="space-y-2"><Label>Catatan</Label><Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} className="bg-background border-border text-foreground" /></div>
+            <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
+              <Link href="/finance/expenses"><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
               <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">{loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</> : "Simpan Pengeluaran"}</Button>
             </div>
           </CardContent>

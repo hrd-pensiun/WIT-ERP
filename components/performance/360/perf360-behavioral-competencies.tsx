@@ -59,9 +59,9 @@ export function Perf360BehavioralCompetencies({
   )
 
   return (
-    <Card className={cn("border-slate-800 bg-slate-900", className)}>
+    <Card className={cn("", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg text-slate-100">{title}</CardTitle>
+        <CardTitle className="text-lg text-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-6 lg:grid-cols-2 lg:gap-8">
         <div className="h-[min(360px,50vh)] w-full min-h-[260px]">
@@ -104,11 +104,11 @@ export function Perf360BehavioralCompetencies({
             return (
               <li
                 key={row.key}
-                className="flex items-baseline justify-between gap-4 border-b border-slate-800 pb-4 last:border-0 last:pb-0"
+                className="flex items-baseline justify-between gap-4 border-b border-border pb-4 last:border-0 last:pb-0"
               >
-                <span className="text-sm font-medium text-slate-200">{row.subject}</span>
+                <span className="text-sm font-medium text-foreground">{row.subject}</span>
                 <span className="flex shrink-0 items-baseline gap-3">
-                  <span className="text-lg tabular-nums font-semibold text-slate-100">
+                  <span className="text-lg tabular-nums font-semibold text-foreground">
                     {row.score.toFixed(1)}
                   </span>
                   <span className={cn("text-sm font-medium", toneClass[band.tone])}>

@@ -49,29 +49,29 @@ export function Perf360FormGuidance({
       </div>
 
       {!hideSummary ? (
-        <Card className="border-slate-800 bg-slate-950/50">
+        <Card className="border-border bg-background/50">
           <CardHeader className="pb-2 pt-4">
-            <CardTitle className="text-base text-slate-100">Ringkasan form</CardTitle>
-            <CardDescription className="text-slate-500">
-              {templateName} — Anda mengisi sebagai <span className="text-slate-400">{raterRoleLabel}</span>.
+            <CardTitle className="text-base text-foreground">Ringkasan form</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              {templateName} — Anda mengisi sebagai <span className="text-muted-foreground">{raterRoleLabel}</span>.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 border-t border-slate-800/80 pb-4 pt-3 text-sm text-slate-400">
+          <CardContent className="space-y-3 border-t border-border/80 pb-4 pt-3 text-sm text-muted-foreground">
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Yang dinilai</span>
-              <span className="font-medium text-slate-200">{assessedName}</span>
+              <span className="text-muted-foreground">Yang dinilai</span>
+              <span className="font-medium text-foreground">{assessedName}</span>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Konteks penilai</span>
-              <span className="text-right text-slate-300">{raterContextLine?.trim() || "—"}</span>
+              <span className="text-muted-foreground">Konteks penilai</span>
+              <span className="text-right text-foreground">{raterContextLine?.trim() || "—"}</span>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Tanggal pengisian</span>
-              <span className="text-slate-300">{formattedDate}</span>
+              <span className="text-muted-foreground">Tanggal pengisian</span>
+              <span className="text-foreground">{formattedDate}</span>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Skala rating</span>
-              <span className="text-slate-300">1 sampai {scaleMax}</span>
+              <span className="text-muted-foreground">Skala rating</span>
+              <span className="text-foreground">1 sampai {scaleMax}</span>
             </div>
           </CardContent>
         </Card>
@@ -80,17 +80,17 @@ export function Perf360FormGuidance({
       <Accordion
         type="multiple"
         defaultValue={["instructions", "scale"]}
-        className="rounded-xl border border-slate-800 bg-slate-950/40 px-3"
+        className="rounded-xl border border-border bg-background/40 px-3"
       >
         <AccordionItem value="instructions">
           <AccordionTrigger className="text-sm">Petunjuk pengisian</AccordionTrigger>
           <AccordionContent>
-            <ol className="list-decimal space-y-2 pl-4 text-sm text-slate-400">
+            <ol className="list-decimal space-y-2 pl-4 text-sm text-muted-foreground">
               {PERF360_INSTRUCTION_ITEMS.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ol>
-            <p className="mt-3 border-t border-slate-800/80 pt-3 text-xs text-slate-500">{PERF360_SECTION_INTRO_ID}</p>
+            <p className="mt-3 border-t border-border/80 pt-3 text-xs text-muted-foreground">{PERF360_SECTION_INTRO_ID}</p>
           </AccordionContent>
         </AccordionItem>
 
@@ -101,11 +101,11 @@ export function Perf360FormGuidance({
               <ul className="space-y-4 text-sm">
                 {PERF360_SCALE_LEGEND_1_5.map((row) => (
                   <li key={row.score} className="border-l-2 border-emerald-500/40 pl-3">
-                    <p className="font-medium text-slate-200">
+                    <p className="font-medium text-foreground">
                       {row.score} — {row.labelId}{" "}
-                      <span className="text-xs font-normal text-slate-500">({row.labelEn})</span>
+                      <span className="text-xs font-normal text-muted-foreground">({row.labelEn})</span>
                     </p>
-                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-slate-500">
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
                       {row.bullets.map((b) => (
                         <li key={b}>{b}</li>
                       ))}
@@ -114,7 +114,7 @@ export function Perf360FormGuidance({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Template ini menggunakan skala 1–{scaleMax}. Nilai terendah mengarah pada kinerja di bawah ekspektasi;
                 nilai tertinggi pada kinerja yang sangat baik atau melebihi ekspektasi. Sesuaikan penilaian dengan
                 pengalaman kerja langsung Anda dengan orang yang dinilai.
@@ -126,7 +126,7 @@ export function Perf360FormGuidance({
         <AccordionItem value="important">
           <AccordionTrigger className="text-sm">Catatan penting (English)</AccordionTrigger>
           <AccordionContent>
-            <p className="text-sm leading-relaxed text-slate-400">{PERF360_IMPORTANT_NOTE_EN}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{PERF360_IMPORTANT_NOTE_EN}</p>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

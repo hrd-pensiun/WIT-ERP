@@ -48,30 +48,30 @@ export default function NewAttendancePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/hr/attendance"><Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100"><ArrowLeft className="w-5 h-5" /></Button></Link>
-        <div><h1 className="text-2xl font-bold text-slate-100">Input Presensi Manual</h1><p className="text-slate-400 text-sm">Catat kehadiran karyawan</p></div>
+        <Link href="/hr/attendance"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
+        <div><h1 className="text-2xl font-bold text-foreground">Input Presensi Manual</h1><p className="text-muted-foreground text-sm">Catat kehadiran karyawan</p></div>
       </div>
       {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg">{error}</div>}
       <form onSubmit={handleSubmit}>
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader><CardTitle className="text-slate-100 flex items-center gap-2"><Clock className="w-5 h-5 text-emerald-500" /> Data Presensi</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle className="text-foreground flex items-center gap-2"><Clock className="w-5 h-5 text-emerald-500" /> Data Presensi</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-slate-200">Karyawan <span className="text-red-400">*</span></Label>
+                <Label>Karyawan <span className="text-red-400">*</span></Label>
                 <Select value={formData.employee_id} onValueChange={(value) => setFormData({ ...formData, employee_id: value })}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue placeholder="Pilih karyawan" /></SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800">{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.full_name} ({e.employee_number})</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue placeholder="Pilih karyawan" /></SelectTrigger>
+                  <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.full_name} ({e.employee_number})</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label className="text-slate-200">Tanggal <span className="text-red-400">*</span></Label><Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-              <div className="space-y-2"><Label className="text-slate-200">Check In</Label><Input type="time" value={formData.check_in} onChange={(e) => setFormData({ ...formData, check_in: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-              <div className="space-y-2"><Label className="text-slate-200">Check Out</Label><Input type="time" value={formData.check_out} onChange={(e) => setFormData({ ...formData, check_out: e.target.value })} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+              <div className="space-y-2"><Label>Tanggal <span className="text-red-400">*</span></Label><Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required className="bg-background border-border text-foreground" /></div>
+              <div className="space-y-2"><Label>Check In</Label><Input type="time" value={formData.check_in} onChange={(e) => setFormData({ ...formData, check_in: e.target.value })} className="bg-background border-border text-foreground" /></div>
+              <div className="space-y-2"><Label>Check Out</Label><Input type="time" value={formData.check_out} onChange={(e) => setFormData({ ...formData, check_out: e.target.value })} className="bg-background border-border text-foreground" /></div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Status <span className="text-red-400">*</span></Label>
+                <Label>Status <span className="text-red-400">*</span></Label>
                 <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800">
+                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
                     <SelectItem value="present">Hadir</SelectItem>
                     <SelectItem value="absent">Tidak Hadir</SelectItem>
                     <SelectItem value="late">Terlambat</SelectItem>
@@ -81,9 +81,9 @@ export default function NewAttendancePage() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2"><Label className="text-slate-200">Catatan</Label><Input value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Catatan tambahan..." className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-            <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-800">
-              <Link href="/hr/attendance"><Button type="button" variant="ghost" className="text-slate-400">Batal</Button></Link>
+            <div className="space-y-2"><Label>Catatan</Label><Input value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Catatan tambahan..." className="bg-background border-border text-foreground" /></div>
+            <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
+              <Link href="/hr/attendance"><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
               <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">{loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</> : "Simpan"}</Button>
             </div>
           </CardContent>

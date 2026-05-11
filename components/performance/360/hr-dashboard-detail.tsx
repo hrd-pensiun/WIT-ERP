@@ -345,7 +345,7 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
       }
       subtitle={`${scoreData ? "Hasil penilaian (real data)" : "Hasil penilaian (demo UI)"} · ${periodLine}`}
       action={
-        <Button variant="outline" size="sm" className="border-slate-700 text-slate-300" asChild>
+        <Button variant="outline" size="sm" className="border-border text-foreground" asChild>
           <Link href={backHref}>
             <ArrowLeft className="mr-1.5 h-4 w-4" />
             Kembali ke daftar
@@ -359,22 +359,22 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
         </div>
       ) : null}
 
-      <Card className="border-slate-800 bg-slate-900">
+      <Card>
         <CardHeader className="space-y-2 pb-4">
-          <CardTitle className="text-base text-slate-100">Periode penilaian</CardTitle>
-          <CardDescription className="text-slate-500">
+          <CardTitle className="text-base text-foreground">Periode penilaian</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Mengganti template memperbarui query string; skor dihitung dari submission yang sudah submitted.
           </CardDescription>
-          <Label className="text-xs text-slate-400">Template</Label>
+          <Label className="text-xs text-muted-foreground">Template</Label>
           <Select
             value={templateId || undefined}
             onValueChange={replaceTemplateInUrl}
             disabled={templatesLoading || templates.length === 0}
           >
-            <SelectTrigger className="max-w-xl border-slate-800 bg-slate-950 text-slate-100">
+            <SelectTrigger className="max-w-xl border-border bg-background text-foreground">
               <SelectValue placeholder="Pilih template" />
             </SelectTrigger>
-            <SelectContent className="border-slate-800 bg-slate-900">
+            <SelectContent>
               {templates.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {formatTemplatePeriodLabel(t)} — {t.name}
@@ -386,7 +386,7 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
       </Card>
 
       {scoreLoading ? (
-        <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/80 px-4 py-4 text-sm text-slate-400">
+        <div className="flex items-center gap-2 rounded-lg border /80 px-4 py-4 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
           Menghitung skor…
         </div>

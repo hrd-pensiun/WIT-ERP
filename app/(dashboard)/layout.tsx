@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { insForge } from "@/lib/insforge";
 import { useAuth } from "@/hooks/useAuth";
+
+const pageVariants = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.18, ease: "easeOut" } },
+  exit:    { opacity: 0, y: -4, transition: { duration: 0.12, ease: "easeIn" } },
+};
 
 export default function DashboardLayout({
   children,
@@ -18,6 +25,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { user } = useAuth();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (!insForge) {
@@ -28,18 +36,14 @@ export default function DashboardLayout({
     let mounted = true;
     insForge.auth.getCurrentUser().then(({ data }) => {
       if (!mounted) return;
-
       if (!data.user) {
         router.replace("/login");
         return;
       }
-
       setIsCheckingAuth(false);
     });
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [router]);
 
   useEffect(() => {
@@ -54,30 +58,46 @@ export default function DashboardLayout({
 
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-400">Loading...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-6 h-6 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
+          <p className="text-xs text-muted-foreground tracking-wide">Authenticating…</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-slate-950">
+    <div className="flex h-screen bg-background">
       {/* Mobile Navigation */}
       <MobileNav />
-      
-      {/* Sidebar is position:fixed (w-64); main column uses lg:ml-64 so content does not slide under it */}
+
+      {/* Sidebar — position:fixed; width controlled by collapsed state */}
       <div className="hidden lg:block">
-        <Sidebar />
+        <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
       </div>
 
-      {/* Main content — offset by sidebar width on lg+ so content does not sit under fixed sidebar */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden lg:ml-64">
-        <div className="lg:hidden h-16" /> {/* Spacer for mobile header */}
+      {/* Main content area — margin tracks sidebar width */}
+      <div
+        className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? 60 : 256 }}
+      >
+        <div className="lg:hidden h-14" />
         <Header />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6 pb-20 lg:pb-6">
-          <div className="mx-auto max-w-7xl">
+          <div>
             <Breadcrumbs />
-            {children}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={pathname}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       </div>

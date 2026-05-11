@@ -3,13 +3,20 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { 
-  LayoutGrid, Plus, Search, Clock, Calendar,
+  LayoutGrid, Plus, Clock, Calendar,
   User, MoreHorizontal, AlertCircle, CheckCircle2,
   Circle, Pencil, Trash2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { FilterBar, FilterBarSearch, FilterBarSeparator } from "@/components/ui/filter-bar"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useProjects } from "@/hooks/useProjects"
@@ -18,7 +25,7 @@ const PRIORITY_COLORS = {
   urgent: 'bg-red-500',
   high: 'bg-orange-500',
   medium: 'bg-yellow-500',
-  low: 'bg-slate-500'
+  low: 'bg-muted-foreground/40'
 }
 
 export default function ProjectKanbanPage() {
@@ -94,7 +101,7 @@ export default function ProjectKanbanPage() {
       case 'done': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />
       case 'review': return <AlertCircle className="w-4 h-4 text-yellow-500" />
       case 'in_progress': return <Clock className="w-4 h-4 text-blue-500" />
-      default: return <Circle className="w-4 h-4 text-slate-500" />
+      default: return <Circle className="w-4 h-4 text-muted-foreground" />
     }
   }
 
@@ -103,21 +110,21 @@ export default function ProjectKanbanPage() {
   )
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <LayoutGrid className="w-6 h-6 text-emerald-500" />
             Project Kanban
           </h1>
-          <p className="text-slate-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Kelola tasks dan progress project
           </p>
         </div>
         <div className="flex gap-2">
           <Link href="/projects/new">
-            <Button variant="outline" className="border-slate-700">
+            <Button variant="outline" className="border-border">
               <Plus className="w-4 h-4 mr-2" />
               Project Baru
             </Button>
@@ -132,37 +139,30 @@ export default function ProjectKanbanPage() {
       </div>
 
       {/* Project Filter */}
-      <Card className="bg-slate-900 border-slate-800">
-        <CardContent className="p-4">
-          {actionError && (
-            <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-              {actionError}
-            </div>
-          )}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="Cari tasks..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-slate-950 border-slate-800 text-slate-100"
-              />
-            </div>
-            
-            <select
-              value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            >
-              <option value="all">Semua Project</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.project_name}</option>
-              ))}
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+      {actionError && (
+        <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {actionError}
+        </div>
+      )}
+      <FilterBar>
+        <FilterBarSearch
+          placeholder="Cari tasks..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <FilterBarSeparator />
+        <Select value={selectedProject} onValueChange={setSelectedProject}>
+          <SelectTrigger className="h-8 text-sm w-auto min-w-[160px]">
+            <SelectValue placeholder="Semua Project" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Project</SelectItem>
+            {projects.map(p => (
+              <SelectItem key={p.id} value={p.id}>{p.project_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
 
       {/* Kanban Board */}
       <div className="overflow-x-auto pb-4">
@@ -174,13 +174,13 @@ export default function ProjectKanbanPage() {
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, column.id)}
             >
-              <div className="bg-slate-900 border border-slate-800 rounded-lg">
+              <div className="bg-card border border-border rounded-lg">
                 {/* Column Header */}
-                <div className="p-3 border-b border-slate-800 flex items-center justify-between">
+                <div className="p-3 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {getStatusIcon(column.id)}
-                    <h3 className="font-semibold text-slate-200">{column.title}</h3>
-                    <Badge variant="secondary" className="bg-slate-800">
+                    <h3 className="font-semibold text-foreground">{column.title}</h3>
+                    <Badge variant="secondary" className="bg-muted">
                       {filteredTasks.filter(t => t.status === column.id).length}
                     </Badge>
                   </div>
@@ -196,25 +196,25 @@ export default function ProjectKanbanPage() {
                       draggable
                       onDragStart={() => handleDragStart(task.id)}
                       className={`
-                        bg-slate-950 border border-slate-800 rounded-lg p-3
+                        bg-background border border-border rounded-lg p-3
                         cursor-move hover:border-emerald-500/50 transition-colors
                         ${draggingTask === task.id ? 'opacity-50' : ''}
                       `}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <p className="font-medium text-slate-200 text-sm">
+                        <p className="font-medium text-foreground text-sm">
                           {task.title}
                         </p>
                         <div className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.medium}`} />
                       </div>
 
                       {(task as any).project && selectedProject === 'all' && (
-                        <Badge variant="outline" className="mb-2 text-xs border-slate-700 text-slate-500">
+                        <Badge variant="outline" className="mb-2 text-xs border-border text-muted-foreground">
                           {(task as any).project.project_name}
                         </Badge>
                       )}
 
-                      <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                         <Clock className="w-3 h-3" />
                         <span>
                           {task.estimated_hours && task.estimated_hours > 0 
@@ -230,7 +230,7 @@ export default function ProjectKanbanPage() {
                       </div>
 
                       {task.due_date && (
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar className="w-3 h-3" />
                           {new Date(task.due_date).toLocaleDateString('id-ID', { 
                             month: 'short', 
@@ -239,7 +239,7 @@ export default function ProjectKanbanPage() {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800">
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                         <div className="flex items-center gap-1">
                           {(task as any).assignee ? (
                             <>
@@ -248,32 +248,32 @@ export default function ProjectKanbanPage() {
                                   {(task as any).assignee.full_name?.charAt(0).toUpperCase()}
                                 </span>
                               </div>
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-muted-foreground">
                                 {(task as any).assignee.full_name}
                               </span>
                             </>
                           ) : (
-                            <span className="text-xs text-slate-600">Unassigned</span>
+                            <span className="text-xs text-muted-foreground">Unassigned</span>
                           )}
                         </div>
                         
                         {task.progress_percent > 0 && (
                           <div className="flex items-center gap-1">
                             <Progress value={task.progress_percent} className="w-12 h-1" />
-                            <span className="text-xs text-slate-500">{task.progress_percent}%</span>
+                            <span className="text-xs text-muted-foreground">{task.progress_percent}%</span>
                           </div>
                         )}
                       </div>
                       <div className="mt-2 flex justify-end gap-1">
                         <Link href={`/projects/${task.project_id}/tasks/${task.id}/edit`}>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-slate-100">
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground">
                             <Pencil className="w-3 h-3" />
                           </Button>
                         </Link>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7 text-slate-400 hover:text-red-400"
+                          className="h-7 w-7 text-muted-foreground hover:text-red-400"
                           onClick={() => handleDeleteTask(task.id)}
                         >
                           <Trash2 className="w-3 h-3" />
@@ -283,7 +283,7 @@ export default function ProjectKanbanPage() {
                   ))}
                   
                   {filteredTasks.filter(t => t.status === column.id).length === 0 && !loading && (
-                    <div className="text-center py-8 text-slate-600 text-sm">
+                    <div className="text-center py-8 text-muted-foreground text-sm">
                       No tasks
                     </div>
                   )}

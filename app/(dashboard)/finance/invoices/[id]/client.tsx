@@ -26,11 +26,11 @@ export default function InvoiceDetailClient({ id }: { id: string }) {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
-      draft: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+      draft: "bg-muted/50 text-muted-foreground border-border/30",
       sent: "bg-blue-500/20 text-blue-400 border-blue-500/30",
       paid: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
       overdue: "bg-red-500/20 text-red-400 border-red-500/30",
-      cancelled: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+      cancelled: "bg-muted/50 text-muted-foreground border-border/30",
     }
     return variants[status] || variants.draft
   }
@@ -45,11 +45,11 @@ export default function InvoiceDetailClient({ id }: { id: string }) {
 
   if (!invoice) {
     return (
-      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+      <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Link href="/finance/invoices"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Invoice tidak ditemukan</h1>
+            <h1 className="text-2xl font-bold text-foreground">Invoice tidak ditemukan</h1>
           </div>
         </div>
       </div>
@@ -78,39 +78,39 @@ export default function InvoiceDetailClient({ id }: { id: string }) {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/finance/invoices"><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Detail Invoice</h1>
-            <p className="text-slate-400">{invoice.invoice_number}</p>
+            <h1 className="text-2xl font-bold text-foreground">Detail Invoice</h1>
+            <p className="text-muted-foreground">{invoice.invoice_number}</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-slate-700"><Printer className="w-4 h-4 mr-2" />Print</Button>
-          <Button variant="outline" className="border-slate-700"><Download className="w-4 h-4 mr-2" />Download</Button>
+          <Button variant="outline" className="border-border"><Printer className="w-4 h-4 mr-2" />Print</Button>
+          <Button variant="outline" className="border-border"><Download className="w-4 h-4 mr-2" />Download</Button>
           <Button variant="destructive" onClick={handleDelete}>Hapus</Button>
         </div>
       </div>
 
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardContent className="p-8">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h2 className="text-xl font-bold text-slate-100">WIT.ID</h2>
-              <p className="text-sm text-slate-400">ERP Solutions</p>
+              <h2 className="text-xl font-bold text-foreground">WIT.ID</h2>
+              <p className="text-sm text-muted-foreground">ERP Solutions</p>
             </div>
             <div className="text-right">
-              <h3 className="text-lg font-bold text-slate-100">INVOICE</h3>
-              <p className="text-sm text-slate-400">{invoice.invoice_number}</p>
+              <h3 className="text-lg font-bold text-foreground">INVOICE</h3>
+              <p className="text-sm text-muted-foreground">{invoice.invoice_number}</p>
               <Badge className={`mt-2 ${getStatusBadge(invoice.status)}`}>{invoice.status.toUpperCase()}</Badge>
               <div className="mt-2">
                 <Select value={invoice.status} onValueChange={handleUpdateStatus} disabled={saving}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100 h-8">
+                  <SelectTrigger className="bg-background border-border text-foreground h-8">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800">
+                  <SelectContent>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="sent">Sent</SelectItem>
                     <SelectItem value="viewed">Viewed</SelectItem>
@@ -126,44 +126,44 @@ export default function InvoiceDetailClient({ id }: { id: string }) {
 
           <div className="grid grid-cols-2 gap-8 mb-8">
             <div>
-              <p className="text-sm font-medium text-slate-400 mb-1">Ditagihkan Kepada</p>
-              <p className="font-medium text-slate-200">{invoice.customer_name}</p>
-              <p className="text-sm text-slate-400">{invoice.customer_email}</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Ditagihkan Kepada</p>
+              <p className="font-medium text-foreground">{invoice.customer_name}</p>
+              <p className="text-sm text-muted-foreground">{invoice.customer_email}</p>
             </div>
             <div className="text-right">
-              <div className="mb-2"><p className="text-sm text-slate-400">Tanggal Issue</p><p className="text-slate-200">{invoice.invoice_date}</p></div>
-              <div><p className="text-sm text-slate-400">Jatuh Tempo</p><p className="text-slate-200">{invoice.due_date}</p></div>
+              <div className="mb-2"><p className="text-sm text-muted-foreground">Tanggal Issue</p><p>{invoice.invoice_date}</p></div>
+              <div><p className="text-sm text-muted-foreground">Jatuh Tempo</p><p>{invoice.due_date}</p></div>
             </div>
           </div>
 
-          <div className="border-t border-slate-800 pt-6">
+          <div className="border-t border-border pt-6">
             <table className="w-full mb-6">
               <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left py-3 text-sm font-medium text-slate-400">Deskripsi</th>
-                  <th className="text-right py-3 text-sm font-medium text-slate-400">Jumlah</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 text-sm font-medium text-muted-foreground">Deskripsi</th>
+                  <th className="text-right py-3 text-sm font-medium text-muted-foreground">Jumlah</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="py-4 text-slate-200">{invoice.notes || 'Invoice item'}</td>
-                  <td className="py-4 text-right text-slate-200">Rp {(invoice.subtotal || 0).toLocaleString('id-ID')}</td>
+                  <td className="py-4 text-foreground">{invoice.notes || 'Invoice item'}</td>
+                  <td className="py-4 text-right text-foreground">Rp {(invoice.subtotal || 0).toLocaleString('id-ID')}</td>
                 </tr>
               </tbody>
             </table>
 
-            <div className="border-t border-slate-800 pt-4 space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-slate-400">Subtotal</span><span className="text-slate-200">Rp {(invoice.subtotal || 0).toLocaleString('id-ID')}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-400">PPN ({taxPercent}%)</span><span className="text-slate-200">Rp {taxAmount.toLocaleString('id-ID')}</span></div>
-              {discount > 0 && <div className="flex justify-between text-sm"><span className="text-slate-400">Diskon</span><span className="text-slate-200">-Rp {discount.toLocaleString('id-ID')}</span></div>}
-              <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-800"><span className="text-slate-200">Total</span><span className="text-emerald-400">Rp {total.toLocaleString('id-ID')}</span></div>
+            <div className="border-t border-border pt-4 space-y-2">
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>Rp {(invoice.subtotal || 0).toLocaleString('id-ID')}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">PPN ({taxPercent}%)</span><span>Rp {taxAmount.toLocaleString('id-ID')}</span></div>
+              {discount > 0 && <div className="flex justify-between text-sm"><span className="text-muted-foreground">Diskon</span><span>-Rp {discount.toLocaleString('id-ID')}</span></div>}
+              <div className="flex justify-between text-lg font-bold pt-2 border-t border-border"><span>Total</span><span className="text-emerald-400">Rp {total.toLocaleString('id-ID')}</span></div>
             </div>
           </div>
 
           {invoice.notes && (
-            <div className="mt-8 p-4 bg-slate-950 rounded-lg border border-slate-800">
-              <p className="text-sm text-slate-400">Catatan</p>
-              <p className="text-slate-300 mt-1">{invoice.notes}</p>
+            <div className="mt-8 p-4 bg-background rounded-lg border border-border">
+              <p className="text-sm text-muted-foreground">Catatan</p>
+              <p className="text-foreground mt-1">{invoice.notes}</p>
             </div>
           )}
         </CardContent>

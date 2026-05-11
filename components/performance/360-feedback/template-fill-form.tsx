@@ -85,7 +85,7 @@ function RatingRow({
             "h-10 min-w-10 rounded-full border px-2 text-sm font-medium transition-colors",
             value === n
               ? "border-emerald-500 bg-emerald-600 text-white"
-              : "border-slate-700 bg-slate-950 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400"
+              : "border-border bg-background text-muted-foreground hover:border-emerald-500/50 hover:text-emerald-400"
           )}
         >
           {n}
@@ -295,58 +295,58 @@ export function Perf360TemplateFillForm({
         hideSummary
       />
 
-      <div className="sticky top-0 z-20 rounded-xl border border-slate-800 bg-slate-900/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-slate-900/85">
+      <div className="sticky top-0 z-20 rounded-xl border /95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-card/85">
         <Card className="border-0 bg-transparent shadow-none">
           <CardHeader className="pb-2 pt-4">
-            <CardTitle className="text-base text-slate-100">Ringkasan form</CardTitle>
-            <CardDescription className="text-slate-500">
+            <CardTitle className="text-base text-foreground">Ringkasan form</CardTitle>
+            <CardDescription className="text-muted-foreground">
               {templateName} — Anda mengisi sebagai{" "}
-              <span className="text-slate-400">{perf360RaterRoleLabel(activeRole)}</span>.
+              <span className="text-muted-foreground">{perf360RaterRoleLabel(activeRole)}</span>.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 border-t border-slate-800/80 pb-4 pt-3 text-sm text-slate-400">
+          <CardContent className="space-y-3 border-t border-border/80 pb-4 pt-3 text-sm text-muted-foreground">
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Yang dinilai</span>
-              <span className="font-medium text-slate-200">{assessedName}</span>
+              <span className="text-muted-foreground">Yang dinilai</span>
+              <span className="font-medium text-foreground">{assessedName}</span>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Konteks penilai</span>
-              <span className="text-right text-slate-300">{raterContextLine?.trim() || "—"}</span>
+              <span className="text-muted-foreground">Konteks penilai</span>
+              <span className="text-right text-foreground">{raterContextLine?.trim() || "—"}</span>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Tanggal pengisian</span>
-              <span className="text-slate-300">{formattedDate}</span>
+              <span className="text-muted-foreground">Tanggal pengisian</span>
+              <span className="text-foreground">{formattedDate}</span>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-slate-500">Skala rating</span>
-              <span className="text-slate-300">1 sampai {scaleMax}</span>
+              <span className="text-muted-foreground">Skala rating</span>
+              <span className="text-foreground">1 sampai {scaleMax}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
       <div>
-        <h2 className="text-base font-semibold text-slate-100">Penilaian</h2>
-        <p className="text-xs text-slate-500">
+        <h2 className="text-base font-semibold text-foreground">Penilaian</h2>
+        <p className="text-xs text-muted-foreground">
           Isi setiap pertanyaan di bawah. Perubahan disimpan sebagai draf di perangkat; gunakan tombol hijau untuk
           mengirim jawaban ke database.
         </p>
       </div>
 
       {hydrating ? (
-        <div className="flex items-center gap-2 text-sm text-slate-400">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
           Menyesuaikan dengan data server…
         </div>
       ) : null}
 
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-slate-500">Progres</span>
+        <span className="text-muted-foreground">Progres</span>
         <span className="font-semibold text-emerald-400">{Math.round(pct)}%</span>
       </div>
       <Progress
         value={pct}
-        className="h-2 max-w-md bg-slate-800 [&>[data-slot=progress-indicator]]:bg-cyan-500"
+        className="h-2 max-w-md bg-muted [&>[data-slot=progress-indicator]]:bg-cyan-500"
       />
 
       {submitOk ? (
@@ -371,10 +371,10 @@ export function Perf360TemplateFillForm({
         <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300">{formError}</p>
       ) : null}
 
-      <Card className="border-slate-800 bg-slate-900">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base text-slate-100">Pertanyaan dari template</CardTitle>
-          <CardDescription className="text-slate-500">
+          <CardTitle className="text-base text-foreground">Pertanyaan dari template</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Hanya tipe penilaian &amp; pilihan ganda untuk periode ini; filter{" "}
             <code className="text-cyan-500/90">applies_to_role</code> sesuai peran Anda sebagai penilai.
           </CardDescription>
@@ -391,17 +391,17 @@ export function Perf360TemplateFillForm({
               return (
                 <div key={q.id} className="space-y-3">
                   {showSection ? (
-                    <h3 className="border-b border-slate-800 pb-2 text-sm font-semibold text-cyan-400/95">{sec}</h3>
+                    <h3 className="border-b border-border pb-2 text-sm font-semibold text-cyan-400/95">{sec}</h3>
                   ) : null}
                   <div className="space-y-3 pl-0 sm:pl-1">
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="font-mono text-xs text-slate-500">{idx + 1}.</span>
-                      <Label className="text-slate-200">{q.question_text}</Label>
+                      <span className="font-mono text-xs text-muted-foreground">{idx + 1}.</span>
+                      <Label className="text-foreground">{q.question_text}</Label>
                       {q.category ? (
-                        <span className="text-xs text-slate-600">({q.category})</span>
+                        <span className="text-xs text-muted-foreground">({q.category})</span>
                       ) : null}
                     </div>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-muted-foreground">
                       Alasan: {perf360ReasonModeLabel(mode)}
                     </p>
                     <RatingRow
@@ -412,7 +412,7 @@ export function Perf360TemplateFillForm({
                     />
                     {mode !== "none" ? (
                       <div className="space-y-2 pt-1">
-                        <Label className="text-slate-200">
+                        <Label className="text-foreground">
                           Alasan / komentar
                           {mode === "required" ? <span className="text-red-400"> *</span> : null}
                         </Label>
@@ -421,7 +421,7 @@ export function Perf360TemplateFillForm({
                           disabled={!!submitOk}
                           onChange={(e) => setReason(q.id, e.target.value)}
                           rows={3}
-                          className="border-slate-800 bg-slate-950 text-slate-100"
+                          className="border-border bg-background text-foreground"
                         />
                       </div>
                     ) : null}
@@ -431,7 +431,7 @@ export function Perf360TemplateFillForm({
             })
           })()}
           {visibleQuestions.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Tidak ada pertanyaan nilai untuk peran ini pada template — cek pengaturan template atau mapping penilai.
             </p>
           ) : null}
@@ -442,7 +442,7 @@ export function Perf360TemplateFillForm({
         <Button
           variant="outline"
           type="button"
-          className="border-slate-700"
+          className="border-border"
           disabled={submitting || !!submitOk}
           onClick={() => {
             const sub = readPerf360Draft(storageKey)?.submittedAt ?? null
@@ -518,9 +518,9 @@ export function Perf360TemplateFillForm({
           )}
         </Button>
       </div>
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-muted-foreground">
         Setelah dikirim, baris formulir Anda muncul selesai di daftar berdasarkan tabel penyimpanan 360 (
-        <span className="font-mono text-slate-500">performance_360_submissions</span>).
+        <span className="font-mono text-muted-foreground">performance_360_submissions</span>).
       </p>
     </div>
   )

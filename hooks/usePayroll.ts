@@ -91,7 +91,7 @@ export function usePayroll(tenantId: string = getTenantId(), options?: { pollInt
       try {
         const { data, error: apiError } = await insForge
           .from("payroll_details")
-          .select("*, user_profiles:user_profile_id(full_name, employee_number)")
+          .select("*, user_profiles:user_profile_id(full_name, employee_number, ptkp_status, tax_position)")
           .eq("tenant_id", tenantId)
           .eq("payroll_period_id", periodId)
           .order("created_at", { ascending: false })
@@ -117,6 +117,42 @@ export function usePayroll(tenantId: string = getTenantId(), options?: { pollInt
     }
   }, [fetchPeriods, options?.pollInterval])
 
+  const updateDetail = useCallback(
+    async (detailId: string, patch: Record<string, any>) => {
+      if (!insForge) throw new Error("Database not connected")
+      const { error: apiError } = await insForge
+        .from("payroll_details")
+        .update(patch)
+        .eq("id", detailId)
+        .eq("tenant_id", tenantId)
+      if (apiError) throw apiError
+    },
+    [tenantId]
+  )
+
+  const approvePeriod = useCallback(
+    async (periodId: string) => {
+      if (!insForge) throw new Error("Database not connected")
+      const db = insForge as any
+      // Approve all draft details in this period
+      const { error: detErr } = await db
+        .from("payroll_details")
+        .update({ status: "approved" })
+        .eq("tenant_id", tenantId)
+        .eq("payroll_period_id", periodId)
+        .eq("status", "draft")
+      if (detErr) throw detErr
+      // Update period status
+      const { error: perErr } = await db
+        .from("payroll_periods")
+        .update({ status: "approved" })
+        .eq("id", periodId)
+        .eq("tenant_id", tenantId)
+      if (perErr) throw perErr
+    },
+    [tenantId]
+  )
+
   return {
     periods,
     details,
@@ -127,5 +163,7 @@ export function usePayroll(tenantId: string = getTenantId(), options?: { pollInt
     deletePeriod,
     getPeriod,
     fetchDetails,
+    updateDetail,
+    approvePeriod,
   }
 }

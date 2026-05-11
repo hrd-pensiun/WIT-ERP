@@ -27,7 +27,7 @@ export default function EmployeeReportPage() {
     { type: "Tetap", key: "permanent", color: "bg-emerald-500" },
     { type: "Kontrak", key: "contract", color: "bg-blue-500" },
     { type: "Freelance", key: "freelance", color: "bg-purple-500" },
-    { type: "Magang", key: "intern", color: "bg-slate-500" },
+    { type: "Magang", key: "intern", color: "bg-muted-foreground/40" },
   ].map((item) => ({
     ...item,
     count: employees.filter((e) => e.employment_type === item.key).length,
@@ -68,18 +68,18 @@ export default function EmployeeReportPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-emerald-500" />
             Laporan Karyawan
           </h1>
-          <p className="text-slate-400 mt-1">Analisis data karyawan dan demografi</p>
+          <p className="text-muted-foreground mt-1">Analisis data karyawan dan demografi</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-slate-700">
+          <Button variant="outline" className="border-border">
             <Calendar className="w-4 h-4 mr-2" />
             Periode: 2026
           </Button>
@@ -92,24 +92,24 @@ export default function EmployeeReportPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Total Karyawan</p>
-                <p className="text-2xl font-bold text-slate-100">{totalEmployees}</p>
+                <p className="text-sm text-muted-foreground">Total Karyawan</p>
+                <p className="text-2xl font-bold text-foreground">{totalEmployees}</p>
               </div>
               <Users className="w-8 h-8 text-emerald-500/50" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Rata-rata Gaji</p>
-                <p className="text-2xl font-bold text-slate-100">
+                <p className="text-sm text-muted-foreground">Rata-rata Gaji</p>
+                <p className="text-2xl font-bold text-foreground">
                   {formatCurrency(avgCompanySalary)}
                 </p>
               </div>
@@ -118,12 +118,12 @@ export default function EmployeeReportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Departemen</p>
-                <p className="text-2xl font-bold text-slate-100">
+                <p className="text-sm text-muted-foreground">Departemen</p>
+                <p className="text-2xl font-bold text-foreground">
                   {departmentStats.length}
                 </p>
               </div>
@@ -132,11 +132,11 @@ export default function EmployeeReportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Turnover Rate</p>
+                <p className="text-sm text-muted-foreground">Turnover Rate</p>
                 <p className="text-2xl font-bold text-amber-400">4.3%</p>
               </div>
               <PieChart className="w-8 h-8 text-amber-500/50" />
@@ -148,24 +148,24 @@ export default function EmployeeReportPage() {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Department Distribution */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-slate-100">Distribusi per Departemen</CardTitle>
+            <CardTitle>Distribusi per Departemen</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {departmentStats.map((dept) => (
                 <div key={dept.name} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-300">{dept.name}</span>
+                    <span>{dept.name}</span>
                     <div className="flex items-center gap-4">
-                      <span className="text-slate-400">{dept.count} orang</span>
+                      <span className="text-muted-foreground">{dept.count} orang</span>
                       <span className="text-emerald-400 text-sm">
                         {formatCurrency(dept.avgSalary)}
                       </span>
                     </div>
                   </div>
-                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-emerald-500 rounded-full"
                       style={{ width: `${(dept.count / totalEmployees) * 100}%` }}
@@ -178,18 +178,18 @@ export default function EmployeeReportPage() {
         </Card>
 
         {/* Employment Type */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-slate-100">Tipe Pekerjaan</CardTitle>
+            <CardTitle>Tipe Pekerjaan</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               {employmentTypeStats.map((type) => (
-                <div key={type.type} className="p-4 bg-slate-950 rounded-lg">
+                <div key={type.type} className="p-4 bg-background rounded-lg">
                   <div className={`w-3 h-3 rounded-full ${type.color} mb-2`} />
-                  <p className="text-2xl font-bold text-slate-100">{type.count}</p>
-                  <p className="text-sm text-slate-400">{type.type}</p>
-                  <p className="text-xs text-slate-600 mt-1">
+                  <p className="text-2xl font-bold text-foreground">{type.count}</p>
+                  <p className="text-sm text-muted-foreground">{type.type}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {Math.round((type.count / totalEmployees) * 100)}%
                   </p>
                 </div>
@@ -200,39 +200,39 @@ export default function EmployeeReportPage() {
       </div>
 
       {/* Turnover Table */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-slate-100">Rekruitment & Turnover 2026</CardTitle>
+          <CardTitle>Rekruitment & Turnover 2026</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Bulan</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium">Bergabung</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium">Keluar</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium">Net</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Bulan</th>
+                  <th className="text-right py-3 px-4 text-muted-foreground font-medium">Bergabung</th>
+                  <th className="text-right py-3 px-4 text-muted-foreground font-medium">Keluar</th>
+                  <th className="text-right py-3 px-4 text-muted-foreground font-medium">Net</th>
                 </tr>
               </thead>
               <tbody>
                 {turnoverData.map((row) => (
-                  <tr key={row.month} className="border-b border-slate-800/50">
-                    <td className="py-3 px-4 text-slate-200">{row.month}</td>
+                  <tr key={row.month} className="border-b border-border/50">
+                    <td className="py-3 px-4 text-foreground">{row.month}</td>
                     <td className="py-3 px-4 text-right text-emerald-400">+{row.joined}</td>
                     <td className="py-3 px-4 text-right text-red-400">-{row.left}</td>
-                    <td className="py-3 px-4 text-right text-slate-300">{row.joined - row.left}</td>
+                    <td className="py-3 px-4 text-right text-foreground">{row.joined - row.left}</td>
                   </tr>
                 ))}
-                <tr className="bg-slate-800/30 font-medium">
-                  <td className="py-3 px-4 text-slate-200">Total</td>
+                <tr className="bg-muted/30 font-medium">
+                  <td className="py-3 px-4 text-foreground">Total</td>
                   <td className="py-3 px-4 text-right text-emerald-400">
                     +{turnoverData.reduce((sum, r) => sum + r.joined, 0)}
                   </td>
                   <td className="py-3 px-4 text-right text-red-400">
                     -{turnoverData.reduce((sum, r) => sum + r.left, 0)}
                   </td>
-                  <td className="py-3 px-4 text-right text-slate-300">
+                  <td className="py-3 px-4 text-right text-foreground">
                     {turnoverData.reduce((sum, r) => sum + r.joined - r.left, 0)}
                   </td>
                 </tr>

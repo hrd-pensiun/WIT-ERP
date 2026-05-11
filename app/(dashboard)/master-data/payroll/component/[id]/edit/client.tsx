@@ -63,32 +63,32 @@ export default function ComponentEditClient({ id }: { id: string }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/master-data/payroll"><Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-100"><ArrowLeft className="w-5 h-5" /></Button></Link>
-        <div><h1 className="text-2xl font-bold text-slate-100">Edit Salary Component</h1><p className="text-xs text-slate-500">EDIT-SALARY COMPONENT : {formData.name || formData.code || "-"}</p></div>
+        <Link href="/master-data/payroll"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
+        <div><h1 className="text-2xl font-bold text-foreground">Edit Salary Component</h1><p className="text-xs text-muted-foreground">EDIT-SALARY COMPONENT : {formData.name || formData.code || "-"}</p></div>
       </div>
       {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg">{error}</div>}
       <form onSubmit={handleSubmit}>
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader><CardTitle className="text-slate-100 flex items-center gap-2"><DollarSign className="w-5 h-5 text-emerald-500" /> Informasi Komponen</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle className="text-foreground flex items-center gap-2"><DollarSign className="w-5 h-5 text-emerald-500" /> Informasi Komponen</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2"><Label className="text-slate-200">Kode <span className="text-red-400">*</span></Label><Input value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} required className="bg-slate-950 border-slate-800 text-slate-100" /></div>
-              <div className="space-y-2"><Label className="text-slate-200">Nama <span className="text-red-400">*</span></Label><Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+              <div className="space-y-2"><Label>Kode <span className="text-red-400">*</span></Label><Input value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} required className="bg-background border-border text-foreground" /></div>
+              <div className="space-y-2"><Label>Nama <span className="text-red-400">*</span></Label><Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required className="bg-background border-border text-foreground" /></div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Tipe</Label>
+                <Label>Tipe</Label>
                 <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800"><SelectItem value="earning">Earning</SelectItem><SelectItem value="deduction">Deduction</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="earning">Earning</SelectItem><SelectItem value="deduction">Deduction</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="space-y-2"><Label className="text-slate-200">Deskripsi</Label><Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="bg-slate-950 border-slate-800 text-slate-100" /></div>
+            <div className="space-y-2"><Label>Deskripsi</Label><Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="bg-background border-border text-foreground" /></div>
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2"><Switch checked={formData.is_taxable} onCheckedChange={(checked) => setFormData({ ...formData, is_taxable: checked })} /><Label className="text-slate-200">Kena Pajak</Label></div>
-              <div className="flex items-center gap-2"><Switch checked={formData.status === "active"} onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? "active" : "inactive" })} /><Label className="text-slate-200">Aktif</Label></div>
+              <div className="flex items-center gap-2"><Switch checked={formData.is_taxable} onCheckedChange={(checked) => setFormData({ ...formData, is_taxable: checked })} /><Label>Kena Pajak</Label></div>
+              <div className="flex items-center gap-2"><Switch checked={formData.status === "active"} onCheckedChange={(checked) => setFormData({ ...formData, status: checked ? "active" : "inactive" })} /><Label>Aktif</Label></div>
             </div>
-            <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-800">
-              <Link href="/master-data/payroll"><Button type="button" variant="ghost" className="text-slate-400">Batal</Button></Link>
+            <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
+              <Link href="/master-data/payroll"><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
               <Button type="submit" disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">{saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</> : <><Save className="w-4 h-4 mr-2" />Simpan Perubahan</>}</Button>
             </div>
           </CardContent>
