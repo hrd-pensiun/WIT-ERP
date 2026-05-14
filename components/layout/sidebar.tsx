@@ -18,6 +18,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Banknote,
+  GanttChart,
+  Monitor,
+  Calculator,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
@@ -31,6 +34,39 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  {
+    name: "Workforce",
+    href: "/workforce",
+    icon: GanttChart,
+    children: [
+      { name: "Dashboard", href: "/workforce" },
+      { name: "Workload", href: "/workforce/workload" },
+      { name: "Allocation", href: "/workforce/allocation" },
+      { name: "Timesheet", href: "/workforce/timesheet" },
+    ],
+  },
+  {
+    name: "Commercial",
+    href: "/commercial",
+    icon: Calculator,
+    children: [
+      { name: "Calculator", href: "/commercial" },
+      { name: "Projects", href: "/commercial/projects" },
+      { name: "Rate Cards", href: "/commercial/rate-cards" },
+      { name: "Master Data", href: "/commercial/master-data" },
+    ],
+  },
+  {
+    name: "Projects",
+    href: "/projects",
+    icon: PieChart,
+    children: [
+      { name: "Delivery View", href: "/dashboards/pm" },
+      { name: "All Projects", href: "/projects" },
+      { name: "Sprint Board", href: "/projects/kanban" },
+      { name: "Time Tracking", href: "/projects/time" },
+    ],
+  },
   {
     name: "Master Data",
     href: "/master-data",
@@ -71,19 +107,10 @@ const navigation: NavItem[] = [
     href: "/crm",
     icon: Briefcase,
     children: [
-      { name: "Pipeline", href: "/crm/pipeline" },
-      { name: "Leads", href: "/crm/leads" },
+      { name: "Leads", href: "/crm/pipeline" },
+      { name: "Manajemen Klien", href: "/crm/clients" },
+      { name: "Manajemen Perusahaan", href: "/crm/companies" },
       { name: "Activities", href: "/crm/activities" },
-    ],
-  },
-  {
-    name: "Projects",
-    href: "/projects",
-    icon: PieChart,
-    children: [
-      { name: "All Projects", href: "/projects" },
-      { name: "Kanban Board", href: "/projects/kanban" },
-      { name: "Time Tracking", href: "/projects/time" },
     ],
   },
   {
@@ -113,6 +140,7 @@ const navigation: NavItem[] = [
     href: "/reports",
     icon: BarChart3,
     children: [
+      { name: "Executive", href: "/dashboards/executive" },
       { name: "Employees", href: "/reports/employees" },
       { name: "Sales", href: "/reports/sales" },
       { name: "Projects", href: "/reports/projects" },

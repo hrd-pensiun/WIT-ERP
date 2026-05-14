@@ -55,13 +55,13 @@ export function useLeads(tenantId: string = getTenantId(), options?: { pollInter
 
   const createLead = useCallback(async (data: any) => {
     if (!insForge) throw new Error('Database not connected')
-    
-    const { data: result, error } = await insForge.from('crm_leads').insert({
+
+    const { error } = await insForge.from('crm_leads').insert({
       ...data,
       tenant_id: data.tenant_id ?? tenantId,
-    }).select().single()
+    })
     if (error) throw error
-    return result
+    return true
   }, [tenantId])
 
   const updateLead = useCallback(async (id: string, data: any) => {
@@ -76,6 +76,31 @@ export function useLeads(tenantId: string = getTenantId(), options?: { pollInter
       .single()
     if (error) throw error
     return result
+  }, [tenantId])
+
+  const getLead = useCallback(async (id: string) => {
+    if (!insForge) throw new Error('Database not connected')
+
+    const { data, error } = await insForge
+      .from('crm_leads')
+      .select('*')
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .single()
+    if (error) throw error
+    return data
+  }, [tenantId])
+
+  const deleteLead = useCallback(async (id: string) => {
+    if (!insForge) throw new Error('Database not connected')
+
+    const { error } = await insForge
+      .from('crm_leads')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+    if (error) throw error
+    return true
   }, [tenantId])
 
   const convertToOpportunity = useCallback(async (id: string) => {
@@ -121,6 +146,8 @@ export function useLeads(tenantId: string = getTenantId(), options?: { pollInter
     fetchLeads,
     createLead,
     updateLead,
+    getLead,
+    deleteLead,
     convertToOpportunity
   }
 }

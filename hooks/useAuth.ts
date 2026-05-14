@@ -15,13 +15,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!insForge) {
+    const client = insForge
+    if (!client) {
       setLoading(false)
       return
     }
 
     let isMounted = true
-    insForge.auth.getCurrentUser().then(async ({ data, error }) => {
+    client.auth.getCurrentUser().then(async ({ data, error }) => {
       if (!isMounted) return
 
       if (error || !data?.user) {
@@ -31,7 +32,7 @@ export function useAuth() {
         let profileRole: string | null = null
         const tenantId = getTenantId()
         try {
-          const byUserId = await insForge
+          const byUserId = await client
             .from('user_profiles')
             .select('app_role')
             .eq('tenant_id', tenantId)
@@ -41,7 +42,7 @@ export function useAuth() {
           profileRole = (byUserId.data as { app_role?: string | null } | null)?.app_role ?? null
 
           if (!profileRole && data.user.email) {
-            const byEmail = await insForge
+            const byEmail = await client
               .from('user_profiles')
               .select('app_role')
               .eq('tenant_id', tenantId)
@@ -53,10 +54,11 @@ export function useAuth() {
           profileRole = null
         }
 
+        const meta = data.user.metadata
         setUser({
           id: data.user.id,
           email: data.user.email,
-          metadata: data.user.metadata,
+          ...(meta ? { metadata: meta } : {}),
           profileRole,
         })
         setIsAuthenticated(true)
@@ -77,12 +79,15 @@ export function useAuth() {
 
     setLoading(true)
 
+    const nameFromMeta =
+      metadata && typeof metadata === 'object' && typeof (metadata as { name?: unknown }).name === 'string'
+        ? (metadata as { name: string }).name
+        : undefined
+
     const { data, error } = await insForge.auth.signUp({
       email,
       password,
-      options: {
-        data: metadata,
-      },
+      ...(nameFromMeta ? { name: nameFromMeta } : {}),
     })
 
     if (error) {
@@ -90,18 +95,19 @@ export function useAuth() {
       return { success: false, error: error?.message ?? 'Registration failed' }
     }
 
-    // If auto-confirm is enabled, user and session will be returned
+    // If auto-confirm is enabled, user and tokens may be returned
     if (data?.user) {
+      const meta = data.user.metadata
       setUser({
         id: data.user.id,
         email: data.user.email,
-        metadata: data.user.user_metadata,
+        ...(meta ? { metadata: meta } : {}),
       })
       setIsAuthenticated(true)
     }
 
     setLoading(false)
-    return { success: true, user: data?.user, session: data?.session }
+    return { success: true, user: data?.user, accessToken: data?.accessToken ?? null }
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -144,10 +150,11 @@ export function useAuth() {
       profileRole = null
     }
 
+    const meta = data.user.metadata
     setUser({
       id: data.user.id,
       email: data.user.email,
-      metadata: data.user.metadata,
+      ...(meta ? { metadata: meta } : {}),
       profileRole,
     })
     setIsAuthenticated(true)

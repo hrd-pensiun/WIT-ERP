@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
   },
   trailingSlash: true,
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   // ESLint config in next.config.ts is not supported in Next.js 16.
 };

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import type { SupabaseClient } from "@supabase/supabase-js"
+
+/** Loose typing so `schema("auth")` and generated DB types match runtime InsForge/PostgREST */
+type AdminSupabase = SupabaseClient<any, any, any>
 
 type SyncRolePayload = {
   employeeId?: string | null
@@ -14,17 +18,17 @@ type SyncRolePayload = {
 const ALLOWED_ROLES = new Set(["employee", "manager", "hr_admin", "SuperAdmin"])
 const DEFAULT_PASSWORD = "wit12345"
 
-function getAdminClient() {
+function getAdminClient(): AdminSupabase | null {
   const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_URL || process.env.INSFORGE_URL
   const serviceRoleKey = process.env.INSFORGE_SERVICE_ROLE_KEY
   if (!baseUrl || !serviceRoleKey) return null
   return createClient(baseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-  })
+  }) as AdminSupabase
 }
 
 async function resolveUserIdByEmail(
-  admin: ReturnType<typeof createClient>,
+  admin: AdminSupabase,
   email: string
 ): Promise<string | null> {
   const { data, error } = await admin.schema("auth").from("users").select("id").eq("email", email).maybeSingle()
@@ -32,7 +36,7 @@ async function resolveUserIdByEmail(
   return (data as { id: string }).id
 }
 
-async function setProfileUserId(admin: ReturnType<typeof createClient>, employeeId: string, userId: string) {
+async function setProfileUserId(admin: AdminSupabase, employeeId: string, userId: string) {
   const { error } = await admin.from("user_profiles").update({ user_id: userId }).eq("id", employeeId)
   if (error) {
     throw new Error(error.message || "Failed to update user_profiles.user_id")
@@ -40,7 +44,7 @@ async function setProfileUserId(admin: ReturnType<typeof createClient>, employee
 }
 
 async function ensureAuthUser(params: {
-  admin: ReturnType<typeof createClient>
+  admin: AdminSupabase
   userId?: string | null
   email?: string | null
   role: string
@@ -90,7 +94,7 @@ async function ensureAuthUser(params: {
   return { ok: true as const, userId: targetUserId }
 }
 
-async function syncAllEmployees(admin: ReturnType<typeof createClient>) {
+async function syncAllEmployees(admin: AdminSupabase) {
   const { data: employees, error } = await admin
     .from("user_profiles")
     .select("id,user_id,email,full_name,app_role")

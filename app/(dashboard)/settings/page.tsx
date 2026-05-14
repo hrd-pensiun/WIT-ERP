@@ -41,7 +41,8 @@ export default function SettingsPage() {
   }, [user])
 
   useEffect(() => {
-    if (!user?.id || !insForge) return
+    const client = insForge
+    if (!user?.id || !client) return
 
     const tenantId = getTenantId()
     let cancelled = false
@@ -50,7 +51,7 @@ export default function SettingsPage() {
       setLoadingProfile(true)
       setProfileError(null)
       try {
-        const byUserId = await insForge
+        const byUserId = await client
           .from("user_profiles")
           .select(
             "id,user_id,full_name,employee_number,email,phone,status,join_date,app_role,departments:department_id(name),divisions:division_id(name),hr_positions:position_id(name),hr_job_grades:job_grade_id(name,level)"
@@ -62,7 +63,7 @@ export default function SettingsPage() {
         let found = (byUserId.data || null) as EmployeeProfile | null
 
         if (!found && user.email) {
-          const byEmail = await insForge
+          const byEmail = await client
             .from("user_profiles")
             .select(
               "id,user_id,full_name,employee_number,email,phone,status,join_date,app_role,departments:department_id(name),divisions:division_id(name),hr_positions:position_id(name),hr_job_grades:job_grade_id(name,level)"

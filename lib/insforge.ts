@@ -22,13 +22,12 @@ const client = hasRealCredentials
 
 // Proxy .from() to .database.from() for Supabase-compatible API
 if (client) {
-  // @ts-ignore
-  client.from = client.database.from.bind(client.database)
+  Object.assign(client, {
+    from: client.database.from.bind(client.database),
+  })
 }
 
 export const insForge = client
-
-export type InsForgeClient = NonNullable<typeof insForge>
 
 // Helper to check if we're in mock mode
 export const isMockMode = () => !insForge

@@ -134,7 +134,8 @@ export function useEmployeeProfileDetails(tenantId: string = getTenantId()) {
 
   const replaceProfileDetails = useCallback(
     async (userProfileId: string, payload: EmployeeProfileDetailsPayload) => {
-      if (!insForge) throw new Error("Database not connected")
+      const client = insForge
+      if (!client) throw new Error("Database not connected")
 
       const cleanupTargets = [
         "employee_family_members",
@@ -146,7 +147,7 @@ export function useEmployeeProfileDetails(tenantId: string = getTenantId()) {
       ]
 
       for (const table of cleanupTargets) {
-        const { error } = await insForge
+        const { error } = await client
           .from(table)
           .delete()
           .eq("tenant_id", tenantId)
@@ -158,74 +159,92 @@ export function useEmployeeProfileDetails(tenantId: string = getTenantId()) {
 
       if (payload.familyMembers.length > 0) {
         inserts.push(
-          insForge.from("employee_family_members").insert(
-            payload.familyMembers.map((item, idx) => ({
-              ...item,
-              tenant_id: tenantId,
-              user_profile_id: userProfileId,
-              sort_order: idx,
-            }))
-          )
+          (async () => {
+            const { error } = await client.from("employee_family_members").insert(
+              payload.familyMembers.map((item, idx) => ({
+                ...item,
+                tenant_id: tenantId,
+                user_profile_id: userProfileId,
+                sort_order: idx,
+              }))
+            )
+            return { error }
+          })()
         )
       }
       if (payload.educationHistories.length > 0) {
         inserts.push(
-          insForge.from("employee_education_histories").insert(
-            payload.educationHistories.map((item, idx) => ({
-              ...item,
-              tenant_id: tenantId,
-              user_profile_id: userProfileId,
-              sort_order: idx,
-            }))
-          )
+          (async () => {
+            const { error } = await client.from("employee_education_histories").insert(
+              payload.educationHistories.map((item, idx) => ({
+                ...item,
+                tenant_id: tenantId,
+                user_profile_id: userProfileId,
+                sort_order: idx,
+              }))
+            )
+            return { error }
+          })()
         )
       }
       if (payload.informalEducations.length > 0) {
         inserts.push(
-          insForge.from("employee_informal_education_histories").insert(
-            payload.informalEducations.map((item, idx) => ({
-              ...item,
-              tenant_id: tenantId,
-              user_profile_id: userProfileId,
-              sort_order: idx,
-            }))
-          )
+          (async () => {
+            const { error } = await client.from("employee_informal_education_histories").insert(
+              payload.informalEducations.map((item, idx) => ({
+                ...item,
+                tenant_id: tenantId,
+                user_profile_id: userProfileId,
+                sort_order: idx,
+              }))
+            )
+            return { error }
+          })()
         )
       }
       if (payload.organizationExperiences.length > 0) {
         inserts.push(
-          insForge.from("employee_organization_experiences").insert(
-            payload.organizationExperiences.map((item, idx) => ({
-              ...item,
-              tenant_id: tenantId,
-              user_profile_id: userProfileId,
-              sort_order: idx,
-            }))
-          )
+          (async () => {
+            const { error } = await client.from("employee_organization_experiences").insert(
+              payload.organizationExperiences.map((item, idx) => ({
+                ...item,
+                tenant_id: tenantId,
+                user_profile_id: userProfileId,
+                sort_order: idx,
+              }))
+            )
+            return { error }
+          })()
         )
       }
       if (payload.workHistories.length > 0) {
         inserts.push(
-          insForge.from("employee_work_histories").insert(
-            payload.workHistories.map((item, idx) => ({
-              ...item,
-              tenant_id: tenantId,
-              user_profile_id: userProfileId,
-              sort_order: idx,
-            }))
-          )
+          (async () => {
+            const { error } = await client.from("employee_work_histories").insert(
+              payload.workHistories.map((item, idx) => ({
+                ...item,
+                tenant_id: tenantId,
+                user_profile_id: userProfileId,
+                sort_order: idx,
+              }))
+            )
+            return { error }
+          })()
         )
       }
       if (payload.portfolioItems.length > 0) {
         inserts.push(
-          insForge.from("employee_portfolios").insert(
-            payload.portfolioItems.map((item, idx) => ({
-              ...item,
-              tenant_id: tenantId,
-              user_profile_id: userProfileId,
-              sort_order: idx,
-            }))
-          )
+          (async () => {
+            const { error } = await client.from("employee_portfolios").insert(
+              payload.portfolioItems.map((item, idx) => ({
+                ...item,
+                tenant_id: tenantId,
+                user_profile_id: userProfileId,
+                sort_order: idx,
+              }))
+            )
+            return { error }
+          })()
         )
       }
 

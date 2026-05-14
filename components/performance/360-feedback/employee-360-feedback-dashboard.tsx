@@ -423,7 +423,7 @@ export function Employee360FeedbackDashboard() {
             bawahan: cSub,
             total,
             avg,
-            avgTone: avg != null && avg < 3.8 ? "warn" : "neutral" as const,
+            avgTone: (avg != null && avg < 3.8 ? "warn" : "neutral") as "warn" | "neutral",
           }
         })
 
@@ -995,7 +995,7 @@ export function Employee360FeedbackDashboard() {
                   <YAxis type="category" dataKey="type" width={88} tick={{ fill: "#94a3b8", fontSize: 12 }} />
                   <Tooltip
                     contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8 }}
-                    formatter={(v: number) => [v.toFixed(1), "Skor"]}
+                    formatter={(v) => [Number(v ?? 0).toFixed(1), "Skor"]}
                   />
                   <Bar dataKey="score" fill="#059669" radius={[0, 4, 4, 0]} />
                 </BarChart>

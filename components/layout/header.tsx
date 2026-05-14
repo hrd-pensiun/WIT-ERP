@@ -46,13 +46,14 @@ export function Header() {
   }
 
   useEffect(() => {
-    if (!user?.id || !insForge) return
+    const client = insForge
+    if (!user?.id || !client) return
 
     const tenantId = getTenantId()
     let cancelled = false
 
     const loadProfile = async () => {
-      const byUserId = await insForge
+      const byUserId = await client
         .from("user_profiles")
         .select("full_name,hr_positions:position_id(name)")
         .eq("tenant_id", tenantId)
@@ -62,7 +63,7 @@ export function Header() {
       let found = (byUserId.data || null) as HeaderProfile | null
 
       if (!found && user.email) {
-        const byEmail = await insForge
+        const byEmail = await client
           .from("user_profiles")
           .select("full_name,hr_positions:position_id(name)")
           .eq("tenant_id", tenantId)

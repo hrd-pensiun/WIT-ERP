@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const SEGMENT_LABELS: Record<string, string> = {
+  commercial: "Commercial",
+  "rate-cards": "Rate Cards",
   crm: "CRM",
   leads: "Leads",
   opportunities: "Opportunities",
@@ -44,6 +46,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   generate: "Generate",
   login: "Login",
   // Payroll module
+  clients: "Klien",
+  companies: "Perusahaan",
   compensation: "Kompensasi Karyawan",
   processing: "Proses Penggajian",
   approval: "Persetujuan Payroll",

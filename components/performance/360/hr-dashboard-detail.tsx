@@ -290,7 +290,7 @@ export function Perf360HrDashboardDetail({ profileId }: { profileId: string }) {
           bawahan: cSub,
           total,
           avg,
-          avgTone: avg != null && avg < 3.8 ? "warn" : "neutral",
+          avgTone: (avg != null && avg < 3.8 ? "warn" : "neutral") as "warn" | "neutral",
         }
       })
 
