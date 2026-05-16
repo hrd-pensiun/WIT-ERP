@@ -3,10 +3,10 @@
 import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Target, Loader2, Edit3, Trash2, ArrowRight } from "lucide-react"
+import { ArrowLeft, Target, Loader2, Edit3, Trash2, ArrowRight, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { insForge } from "@/lib/insforge"
-import LeadTabs, { ConvertProjectDialog, EditLeadDialog } from "@/components/leads/lead-tabs"
+import LeadTabs, { ConvertProjectDialog, ConvertToCommercialProjectDialog, EditLeadDialog } from "@/components/leads/lead-tabs"
 
 export default function LeadViewClient({ id }: { id: string }) {
   const router = useRouter()
@@ -14,6 +14,7 @@ export default function LeadViewClient({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [convertOpen, setConvertOpen] = useState(false)
+  const [convertCommercialOpen, setConvertCommercialOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
 
   const fetchLead = useCallback(async () => {
@@ -79,22 +80,18 @@ export default function LeadViewClient({ id }: { id: string }) {
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Target className="w-6 h-6 text-emerald-500" />
-              Detail Lead
+              Detail Leads : {lead.title || `${lead.contact_name}${lead.company_name ? ` - ${lead.company_name}` : ""}`}{lead.lead_number ? ` (${lead.lead_number})` : ""}
             </h1>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-              {lead.lead_number && (
-                <code className="text-emerald-500 font-mono bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded">
-                  {lead.lead_number}
-                </code>
-              )}
-              {lead.title || `${lead.contact_name}${lead.company_name ? ` - ${lead.company_name}` : ""}`}
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => setConvertOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5">
             <ArrowRight className="w-4 h-4" />
             Convert
+          </Button>
+          <Button onClick={() => setConvertCommercialOpen(true)} variant="outline" className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10 gap-1.5">
+            <Building2 className="w-4 h-4" />
+            Convert to Project
           </Button>
           <Button variant="outline" className="border-border gap-1.5" onClick={() => setEditOpen(true)}>
             <Edit3 className="w-4 h-4" />
@@ -120,6 +117,7 @@ export default function LeadViewClient({ id }: { id: string }) {
       <LeadTabs lead={lead} onRefresh={fetchLead} />
 
       <ConvertProjectDialog lead={lead} open={convertOpen} onOpenChange={setConvertOpen} />
+      <ConvertToCommercialProjectDialog lead={lead} open={convertCommercialOpen} onOpenChange={setConvertCommercialOpen} />
       <EditLeadDialog leadId={id} lead={lead} open={editOpen} onOpenChange={setEditOpen} />
     </div>
   )

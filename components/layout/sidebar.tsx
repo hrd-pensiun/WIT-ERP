@@ -51,9 +51,13 @@ const navigation: NavItem[] = [
     icon: Calculator,
     children: [
       { name: "Calculator", href: "/commercial" },
-      { name: "Projects", href: "/commercial/projects" },
+      { name: "Projects", href: "/projects" },
       { name: "Rate Cards", href: "/commercial/rate-cards" },
       { name: "Master Data", href: "/commercial/master-data" },
+      { name: "Leads", href: "/crm/pipeline" },
+      { name: "Manajemen Klien", href: "/crm/clients" },
+      { name: "Manajemen Perusahaan", href: "/crm/companies" },
+      { name: "Activities", href: "/crm/activities" },
     ],
   },
   {
@@ -61,10 +65,7 @@ const navigation: NavItem[] = [
     href: "/projects",
     icon: PieChart,
     children: [
-      { name: "Delivery View", href: "/dashboards/pm" },
       { name: "All Projects", href: "/projects" },
-      { name: "Sprint Board", href: "/projects/kanban" },
-      { name: "Time Tracking", href: "/projects/time" },
     ],
   },
   {
@@ -100,17 +101,6 @@ const navigation: NavItem[] = [
       { name: "Pajak & Potongan",       href: "/payroll/tax" },
       { name: "Laporan Payroll",        href: "/payroll/reports" },
       { name: "Analitik Payroll",       href: "/payroll/analytics" },
-    ],
-  },
-  {
-    name: "CRM",
-    href: "/crm",
-    icon: Briefcase,
-    children: [
-      { name: "Leads", href: "/crm/pipeline" },
-      { name: "Manajemen Klien", href: "/crm/clients" },
-      { name: "Manajemen Perusahaan", href: "/crm/companies" },
-      { name: "Activities", href: "/crm/activities" },
     ],
   },
   {

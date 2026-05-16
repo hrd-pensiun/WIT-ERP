@@ -2,11 +2,11 @@ import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
-export default async function NewProjectTaskRedirect({
+export default async function CommercialProjectEditRedirect({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  redirect(`/projects/${id}`)
+  redirect(`/projects/${id}/edit`)
 }

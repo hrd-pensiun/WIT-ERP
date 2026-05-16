@@ -1,12 +1,12 @@
-import TaskEditClient from "./client"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
-export default async function TaskEditPage({
+export default async function EditProjectTaskRedirect({
   params,
 }: {
   params: Promise<{ id: string; taskId: string }>
 }) {
-  const { taskId } = await params
-  return <TaskEditClient taskId={taskId} />
+  const { id } = await params
+  redirect(`/projects/${id}`)
 }

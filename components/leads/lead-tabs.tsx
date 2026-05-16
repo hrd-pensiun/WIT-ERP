@@ -18,12 +18,14 @@ import {
   Trash2, Loader2, User, X,
   Calendar, DollarSign, Flag, CheckCircle2, Circle, ArrowRight,
   Edit3, Users, CheckSquare, ClipboardList, BarChart3, Receipt,
-  Clock, Activity, Clock9, Building2, Mail, Phone, Link as LinkIcon
+  Clock, Activity, Clock9, Building2, Mail, Phone, Square, Link as LinkIcon
 } from "lucide-react"
 import { insForge } from "@/lib/insforge"
 import { getTenantId } from "@/lib/tenant"
 import { useAuth } from "@/hooks/useAuth"
 import RichTextEditor from "./rich-text-editor"
+import CostAnalysisList, { type CostAnalysisItem } from "./cost-analysis-list"
+import { computeScorecard } from "./cost-analysis-scorecard"
 
 // ============================================================
 // Types
@@ -58,18 +60,75 @@ const PRIORITY_STYLES: Record<string, string> = {
 // ============================================================
 // Progress / Checklist Section
 // ============================================================
-function LeadProgress({ lead, hasBrief, hasQuotation, hasTechnical, hasCost }: {
-  lead: any; hasBrief: boolean; hasQuotation: boolean; hasTechnical: boolean; hasCost: boolean
+function LeadProgress({ lead, leadId, hasBrief, hasQuotation, hasTechnical, hasCost }: {
+  lead: any; leadId: string; hasBrief: boolean; hasQuotation: boolean; hasTechnical: boolean; hasCost: boolean
 }) {
+  const [submittedBy, setSubmittedBy] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const fetchSubmittedBy = async () => {
+      if (!insForge) return
+      const map: Record<string, string> = {}
+
+      // Collect user IDs to resolve
+      const userIds: string[] = []
+
+      // Lead-level fields
+      if (lead.created_by) userIds.push(lead.created_by)
+      if (lead.pic_sales_id && lead.pic_sales_id !== lead.created_by) userIds.push(lead.pic_sales_id)
+
+      // Query related records in parallel
+      const [briefRes, quotationRes, techRes] = await Promise.all([
+        insForge.from("lead_project_briefs").select("created_by").eq("lead_id", leadId).is("deleted_at", null).order("created_at", { ascending: false }).limit(1),
+        insForge.from("lead_quotations").select("created_by").eq("lead_id", leadId).is("deleted_at", null).order("created_at", { ascending: false }).limit(1),
+        insForge.from("lead_technical_analyses").select("created_by").eq("lead_id", leadId).is("deleted_at", null).order("created_at", { ascending: false }).limit(1),
+      ])
+
+      const briefCreatedBy = briefRes.data?.[0]?.created_by
+      const quotationCreatedBy = quotationRes.data?.[0]?.created_by
+      const techCreatedBy = techRes.data?.[0]?.created_by
+
+      if (briefCreatedBy) userIds.push(briefCreatedBy)
+      if (quotationCreatedBy) userIds.push(quotationCreatedBy)
+      if (techCreatedBy) userIds.push(techCreatedBy)
+
+      // Resolve all user IDs to names
+      const uniqueIds = [...new Set(userIds.filter(Boolean))]
+      if (uniqueIds.length > 0) {
+        const { data: profiles } = await insForge.from("user_profiles").select("user_id, full_name").in("user_id", uniqueIds)
+        const profileMap: Record<string, string> = {}
+        if (profiles) {
+          for (const p of profiles) {
+            profileMap[p.user_id] = p.full_name
+          }
+        }
+
+        // Map each item to submitted by name
+        map.contact = profileMap[lead.created_by] || ""
+        map.company = profileMap[lead.created_by] || ""
+        map.bant = profileMap[lead.created_by] || ""
+        map.pic = lead.pic_sales_id ? (profileMap[lead.pic_sales_id] || "") : ""
+        map.brief = briefCreatedBy ? (profileMap[briefCreatedBy] || "") : ""
+        map.quotation = quotationCreatedBy ? (profileMap[quotationCreatedBy] || "") : ""
+        map.technical = techCreatedBy ? (profileMap[techCreatedBy] || "") : ""
+        // Cost analysis is localStorage-only for now — no created_by
+      }
+
+      setSubmittedBy(map)
+    }
+
+    fetchSubmittedBy()
+  }, [lead.id, lead.created_by, lead.pic_sales_id, leadId, hasBrief, hasQuotation, hasTechnical])
+
   const checks = [
-    { label: "Contact Info", done: !!(lead.contact_name && (lead.contact_email || lead.contact_phone)) },
-    { label: "Company Info", done: !!lead.company_name },
-    { label: "BANT", done: [lead.budget_confirmed, lead.authority_confirmed, lead.need_confirmed, lead.timeline_confirmed].filter(Boolean).length >= 2 },
-    { label: "PIC Assigned", done: !!lead.pic_sales_id },
-    { label: "Project Brief", done: hasBrief },
-    { label: "Quotation", done: hasQuotation },
-    { label: "Tech Analysis", done: hasTechnical },
-    { label: "Cost Analysis", done: hasCost },
+    { key: "contact", label: "Contact Info", done: !!(lead.contact_name && (lead.contact_email || lead.contact_phone)) },
+    { key: "company", label: "Company Info", done: !!lead.company_name },
+    { key: "bant", label: "BANT", done: [lead.budget_confirmed, lead.authority_confirmed, lead.need_confirmed, lead.timeline_confirmed].filter(Boolean).length >= 2 },
+    { key: "pic", label: "PIC Assigned", done: !!lead.pic_sales_id },
+    { key: "brief", label: "Project Brief", done: hasBrief },
+    { key: "quotation", label: "Quotation", done: hasQuotation },
+    { key: "technical", label: "Tech Analysis", done: hasTechnical },
+    { key: "cost", label: "Cost Analysis", done: hasCost },
   ]
   const doneCount = checks.filter(c => c.done).length
   const total = checks.length
@@ -89,13 +148,23 @@ function LeadProgress({ lead, hasBrief, hasQuotation, hasTechnical, hasCost }: {
         <div className="w-full h-1.5 bg-muted rounded-full mb-4 overflow-hidden">
           <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {checks.map((c) => (
-            <div key={c.label} className={`flex items-center gap-1.5 text-xs ${c.done ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-              {c.done ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <Circle className="w-3.5 h-3.5 shrink-0" />}
-              {c.label}
-            </div>
-          ))}
+        <div className="space-y-3">
+          {checks.map((c) => {
+            const submitter = submittedBy[c.key]
+            return (
+              <div key={c.key}>
+                <div className={`flex items-center gap-1.5 text-xs ${c.done ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                  {c.done ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <Circle className="w-3.5 h-3.5 shrink-0" />}
+                  <span className="font-medium">{c.label}</span>
+                </div>
+                {c.done && submitter ? (
+                  <p className="text-[0.55rem] text-muted-foreground/60 ml-5 mt-0.5">Submitted by: {submitter}</p>
+                ) : (
+                  <p className="text-[0.55rem] text-muted-foreground/30 ml-5 mt-0.5">Submitted by: —</p>
+                )}
+              </div>
+            )
+          })}
         </div>
       </CardContent>
     </Card>
@@ -203,6 +272,344 @@ export function ConvertProjectDialog({ lead, open, onOpenChange }: { lead: any; 
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-xs h-9">Batal</Button>
             <Button onClick={handleConvert} disabled={!projectName.trim() || converting} className="bg-emerald-600 hover:bg-emerald-700 text-xs h-9 gap-1.5">
               {converting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Converting...</> : <><ArrowRight className="w-3.5 h-3.5" /> Convert ke Project</>}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ============================================================
+// Convert to Commercial Project Dialog (New Flow)
+// ============================================================
+export function ConvertToCommercialProjectDialog({ lead, open, onOpenChange }: { lead: any; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const router = useRouter()
+  const [projectName, setProjectName] = useState("")
+  const [companyName, setCompanyName] = useState("")
+  const [clientName, setClientName] = useState("")
+  const [projectCode, setProjectCode] = useState("")
+  const [picCommercialId, setPicCommercialId] = useState("")
+  const [picAdmId, setPicAdmId] = useState("")
+  const [pmId, setPmId] = useState("")
+  const [poValue, setPoValue] = useState(0)
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const [termOfPayment, setTermOfPayment] = useState("")
+  const [users, setUsers] = useState<any[]>([])
+  const [converting, setConverting] = useState(false)
+  const [generating, setGenerating] = useState(false)
+
+  // Data migration checklist
+  const [includeMom, setIncludeMom] = useState(true)
+  const [includeCostAnalysis, setIncludeCostAnalysis] = useState(true)
+  const [includeSummary, setIncludeSummary] = useState(true)
+  const [includeBant, setIncludeBant] = useState(true)
+  const [momCount, setMomCount] = useState(0)
+  const [caCount, setCaCount] = useState(0)
+
+  const [leadNumber] = useState(lead?.lead_number || "")
+  const bantItems = [
+    { key: "budget_confirmed", label: "Budget", done: lead?.budget_confirmed },
+    { key: "authority_confirmed", label: "Authority", done: lead?.authority_confirmed },
+    { key: "need_confirmed", label: "Need", done: lead?.need_confirmed },
+    { key: "timeline_confirmed", label: "Timeline", done: lead?.timeline_confirmed },
+  ]
+  const bantScore = lead?.bant_score ?? 0
+
+  useEffect(() => {
+    if (!lead) return
+    setProjectName(lead.title || `Project: ${lead.contact_name || ""}`)
+    setCompanyName(lead.company_name || "")
+    setClientName(lead.contact_name || "")
+    // Generate project code
+    setGenerating(true)
+    ;(async () => {
+      if (!insForge) { setGenerating(false); return }
+      try {
+        const year = new Date().getFullYear().toString()
+        const { data: lastProj } = await insForge.from("commercial_projects")
+          .select("project_code")
+          .like("project_code", `CMP-${year}-%`)
+          .order("project_code", { ascending: false })
+          .limit(1)
+        let seq = 1
+        if (lastProj && lastProj.length > 0) {
+          const parts = lastProj[0].project_code?.split('-')
+          if (parts && parts.length >= 3) seq = parseInt(parts[2]) + 1
+        }
+        setProjectCode(`CMP-${year}-${String(seq).padStart(4, "0")}`)
+      } catch { /* ignore */ }
+      setGenerating(false)
+    })()
+    // Fetch counts for data migration checklist
+    if (insForge) {
+      insForge.from("lead_mom").select("id", { count: "exact", head: true }).eq("lead_id", lead.id).is("deleted_at", null)
+        .then((r: any) => { if (typeof r.count === "number") setMomCount(r.count) })
+      insForge.from("lead_cost_analyses").select("id", { count: "exact", head: true }).eq("lead_id", lead.id).is("deleted_at", null)
+        .then((r: any) => { if (typeof r.count === "number") setCaCount(r.count) })
+    }
+  }, [lead])
+
+  // Fetch users for selection
+  useEffect(() => {
+    if (!insForge) return
+    insForge.from("user_profiles").select("id, full_name, employee_number").is("deleted_at", null).order("full_name", { ascending: true })
+      .then(({ data }: any) => {
+        if (data) setUsers(data)
+      })
+  }, [])
+
+  const handleConvert = async () => {
+    if (!insForge || !projectName.trim()) return
+    setConverting(true)
+    try {
+      // 1. Fetch lead sub-data for snapshots (only if checked)
+      const leadRes = await insForge.from("crm_leads").select("*").eq("id", lead.id).single()
+      let momData = null, caData = null, summaryData = null
+      if (includeMom) { const r = await insForge.from("lead_mom").select("*").eq("lead_id", lead.id).is("deleted_at", null); momData = r.data }
+      if (includeCostAnalysis) { const r = await insForge.from("lead_cost_analyses").select("*").eq("lead_id", lead.id).is("deleted_at", null); caData = r.data }
+      if (includeSummary) { const r = await insForge.from("lead_quotation_summaries").select("*").eq("lead_id", lead.id).is("deleted_at", null).limit(1); summaryData = r.data?.[0] || null }
+
+      // 2. Insert commercial project with snapshot data
+      const payload: any = {
+        project_code: projectCode,
+        project_name: projectName.trim(),
+        company_name: companyName || null,
+        client_name: clientName || null,
+        lead_id: lead.id,
+        pic_commercial_id: picCommercialId || null,
+        pic_adm_id: picAdmId || null,
+        pm_id: pmId || null,
+        po_value: poValue || 0,
+        start_date: startDate || null,
+        end_date: endDate || null,
+        term_of_payment: termOfPayment || null,
+        status: "won",
+        health: "green",
+        lead_data_snapshot: leadRes?.data || null,
+      }
+      if (includeMom) payload.mom_snapshot = momData
+      if (includeCostAnalysis) payload.cost_analysis_snapshot = caData
+      if (includeSummary) payload.summary_snapshot = summaryData
+
+      const { data: project, error } = await insForge.from("commercial_projects").insert(payload).select().single()
+      if (error) throw error
+
+      // 3. Update lead status
+      await insForge.from("crm_leads").update({ status: "closed_won" }).eq("id", lead.id)
+
+      onOpenChange(false)
+      if (project?.id) router.push(`/projects/${project.id}`)
+    } catch (err) {
+      console.error("Failed to convert to commercial project:", err)
+    } finally {
+      setConverting(false)
+    }
+  }
+
+  const TERM_OPTIONS = [
+    "DP 30% - Pelunasan 70%",
+    "DP 50% - Pelunasan 50%",
+    "100% di awal",
+    "100% di akhir",
+    "Bertahap (Monthly)",
+    "Bertahap (Milestone)",
+  ]
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <Building2 className="w-5 h-5 text-blue-500" /> Convert Lead ke Commercial Project
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-5 py-2">
+
+          {/* ════════════════════════════════════════
+              SECTION 1: Lead Reference Info
+              ════════════════════════════════════════ */}
+          <div className="rounded-lg border border-blue-500/20 bg-blue-50/10 dark:bg-blue-950/10 p-3">
+            <p className="text-[0.55rem] text-blue-500 font-semibold tracking-wider mb-2">REFERENSI LEAD</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-muted-foreground">Lead Number:</span>
+                <span className="ml-1.5 font-mono font-medium text-foreground">{leadNumber || "—"}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">BANT Score:</span>
+                <span className="ml-1.5 font-medium text-foreground">{bantScore}%</span>
+              </div>
+              {lead?.title && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Title:</span>
+                  <span className="ml-1.5 font-medium text-foreground">{lead.title}</span>
+                </div>
+              )}
+            </div>
+            {/* BANT Checklist */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {bantItems.map((item) => (
+                <div key={item.key} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.5rem] font-medium ${
+                  item.done
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20"
+                }`}>
+                  {item.done ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Circle className="w-2.5 h-2.5" />}
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════════
+              SECTION 2: Data Migration Checklist
+              ════════════════════════════════════════ */}
+          <div className="rounded-lg border border-border p-3">
+            <p className="text-[0.55rem] text-muted-foreground font-semibold tracking-wider mb-2">DATA YANG AKAN DIBAWA KE PROJECT (SNAPSHOT)</p>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                {includeBant ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
+                <span className="text-xs text-foreground">Lead Checklist (BANT)</span>
+                <input type="checkbox" checked={includeBant} onChange={() => setIncludeBant(!includeBant)} className="sr-only" />
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                {includeMom ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
+                <span className="text-xs text-foreground">Minutes of Meeting {momCount > 0 ? <span className="text-muted-foreground">({momCount} item)</span> : null}</span>
+                <input type="checkbox" checked={includeMom} onChange={() => setIncludeMom(!includeMom)} className="sr-only" />
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                {includeCostAnalysis ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
+                <span className="text-xs text-foreground">Cost Analysis {caCount > 0 ? <span className="text-muted-foreground">({caCount} item)</span> : null}</span>
+                <input type="checkbox" checked={includeCostAnalysis} onChange={() => setIncludeCostAnalysis(!includeCostAnalysis)} className="sr-only" />
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                {includeSummary ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
+                <span className="text-xs text-foreground">Quotation Summary</span>
+                <input type="checkbox" checked={includeSummary} onChange={() => setIncludeSummary(!includeSummary)} className="sr-only" />
+              </label>
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════════
+              SECTION 3: Project Details Form
+              ════════════════════════════════════════ */}
+          <div className="border-t border-border pt-4">
+            <p className="text-[0.55rem] text-muted-foreground font-semibold tracking-wider mb-3">DETAIL PROYEK</p>
+
+            {/* Project Code + Name */}
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Project Number <span className="text-red-500">*</span></Label>
+                <Input value={projectCode} readOnly className="bg-muted border-border text-foreground text-sm font-mono" />
+              </div>
+              <div className="space-y-1.5 col-span-2">
+                <Label className="text-xs text-muted-foreground">Project Name <span className="text-red-500">*</span></Label>
+                <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} className="bg-background border-border text-foreground text-sm" />
+              </div>
+            </div>
+
+            {/* Company + Client */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Perusahaan / Company</Label>
+                <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-background border-border text-foreground text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Klien</Label>
+                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="bg-background border-border text-foreground text-sm" />
+              </div>
+            </div>
+
+            {/* PIC Commercial, PIC ADM, PM */}
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">PIC Commercial <span className="text-red-500">*</span></Label>
+                <Select value={picCommercialId} onValueChange={setPicCommercialId}>
+                  <SelectTrigger className="bg-background border-border text-sm h-9">
+                    <SelectValue placeholder="Pilih PIC" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.full_name}{u.employee_number ? ` (${u.employee_number})` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">PIC ADM</Label>
+                <Select value={picAdmId} onValueChange={setPicAdmId}>
+                  <SelectTrigger className="bg-background border-border text-sm h-9">
+                    <SelectValue placeholder="Pilih PIC" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.full_name}{u.employee_number ? ` (${u.employee_number})` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Project Manager <span className="text-red-500">*</span></Label>
+                <Select value={pmId} onValueChange={setPmId}>
+                  <SelectTrigger className="bg-background border-border text-sm h-9">
+                    <SelectValue placeholder="Pilih PM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.full_name}{u.employee_number ? ` (${u.employee_number})` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* PO Value */}
+            <div className="space-y-1.5 mb-3">
+              <Label className="text-xs text-muted-foreground">Nilai PO (Rp)</Label>
+              <Input type="number" min={0} value={poValue} onChange={(e) => setPoValue(parseInt(e.target.value) || 0)} placeholder="0" className="bg-background border-border text-foreground text-sm font-mono" />
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Start Kick Off <span className="text-red-500">*</span></Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-background border-border text-foreground text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">End of Project <span className="text-red-500">*</span></Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-background border-border text-foreground text-sm" />
+              </div>
+            </div>
+
+            {/* Term of Payment */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Term of Payment</Label>
+              <Select value={termOfPayment} onValueChange={setTermOfPayment}>
+                <SelectTrigger className="bg-background border-border text-sm h-9">
+                  <SelectValue placeholder="Pilih Term of Payment" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TERM_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════════
+              FOOTER: Actions
+              ════════════════════════════════════════ */}
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-xs h-9">Batal</Button>
+            <Button
+              onClick={handleConvert}
+              disabled={!projectName.trim() || !startDate || !endDate || converting || !picCommercialId || !pmId}
+              className="bg-blue-600 hover:bg-blue-700 text-xs h-9 gap-1.5"
+            >
+              {converting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Converting...</> : <><Building2 className="w-3.5 h-3.5" /> Convert to Project</>}
             </Button>
           </div>
         </div>
@@ -375,7 +782,7 @@ function InfoTab({ lead, leadId, hasBrief, hasQuotation, hasTechnical, hasCost }
 
         {/* RIGHT: Lead Checklist */}
         <div className="lg:col-span-3 space-y-4">
-          <LeadProgress lead={lead} hasBrief={hasBrief} hasQuotation={hasQuotation} hasTechnical={hasTechnical} hasCost={hasCost} />
+          <LeadProgress lead={lead} leadId={leadId} hasBrief={hasBrief} hasQuotation={hasQuotation} hasTechnical={hasTechnical} hasCost={hasCost} />
         </div>
       </div>
     </div>
@@ -561,63 +968,162 @@ function MOMTab({ leadId }: { leadId: string }) {
 // Project Brief Tab
 // ============================================================
 function ProjectBriefTab({ leadId, onStatusChange }: { leadId: string; onStatusChange?: (has: boolean) => void }) {
-  const [brief, setBrief] = useState<ProjectBrief | null>(null); const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState<ProjectBrief[]>([]); const [loading, setLoading] = useState(true)
+  const [editId, setEditId] = useState<string | null>(null)
   const [description, setDescription] = useState(""); const [file, setFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false); const [editing, setEditing] = useState(false)
+  const [linkAttachment, setLinkAttachment] = useState("")
+  const [uploading, setUploading] = useState(false)
 
   const fetch = useCallback(async () => {
     if (!insForge) return
-    const { data } = await insForge.from("lead_project_briefs").select("*").eq("lead_id", leadId).is("deleted_at", null).order("created_at", { ascending: false }).limit(1)
-    if (data && data.length > 0) { setBrief(data[0]); setDescription(data[0].description || "") }
-    setLoading(false)
+    const { data } = await insForge.from("lead_project_briefs").select("*").eq("lead_id", leadId).is("deleted_at", null).order("created_at", { ascending: false })
+    if (data) setItems(data); setLoading(false)
   }, [leadId])
   useEffect(() => { fetch() }, [fetch])
 
-  useEffect(() => { onStatusChange?.(!!brief) }, [brief, onStatusChange])
+  useEffect(() => { onStatusChange?.(items.length > 0) }, [items, onStatusChange])
+
+  const clearForm = () => {
+    setEditId(null); setDescription(""); setFile(null); setLinkAttachment("")
+  }
+
+  const selectItem = (item: ProjectBrief) => {
+    setEditId(item.id); setDescription(item.description || ""); setFile(null); setLinkAttachment((item as any).link_attachment || "")
+  }
 
   const handleSave = async () => {
     if (!insForge) return; setUploading(true)
     try {
-      let fileUrl = brief?.file_url || null, fileName = brief?.file_name || null, fileSize = brief?.file_size || null
+      let fileUrl = null, fileName = null, fileSize = null
+      if (editId) {
+        const curr = items.find(i => i.id === editId)
+        if (curr) { fileUrl = curr.file_url; fileName = curr.file_name; fileSize = curr.file_size }
+      }
       if (file) {
         const { data: up } = await insForge.storage.from("lead-documents").upload(`project-briefs/${leadId}/${file.name}`, file)
         if (up) { fileUrl = up.url; fileName = file.name; fileSize = file.size }
       }
-      const p = { tenant_id: getTenantId(), lead_id: leadId, description: description || null, file_name: fileName, file_url: fileUrl, file_size: fileSize }
-      if (brief?.id) await insForge.from("lead_project_briefs").update(p).eq("id", brief.id); else await insForge.from("lead_project_briefs").insert(p)
-      setEditing(false); setFile(null); fetch()
+      const p = { tenant_id: getTenantId(), lead_id: leadId, description: description || null, file_name: fileName, file_url: fileUrl, file_size: fileSize, link_attachment: linkAttachment || null }
+      if (editId) await insForge.from("lead_project_briefs").update(p).eq("id", editId); else await insForge.from("lead_project_briefs").insert(p)
+      clearForm(); fetch()
     } catch (err) { console.error(err) } finally { setUploading(false) }
   }
-  const handleDelete = async () => {
-    if (!brief?.id || !confirm("Hapus project brief ini?")) return; if (!insForge) return
-    await insForge.from("lead_project_briefs").update({ deleted_at: new Date().toISOString() }).eq("id", brief.id)
-    setBrief(null); setDescription(""); setEditing(false)
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Hapus project brief ini?")) return; if (!insForge) return
+    await insForge.from("lead_project_briefs").update({ deleted_at: new Date().toISOString() }).eq("id", id)
+    if (editId === id) clearForm()
+    fetch()
   }
 
   if (loading) return <div className="text-center py-8 text-sm text-muted-foreground">Memuat...</div>
-  if (!editing && !brief) return (
-    <Card><CardContent className="p-8 text-center"><FileText className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground mb-3">Belum ada Project Brief</p><Button size="sm" onClick={() => setEditing(true)} className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs"><Plus className="w-3.5 h-3.5 mr-1" /> Buat Project Brief</Button></CardContent></Card>
-  )
 
-  if (!editing && brief) return (
-    <div className="space-y-3">
-      {brief.description && <Card><CardContent className="p-4"><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Deskripsi</h4><p className="text-sm text-foreground whitespace-pre-wrap">{brief.description}</p></CardContent></Card>}
-      {brief.file_url && <Card><CardContent className="p-4"><h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">File Deck</h4>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border"><FileText className="w-8 h-8 text-emerald-500 shrink-0" />
-          <div className="flex-1 min-w-0"><p className="text-sm text-foreground truncate">{brief.file_name || "File"}</p><p className="text-xs text-muted-foreground">{brief.file_size ? `${(brief.file_size / 1024).toFixed(1)} KB` : ""}</p></div>
-          <a href={brief.file_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded text-muted-foreground hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"><ExternalLink className="w-4 h-4" /></a>
-        </div></CardContent></Card>}
-      <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => setEditing(true)} className="border-border h-8 text-xs gap-1.5"><Edit3 className="w-3.5 h-3.5" /> Edit</Button><Button size="sm" variant="outline" onClick={handleDelete} className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-8 text-xs gap-1.5"><Trash2 className="w-3.5 h-3.5" /> Hapus</Button></div>
-    </div>
-  )
+  const formDirty = description || file || linkAttachment
 
   return (
-    <Card><CardContent className="p-4 space-y-4">
-      <h4 className="text-sm font-medium text-foreground">{brief ? "Edit" : "Buat"} Project Brief</h4>
-      <div className="space-y-2"><Label className="text-xs text-muted-foreground">Deskripsi</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} placeholder="Deskripsi project..." className="bg-background border-border text-sm" /></div>
-      <div className="space-y-2"><Label className="text-xs text-muted-foreground">File Deck (PDF, PPT, DOC)</Label><Input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] || null)} className="bg-background border-border text-sm" />{file && <p className="text-xs text-muted-foreground">{file.name} ({(file.size / 1024).toFixed(1)} KB)</p>}</div>
-      <div className="flex justify-end gap-2 pt-2"><Button variant="ghost" onClick={() => { setEditing(false); setFile(null) }} className="text-xs h-9" disabled={uploading}>Batal</Button><Button onClick={handleSave} disabled={uploading} className="bg-emerald-600 hover:bg-emerald-700 text-xs h-9">{uploading ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Upload...</> : "Simpan"}</Button></div>
-    </CardContent></Card>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* LEFT: Brief List */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-muted-foreground">{items.length} Project Brief</p>
+          <Button size="sm" variant="outline" onClick={clearForm} className="border-border h-8 text-xs gap-1">
+            <Plus className="w-3.5 h-3.5" /> Tambah Baru
+          </Button>
+        </div>
+        {items.length === 0 ? (
+          <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Belum ada Project Brief. Buat brief baru di panel sebelah kanan.</CardContent></Card>
+        ) : (
+          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+            {items.map((item) => {
+              const isSelected = editId === item.id
+              return (
+                <Card
+                  key={item.id}
+                  className={`cursor-pointer transition-all hover:border-emerald-500/30 ${isSelected ? "ring-2 ring-emerald-500/50 border-emerald-500/50" : ""}`}
+                  onClick={() => selectItem(item)}
+                >
+                  <CardContent className="p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <h4 className="font-medium text-foreground text-sm truncate">Project Brief</h4>
+                        </div>
+                        {item.description && <p className="text-[0.6rem] text-muted-foreground line-clamp-2">{item.description}</p>}
+                        {(item as any).link_attachment && <p className="text-[0.6rem] text-blue-400 truncate flex items-center gap-1"><LinkIcon className="w-2.5 h-2.5 shrink-0" />{(item as any).link_attachment}</p>}
+                        <div className="flex items-center gap-2 text-[0.55rem] text-muted-foreground">
+                          {item.file_name && <span className="flex items-center gap-1"><FileText className="w-2.5 h-2.5" /> {item.file_name}</span>}
+                          <span>{new Date(item.created_at).toLocaleDateString("id-ID", { month: "short", day: "numeric", year: "numeric" })}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
+                        className="p-1 rounded shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT: Editor Form */}
+      <div>
+        <Card>
+          <CardContent className="p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Edit3 className="w-3.5 h-3.5 text-emerald-500" />
+              {editId ? "Edit Project Brief" : "Project Brief Baru"}
+            </h3>
+
+            <div className="space-y-3">
+              {/* Description */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Deskripsi</Label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} placeholder="Deskripsi project..." className="bg-background border-border text-sm" />
+              </div>
+
+              {/* File Upload */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Upload className="w-3 h-3 text-emerald-500" /> File Deck (PDF, PPT, DOC)
+                </Label>
+                <Input type="file" accept=".pdf,.ppt,.pptx,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] || null)} className="bg-background border-border text-sm" />
+                {file && <p className="text-xs text-muted-foreground">{file.name} ({(file.size / 1024).toFixed(1)} KB)</p>}
+                {editId && !file && (() => {
+                  const curr = items.find(i => i.id === editId)
+                  return curr?.file_name ? <p className="text-xs text-muted-foreground">File saat ini: {curr.file_name}</p> : null
+                })()}
+              </div>
+
+              {/* Link Attachment */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <LinkIcon className="w-3 h-3 text-emerald-500" /> Link Attachment
+                </Label>
+                <Input value={linkAttachment} onChange={(e) => setLinkAttachment(e.target.value)} placeholder="Link deck, dokumentasi, referensi..." className="bg-background border-border text-sm h-9" />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 pt-1">
+                {formDirty && (
+                  <Button variant="ghost" onClick={clearForm} className="text-xs h-9" disabled={uploading}>
+                    Batal
+                  </Button>
+                )}
+                <Button onClick={handleSave} disabled={uploading} className="bg-emerald-600 hover:bg-emerald-700 text-xs h-9 gap-1">
+                  {uploading ? <><Loader2 className="w-3 h-3 animate-spin" /> Upload...</> : editId ? "Simpan" : "Tambah"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }
 
@@ -626,8 +1132,14 @@ function ProjectBriefTab({ leadId, onStatusChange }: { leadId: string; onStatusC
 // ============================================================
 function QuotationTab({ leadId, onStatusChange }: { leadId: string; onStatusChange?: (has: boolean) => void }) {
   const [items, setItems] = useState<Quotation[]>([]); const [loading, setLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false); const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState({ quotation_number: "", title: "", amount: "", status: "draft", notes: "", valid_until: "" }); const [saving, setSaving] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [quotationNumber, setQuotationNumber] = useState("")
+  const [title, setTitle] = useState("")
+  const [amount, setAmount] = useState("")
+  const [status, setStatus] = useState("draft")
+  const [notes, setNotes] = useState("")
+  const [validUntil, setValidUntil] = useState("")
+  const [saving, setSaving] = useState(false)
 
   const fetch = useCallback(async () => {
     if (!insForge) return
@@ -644,66 +1156,156 @@ function QuotationTab({ leadId, onStatusChange }: { leadId: string; onStatusChan
     if (data && data.length > 0) { const n = parseInt(data[0].quotation_number.replace(/[^0-9]/g, "")) || 0; return `Q-${String(n + 1).padStart(4, "0")}` }
     return "Q-0001"
   }
-  const openAdd = async () => { setEditId(null); setForm({ quotation_number: await genNum(), title: "", amount: "", status: "draft", notes: "", valid_until: "" }); setDialogOpen(true) }
-  const openEdit = (item: Quotation) => { setEditId(item.id); setForm({ quotation_number: item.quotation_number, title: item.title, amount: String(item.amount || 0), status: item.status, notes: item.notes || "", valid_until: item.valid_until?.split("T")[0] || "" }); setDialogOpen(true) }
+
+  const clearForm = () => {
+    setEditId(null); setQuotationNumber(""); setTitle(""); setAmount(""); setStatus("draft"); setNotes(""); setValidUntil("")
+  }
+
+  const selectItem = (item: Quotation) => {
+    setEditId(item.id); setQuotationNumber(item.quotation_number); setTitle(item.title); setAmount(String(item.amount || 0)); setStatus(item.status); setNotes(item.notes || ""); setValidUntil(item.valid_until?.split("T")[0] || "")
+  }
 
   const handleSave = async () => {
-    if (!form.title.trim() || !form.quotation_number.trim() || !insForge) return; setSaving(true)
+    if (!title.trim() || !quotationNumber.trim() || !insForge) return; setSaving(true)
     try {
-      const p = { tenant_id: getTenantId(), lead_id: leadId, quotation_number: form.quotation_number.trim(), title: form.title.trim(), amount: parseFloat(form.amount) || 0, status: form.status, notes: form.notes || null, valid_until: form.valid_until || null }
+      const p = { tenant_id: getTenantId(), lead_id: leadId, quotation_number: quotationNumber.trim(), title: title.trim(), amount: parseFloat(amount) || 0, status, notes: notes || null, valid_until: validUntil || null }
       if (editId) await insForge.from("lead_quotations").update(p).eq("id", editId); else await insForge.from("lead_quotations").insert(p)
-      setDialogOpen(false); fetch()
+      clearForm(); fetch()
     } catch (err) { console.error(err) } finally { setSaving(false) }
   }
-  const handleDelete = async (id: string) => { if (!confirm("Hapus quotation ini?")) return; if (!insForge) return; await insForge.from("lead_quotations").update({ deleted_at: new Date().toISOString() }).eq("id", id); fetch() }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Hapus quotation ini?")) return; if (!insForge) return
+    await insForge.from("lead_quotations").update({ deleted_at: new Date().toISOString() }).eq("id", id)
+    if (editId === id) clearForm()
+    fetch()
+  }
 
   const QSTATUS: Record<string, string> = { draft: "bg-zinc-500/10 text-zinc-400", sent: "bg-blue-500/10 text-blue-400", approved: "bg-emerald-500/10 text-emerald-400", rejected: "bg-red-500/10 text-red-400", revised: "bg-amber-500/10 text-amber-400" }
 
   if (loading) return <div className="text-center py-8 text-sm text-muted-foreground">Memuat...</div>
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between"><p className="text-sm text-muted-foreground">{items.length} Quotation</p><Button size="sm" onClick={openAdd} className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs"><Plus className="w-3.5 h-3.5 mr-1" /> Tambah Quotation</Button></div>
-      {items.length === 0 ? <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Belum ada Quotation.</CardContent></Card> : (
-        <div className="space-y-2">
-          {items.map((item) => (
-            <Card key={item.id}><CardContent className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <code className="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded">{item.quotation_number}</code>
-                    <h4 className="font-medium text-foreground text-sm truncate">{item.title}</h4>
-                    <Badge className={`${QSTATUS[item.status] || "bg-zinc-500/10 text-zinc-400"} text-[0.6rem]`}>{item.status}</Badge>
-                  </div>
-                  <p className="text-base font-semibold text-emerald-400">{fmtCurrency(item.amount)}</p>
-                  {item.notes && <p className="text-xs text-muted-foreground">{item.notes}</p>}
-                  {item.valid_until && <p className="text-xs text-muted-foreground">Valid until: {new Date(item.valid_until).toLocaleDateString("id-ID")}</p>}
-                </div>
-                <div className="flex items-center gap-1 shrink-0"><button onClick={() => openEdit(item)} className="p-1.5 rounded text-muted-foreground hover:text-amber-500"><Edit3 className="w-3.5 h-3.5" /></button><button onClick={() => handleDelete(item.id)} className="p-1.5 rounded text-muted-foreground hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button></div>
-              </div>
-            </CardContent></Card>
-          ))}
-        </div>
-      )}
-      <QuotationDialog {...{ dialogOpen, setDialogOpen, editId, form, setForm, saving, handleSave }} />
-    </div>
-  )
-}
 
-function QuotationDialog({ dialogOpen, setDialogOpen, editId, form, setForm, saving, handleSave }: any) {
+  const formDirty = quotationNumber || title || amount || notes || validUntil
+
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{editId ? "Edit Quotation" : "Tambah Quotation"}</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3"><div className="space-y-1.5"><Label className="text-xs text-muted-foreground">No. Quotation</Label><Input value={form.quotation_number} onChange={(e) => setForm({ ...form, quotation_number: e.target.value })} className="bg-background border-border text-sm" /></div>
-            <div className="space-y-1.5"><Label className="text-xs text-muted-foreground">Status</Label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full h-10 px-3 rounded-lg bg-background border border-border text-sm text-foreground"><option value="draft">Draft</option><option value="sent">Sent</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="revised">Revised</option></select></div></div>
-          <div className="space-y-1.5"><Label className="text-xs text-muted-foreground">Judul <span className="text-red-500">*</span></Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Judul quotation" className="bg-background border-border text-sm" /></div>
-          <div className="grid grid-cols-2 gap-3"><div className="space-y-1.5"><Label className="text-xs text-muted-foreground">Nilai (Rp)</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="bg-background border-border text-sm" /></div>
-            <div className="space-y-1.5"><Label className="text-xs text-muted-foreground">Valid Until</Label><Input type="date" value={form.valid_until} onChange={(e) => setForm({ ...form, valid_until: e.target.value })} className="bg-background border-border text-sm" /></div></div>
-          <div className="space-y-1.5"><Label className="text-xs text-muted-foreground">Catatan</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className="bg-background border-border text-sm" /></div>
-          <div className="flex justify-end gap-2 pt-2"><Button variant="ghost" onClick={() => setDialogOpen(false)} className="text-xs h-9">Batal</Button><Button onClick={handleSave} disabled={!form.title.trim() || saving} className="bg-emerald-600 hover:bg-emerald-700 text-xs h-9">{saving ? "Menyimpan..." : editId ? "Simpan" : "Tambah"}</Button></div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* LEFT: Quotation List */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-muted-foreground">{items.length} Quotation</p>
+          <Button size="sm" variant="outline" onClick={async () => { clearForm(); setQuotationNumber(await genNum()) }} className="border-border h-8 text-xs gap-1">
+            <Plus className="w-3.5 h-3.5" /> Tambah Baru
+          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+        {items.length === 0 ? (
+          <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Belum ada Quotation. Buat quotation baru di panel sebelah kanan.</CardContent></Card>
+        ) : (
+          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+            {items.map((item) => {
+              const isSelected = editId === item.id
+              return (
+                <Card
+                  key={item.id}
+                  className={`cursor-pointer transition-all hover:border-emerald-500/30 ${isSelected ? "ring-2 ring-emerald-500/50 border-emerald-500/50" : ""}`}
+                  onClick={() => selectItem(item)}
+                >
+                  <CardContent className="p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Receipt className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <code className="text-[0.6rem] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded">{item.quotation_number}</code>
+                          <h4 className="font-medium text-foreground text-sm truncate">{item.title}</h4>
+                          <Badge className={`${QSTATUS[item.status] || "bg-zinc-500/10 text-zinc-400"} text-[0.55rem]`}>{item.status}</Badge>
+                        </div>
+                        <p className="text-sm font-semibold text-emerald-400">{fmtCurrency(item.amount)}</p>
+                        {item.notes && <p className="text-[0.6rem] text-muted-foreground line-clamp-1">{item.notes}</p>}
+                        {item.valid_until && <p className="text-[0.55rem] text-muted-foreground">Valid until: {new Date(item.valid_until).toLocaleDateString("id-ID")}</p>}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
+                        className="p-1 rounded shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT: Editor Form */}
+      <div>
+        <Card>
+          <CardContent className="p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Edit3 className="w-3.5 h-3.5 text-emerald-500" />
+              {editId ? "Edit Quotation" : "Quotation Baru"}
+            </h3>
+
+            <div className="space-y-3">
+              {/* Quotation Number + Status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">No. Quotation <span className="text-red-500">*</span></Label>
+                  <Input value={quotationNumber} onChange={(e) => setQuotationNumber(e.target.value)} className="bg-background border-border text-sm h-9" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm text-foreground">
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="revised">Revised</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Judul <span className="text-red-500">*</span></Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul quotation" className="bg-background border-border text-sm h-9" />
+              </div>
+
+              {/* Amount + Valid Until */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Nilai (Rp)</Label>
+                  <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="bg-background border-border text-sm h-9" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Valid Until</Label>
+                  <Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="bg-background border-border text-sm h-9" />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Catatan</Label>
+                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Catatan quotation..." className="bg-background border-border text-sm" />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 pt-1">
+                {formDirty && (
+                  <Button variant="ghost" onClick={clearForm} className="text-xs h-9" disabled={saving}>
+                    Batal
+                  </Button>
+                )}
+                <Button onClick={handleSave} disabled={!title.trim() || !quotationNumber.trim() || saving} className="bg-emerald-600 hover:bg-emerald-700 text-xs h-9 gap-1">
+                  {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  {editId ? "Simpan" : "Tambah"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }
 
@@ -890,14 +1492,127 @@ function TechnicalAnalysisTab({ leadId, onStatusChange }: { leadId: string; onSt
 // ============================================================
 // Cost Analysis Tab
 // ============================================================
+const SCHEME_TO_CATEGORY: Record<string, "Man Power Based" | "Equipment Cost" | "Operational Cost"> = {
+  manpower: "Man Power Based",
+  procurement: "Equipment Cost",
+  product: "Operational Cost",
+}
+
 function CostAnalysisTab({ leadId, onStatusChange }: { leadId: string; onStatusChange?: (has: boolean) => void }) {
-  useEffect(() => { onStatusChange?.(false) }, [onStatusChange])
+  const router = useRouter()
+  const [items, setItems] = useState<CostAnalysisItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const fetch = useCallback(async () => {
+    if (!insForge) return
+    try {
+      const { data, error } = await insForge
+        .from("lead_cost_analyses")
+        .select("*")
+        .eq("lead_id", leadId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+      if (error || !data) { setLoading(false); return }
+
+      setItems(data.map((i: any) => {
+        let hpp = 0
+        let publishRate = 0
+        const breakdown: string[] = []
+
+        if (i.scheme_type === "manpower" || i.scheme_type === "product") {
+          hpp = i.manpower_total_hpp || 0
+          publishRate = i.manpower_total_publish || 0
+          if (i.manpower_data?.length > 0) {
+            i.manpower_data.forEach((m: any) => {
+              breakdown.push(`${m.qty} × ${m.role || m.nama || "Resource"} × ${m.months} Bulan`)
+            })
+          }
+        }
+
+        if (i.scheme_type === "procurement" || i.scheme_type === "product") {
+          hpp = hpp || i.procurement_total || 0
+          if (i.procurement_data?.length > 0) {
+            const totalPub = i.procurement_data.reduce((s: number, p: any) => s + (p.publish_rate || 0), 0)
+            publishRate = publishRate || totalPub
+            i.procurement_data.forEach((p: any) => {
+              breakdown.push(`${p.qty} × ${p.item_name || "Item"}`)
+            })
+          }
+        }
+
+        let status: CostAnalysisItem["status"] = "Draft"
+        if (i.status === "approved" || i.status === "Approved") status = "Approved"
+        else if (i.status === "pending" || i.status === "Pending") status = "Pending"
+        else if (i.status === "conflict" || i.status === "Conflict") status = "Conflict"
+
+        return {
+          id: i.id,
+          category: SCHEME_TO_CATEGORY[i.scheme_type] || "Man Power Based",
+          createdAt: i.created_at,
+          totalCost: i.grand_total || 0,
+          hpp,
+          publishRate,
+          status,
+          breakdown,
+          scorecard: computeScorecard(i),
+        }
+      }))
+    } catch { /* ignore */ }
+    setLoading(false)
+  }, [leadId])
+
+  useEffect(() => { fetch() }, [fetch])
+  useEffect(() => { onStatusChange?.(items.length > 0) }, [items, onStatusChange])
+
+  const handleSelectScheme = () => {
+    setDialogOpen(false)
+    router.push(`/commercial/cost-analysis/new?lead_id=${leadId}&scheme=manpower`)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!insForge) return
+    try {
+      await insForge.from("lead_cost_analyses").update({ deleted_at: new Date().toISOString() }).eq("id", id)
+      setItems((prev) => prev.filter((i) => i.id !== id))
+    } catch { /* ignore */ }
+  }
+
   return (
-    <Card><CardContent className="p-8 text-center space-y-4">
-      <Calculator className="w-12 h-12 text-emerald-500 mx-auto" />
-      <div><h3 className="text-lg font-semibold text-foreground">Cost Analysis</h3><p className="text-sm text-muted-foreground mt-1">Hitung HPP, margin, dan pricing menggunakan Commercial Calculator</p></div>
-      <Link href="/commercial" target="_blank"><Button className="bg-emerald-600 hover:bg-emerald-700 gap-2"><Calculator className="w-4 h-4" /> Buka Commercial Calculator <ExternalLink className="w-3.5 h-3.5" /></Button></Link>
-    </CardContent></Card>
+    <>
+      <CostAnalysisList
+        items={items}
+        loading={loading}
+        onCreate={() => setDialogOpen(true)}
+        onEdit={(item) => router.push(`/commercial/cost-analysis/new?id=${item.id}&lead_id=${leadId}`)}
+        onViewDetail={(item) => router.push(`/commercial/cost-analysis/${item.id}?lead_id=${leadId}`)}
+        onDelete={handleDelete}
+      />
+
+      {/* Man Power Cost Analysis */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Cost Analysis Baru</DialogTitle></DialogHeader>
+          <p className="text-xs text-muted-foreground -mt-2">Buat perhitungan biaya berbasis Man Power untuk project ini.</p>
+          <div className="py-2">
+            <Card
+              className="cursor-pointer hover:border-emerald-500/70 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10 transition-all"
+              onClick={handleSelectScheme}
+            >
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                  <Calculator className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Man Power Based</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">Hitung biaya berdasarkan komposisi manpower (HPP, Publish Rate, margin). Cocok untuk project IT consulting/services.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
