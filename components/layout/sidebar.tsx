@@ -47,17 +47,17 @@ const navigation: NavItem[] = [
   },
   {
     name: "Commercial",
-    href: "/commercial",
+    href: "/commercial/raw-calculator",
     icon: Calculator,
     children: [
-      { name: "Calculator", href: "/commercial" },
+      { name: "Calculator", href: "/commercial/raw-calculator" },
       { name: "Projects", href: "/projects" },
       { name: "Rate Cards", href: "/commercial/rate-cards" },
       { name: "Master Data", href: "/commercial/master-data" },
-      { name: "Leads", href: "/crm/pipeline" },
-      { name: "Manajemen Klien", href: "/crm/clients" },
-      { name: "Manajemen Perusahaan", href: "/crm/companies" },
-      { name: "Activities", href: "/crm/activities" },
+      { name: "Leads", href: "/commercial/leads" },
+      { name: "Manajemen Klien", href: "/commercial/clients" },
+      { name: "Manajemen Perusahaan", href: "/commercial/companies" },
+      { name: "Activities", href: "/commercial/activities" },
     ],
   },
   {

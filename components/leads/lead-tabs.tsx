@@ -18,7 +18,7 @@ import {
   Trash2, Loader2, User, X,
   Calendar, DollarSign, Flag, CheckCircle2, Circle, ArrowRight,
   Edit3, Users, CheckSquare, ClipboardList, BarChart3, Receipt,
-  Clock, Activity, Clock9, Building2, Mail, Phone, Square, Link as LinkIcon
+  Clock, Activity, Clock9, Building2, Mail, Phone, Square, Link as LinkIcon, Download
 } from "lucide-react"
 import { insForge } from "@/lib/insforge"
 import { getTenantId } from "@/lib/tenant"
@@ -281,336 +281,638 @@ export function ConvertProjectDialog({ lead, open, onOpenChange }: { lead: any; 
 }
 
 // ============================================================
-// Convert to Commercial Project Dialog (New Flow)
+// Default checklist template — auto-created on every new project
+// ============================================================
+const DEFAULT_CHECKLIST = [
+  { category: "credentials", item_name: "NDA (Non-Disclosure Agreement)", sort_order: 1 },
+  { category: "credentials", item_name: "Quotation",                       sort_order: 2 },
+  { category: "credentials", item_name: "Summary Quotation",               sort_order: 3 },
+  { category: "credentials", item_name: "MOU / PKS",                       sort_order: 4 },
+  { category: "credentials", item_name: "First Payment",                   sort_order: 5 },
+  { category: "development", item_name: "User Requirement",                sort_order: 6 },
+  { category: "development", item_name: "BRD, FSD, TSD",                   sort_order: 7 },
+  { category: "development", item_name: "Asset Repository",                sort_order: 8 },
+  { category: "development", item_name: "Minute of Meeting",               sort_order: 9 },
+  { category: "development", item_name: "Weekly Report",                   sort_order: 10 },
+  { category: "development", item_name: "UAT / SIT",                       sort_order: 11 },
+  { category: "development", item_name: "BAST",                            sort_order: 12 },
+  { category: "handover",    item_name: "Manual Book",                     sort_order: 13 },
+  { category: "handover",    item_name: "Code Documentation",              sort_order: 14 },
+  { category: "handover",    item_name: "Repository",                      sort_order: 15 },
+  { category: "handover",    item_name: "API Docs",                        sort_order: 16 },
+]
+
+interface PaymentTerm {
+  term_name: string
+  percentage: number
+  nominal: number
+  due_date: string
+}
+
+// ============================================================
+// Convert to Commercial Project Dialog (New Flow — 4 Steps)
 // ============================================================
 export function ConvertToCommercialProjectDialog({ lead, open, onOpenChange }: { lead: any; open: boolean; onOpenChange: (v: boolean) => void }) {
   const router = useRouter()
-  const [projectName, setProjectName] = useState("")
-  const [companyName, setCompanyName] = useState("")
-  const [clientName, setClientName] = useState("")
-  const [projectCode, setProjectCode] = useState("")
+  const [step, setStep] = useState(1)
+
+  // ── Step 1: Project Info ──────────────────────────────────
+  const [projectName, setProjectName]   = useState("")
+  const [companyName, setCompanyName]   = useState("")
+  const [clientName, setClientName]     = useState("")
+  const [projectCode, setProjectCode]   = useState("")
+  const [projectUrl, setProjectUrl]     = useState("")
+  const [poValue, setPoValue]           = useState(0)
+  const [poValueSource, setPoValueSource] = useState<string>("")
+
+  // Cost analysis auto-populate
+  const [caActualDeal, setCaActualDeal]         = useState<number | null>(null)
+  const [caGrandTotal, setCaGrandTotal]         = useState<number | null>(null)
+  const [caQuotationPublish, setCaQuotationPublish] = useState<number | null>(null)
+  const [caTotalHpp, setCaTotalHpp]             = useState<number | null>(null)
+  const [caTotalPublish, setCaTotalPublish]     = useState<number | null>(null)
+  const [caMarginPct, setCaMarginPct]           = useState<number | null>(null)
+
+  // ── Step 2: Tim & Jadwal ─────────────────────────────────
   const [picCommercialId, setPicCommercialId] = useState("")
-  const [picAdmId, setPicAdmId] = useState("")
-  const [pmId, setPmId] = useState("")
-  const [poValue, setPoValue] = useState(0)
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
+  const [picAdmId, setPicAdmId]               = useState("")
+  const [pmId, setPmId]                       = useState("")
+  const [kickoffDate, setKickoffDate]         = useState("")
+  const [startDevDate, setStartDevDate]       = useState("")
+  const [endDate, setEndDate]                 = useState("")
+  const [onlineMeetingUrl, setOnlineMeetingUrl] = useState("")
+
+  // ── Step 3: Payment Terms ────────────────────────────────
+  const [paymentTerms, setPaymentTerms] = useState<PaymentTerm[]>([])
   const [termOfPayment, setTermOfPayment] = useState("")
-  const [users, setUsers] = useState<any[]>([])
-  const [converting, setConverting] = useState(false)
-  const [generating, setGenerating] = useState(false)
 
-  // Data migration checklist
-  const [includeMom, setIncludeMom] = useState(true)
+  // ── Snapshots ───────────────────────────────────────────
+  const [includeMom, setIncludeMom]               = useState(true)
   const [includeCostAnalysis, setIncludeCostAnalysis] = useState(true)
-  const [includeSummary, setIncludeSummary] = useState(true)
-  const [includeBant, setIncludeBant] = useState(true)
-  const [momCount, setMomCount] = useState(0)
-  const [caCount, setCaCount] = useState(0)
+  const [includeSummary, setIncludeSummary]       = useState(true)
+  const [includeBant, setIncludeBant]             = useState(true)
+  const [momCount, setMomCount]                   = useState(0)
+  const [caCount, setCaCount]                     = useState(0)
 
-  const [leadNumber] = useState(lead?.lead_number || "")
+  const [users, setUsers]       = useState<any[]>([])
+  const [converting, setConverting] = useState(false)
+  const [convertError, setConvertError] = useState<string | null>(null)
+
   const bantItems = [
-    { key: "budget_confirmed", label: "Budget", done: lead?.budget_confirmed },
+    { key: "budget_confirmed",    label: "Budget",    done: lead?.budget_confirmed },
     { key: "authority_confirmed", label: "Authority", done: lead?.authority_confirmed },
-    { key: "need_confirmed", label: "Need", done: lead?.need_confirmed },
-    { key: "timeline_confirmed", label: "Timeline", done: lead?.timeline_confirmed },
+    { key: "need_confirmed",      label: "Need",      done: lead?.need_confirmed },
+    { key: "timeline_confirmed",  label: "Timeline",  done: lead?.timeline_confirmed },
   ]
   const bantScore = lead?.bant_score ?? 0
 
+  // ── Init on open ─────────────────────────────────────────
   useEffect(() => {
-    if (!lead) return
+    if (!lead || !open) return
+    setStep(1)
+    setConvertError(null)
     setProjectName(lead.title || `Project: ${lead.contact_name || ""}`)
     setCompanyName(lead.company_name || "")
     setClientName(lead.contact_name || "")
-    // Generate project code
-    setGenerating(true)
-    ;(async () => {
-      if (!insForge) { setGenerating(false); return }
-      try {
-        const year = new Date().getFullYear().toString()
-        const { data: lastProj } = await insForge.from("commercial_projects")
-          .select("project_code")
-          .like("project_code", `CMP-${year}-%`)
-          .order("project_code", { ascending: false })
-          .limit(1)
-        let seq = 1
-        if (lastProj && lastProj.length > 0) {
-          const parts = lastProj[0].project_code?.split('-')
-          if (parts && parts.length >= 3) seq = parseInt(parts[2]) + 1
-        }
-        setProjectCode(`CMP-${year}-${String(seq).padStart(4, "0")}`)
-      } catch { /* ignore */ }
-      setGenerating(false)
-    })()
-    // Fetch counts for data migration checklist
-    if (insForge) {
-      insForge.from("lead_mom").select("id", { count: "exact", head: true }).eq("lead_id", lead.id).is("deleted_at", null)
-        .then((r: any) => { if (typeof r.count === "number") setMomCount(r.count) })
-      insForge.from("lead_cost_analyses").select("id", { count: "exact", head: true }).eq("lead_id", lead.id).is("deleted_at", null)
-        .then((r: any) => { if (typeof r.count === "number") setCaCount(r.count) })
-    }
-  }, [lead])
+    setEndDate(lead.expected_close_date || "")
 
-  // Fetch users for selection
+    // Generate project code
+    if (insForge) {
+      const year = new Date().getFullYear().toString()
+      insForge.from("commercial_projects")
+        .select("project_code")
+        .like("project_code", `CMP-${year}-%`)
+        .order("project_code", { ascending: false })
+        .limit(1)
+        .then((r: any) => {
+          let seq = 1
+          if (r.data?.[0]) {
+            const parts = r.data[0].project_code?.split("-")
+            if (parts?.length >= 3) seq = parseInt(parts[2]) + 1
+          }
+          setProjectCode(`CMP-${year}-${String(seq).padStart(4, "0")}`)
+        })
+
+      // MOM count
+      insForge.from("lead_mom").select("id", { count: "exact", head: true })
+        .eq("lead_id", lead.id).is("deleted_at", null)
+        .then((r: any) => { if (typeof r.count === "number") setMomCount(r.count) })
+
+      // Cost analysis auto-populate
+      insForge.from("lead_cost_analyses")
+        .select("actual_deal,grand_total,quotation_publish,manpower_total_hpp,manpower_total_publish,margin_pct")
+        .eq("lead_id", lead.id).is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .then((r: any) => {
+          const rows = r.data || []
+          setCaCount(rows.length)
+          if (rows.length === 0) return
+          const ca = rows[0]
+          const actualDeal       = Number(ca.actual_deal) || 0
+          const grandTotal       = Number(ca.grand_total) || 0
+          const quotationPublish = Number(ca.quotation_publish) || 0
+          setCaActualDeal(actualDeal)
+          setCaGrandTotal(grandTotal)
+          setCaQuotationPublish(quotationPublish)
+          setCaTotalHpp(Number(ca.manpower_total_hpp) || 0)
+          setCaTotalPublish(Number(ca.manpower_total_publish) || 0)
+          setCaMarginPct(Number(ca.margin_pct) || 0)
+          if (actualDeal > 0) { setPoValue(actualDeal); setPoValueSource("actual_deal") }
+          else if (grandTotal > 0) { setPoValue(grandTotal); setPoValueSource("grand_total") }
+          else if (quotationPublish > 0) { setPoValue(quotationPublish); setPoValueSource("quotation_publish") }
+        })
+    }
+  }, [lead, open])
+
+  // Fetch users
   useEffect(() => {
     if (!insForge) return
-    insForge.from("user_profiles").select("id, full_name, employee_number").is("deleted_at", null).order("full_name", { ascending: true })
-      .then(({ data }: any) => {
-        if (data) setUsers(data)
-      })
+    insForge.from("user_profiles").select("id, full_name, employee_number")
+      .is("deleted_at", null).order("full_name", { ascending: true })
+      .then(({ data }: any) => { if (data) setUsers(data) })
   }, [])
 
+  // Payment terms helper: distribute PO value
+  const applyTermTemplate = (template: string) => {
+    if (!poValue) return
+    const pts: PaymentTerm[] = []
+    if (template === "dp30") {
+      pts.push({ term_name: "Down Payment (30%)", percentage: 30, nominal: Math.round(poValue * 0.3), due_date: kickoffDate || "" })
+      pts.push({ term_name: "Pelunasan (70%)", percentage: 70, nominal: Math.round(poValue * 0.7), due_date: endDate || "" })
+    } else if (template === "dp50") {
+      pts.push({ term_name: "Down Payment (50%)", percentage: 50, nominal: Math.round(poValue * 0.5), due_date: kickoffDate || "" })
+      pts.push({ term_name: "Pelunasan (50%)", percentage: 50, nominal: Math.round(poValue * 0.5), due_date: endDate || "" })
+    } else if (template === "full_up") {
+      pts.push({ term_name: "Full Payment", percentage: 100, nominal: poValue, due_date: kickoffDate || "" })
+    } else if (template === "full_end") {
+      pts.push({ term_name: "Full Payment", percentage: 100, nominal: poValue, due_date: endDate || "" })
+    } else if (template === "4termin") {
+      const each = Math.round(poValue / 4)
+      pts.push({ term_name: "Down Payment (25%)", percentage: 25, nominal: each, due_date: "" })
+      pts.push({ term_name: "Term 1 (25%)",       percentage: 25, nominal: each, due_date: "" })
+      pts.push({ term_name: "Term 2 (25%)",       percentage: 25, nominal: each, due_date: "" })
+      pts.push({ term_name: "Pelunasan (25%)",    percentage: 25, nominal: Math.round(poValue - each * 3), due_date: endDate || "" })
+    }
+    setPaymentTerms(pts)
+    setTermOfPayment(template)
+  }
+
+  const addTerm = () => setPaymentTerms(prev => [...prev, { term_name: "", percentage: 0, nominal: 0, due_date: "" }])
+  const removeTerm = (i: number) => setPaymentTerms(prev => prev.filter((_, idx) => idx !== i))
+  const updateTerm = (i: number, field: keyof PaymentTerm, value: string | number) => {
+    setPaymentTerms(prev => prev.map((t, idx) => {
+      if (idx !== i) return t
+      const updated = { ...t, [field]: value }
+      // If percentage changed and poValue known, auto-calc nominal
+      if (field === "percentage" && poValue > 0) {
+        updated.nominal = Math.round(poValue * (Number(value) / 100))
+      }
+      return updated
+    }))
+  }
+
+  // ── Submit ────────────────────────────────────────────────
   const handleConvert = async () => {
     if (!insForge || !projectName.trim()) return
     setConverting(true)
+    setConvertError(null)
     try {
-      // 1. Fetch lead sub-data for snapshots (only if checked)
+      // Fetch snapshots
       const leadRes = await insForge.from("crm_leads").select("*").eq("id", lead.id).single()
       let momData = null, caData = null, summaryData = null
-      if (includeMom) { const r = await insForge.from("lead_mom").select("*").eq("lead_id", lead.id).is("deleted_at", null); momData = r.data }
-      if (includeCostAnalysis) { const r = await insForge.from("lead_cost_analyses").select("*").eq("lead_id", lead.id).is("deleted_at", null); caData = r.data }
-      if (includeSummary) { const r = await insForge.from("lead_quotation_summaries").select("*").eq("lead_id", lead.id).is("deleted_at", null).limit(1); summaryData = r.data?.[0] || null }
+      if (includeMom)         { const r = await insForge.from("lead_mom").select("*").eq("lead_id", lead.id).is("deleted_at", null); momData = r.data }
+      if (includeCostAnalysis){ const r = await insForge.from("lead_cost_analyses").select("*").eq("lead_id", lead.id).is("deleted_at", null); caData = r.data }
+      if (includeSummary)     { const r = await insForge.from("lead_quotation_summaries").select("*").eq("lead_id", lead.id).is("deleted_at", null).limit(1); summaryData = r.data?.[0] || null }
 
-      // 2. Insert commercial project with snapshot data
+      // Insert commercial_projects
       const payload: any = {
-        project_code: projectCode,
-        project_name: projectName.trim(),
-        company_name: companyName || null,
-        client_name: clientName || null,
-        lead_id: lead.id,
+        project_code:      projectCode,
+        project_name:      projectName.trim(),
+        company_name:      companyName || null,
+        client_name:       clientName  || null,
+        lead_id:           lead.id,
         pic_commercial_id: picCommercialId || null,
-        pic_adm_id: picAdmId || null,
-        pm_id: pmId || null,
-        po_value: poValue || 0,
-        start_date: startDate || null,
-        end_date: endDate || null,
-        term_of_payment: termOfPayment || null,
-        status: "won",
-        health: "green",
-        lead_data_snapshot: leadRes?.data || null,
+        pic_adm_id:        picAdmId        || null,
+        pm_id:             pmId            || null,
+        po_value:          poValue || 0,
+        kickoff_date:      kickoffDate    || null,
+        start_dev_date:    startDevDate   || null,
+        end_date:          endDate        || null,
+        project_url:       projectUrl     || null,
+        online_meeting_url: onlineMeetingUrl || null,
+        term_of_payment:   termOfPayment  || null,
+        status:            "administration",
+        health:            "green",
+        lead_data_snapshot: includeBant ? (leadRes?.data || null) : null,
+        total_hpp:         caTotalHpp    || 0,
+        total_publish:     caTotalPublish || 0,
+        quotation_publish: caQuotationPublish || 0,
+        actual_deal:       caActualDeal  || 0,
+        grand_total:       caGrandTotal  || (caActualDeal || caQuotationPublish || 0),
+        margin_pct:        caMarginPct   || 0,
       }
-      if (includeMom) payload.mom_snapshot = momData
+      if (includeMom)          payload.mom_snapshot           = momData
       if (includeCostAnalysis) payload.cost_analysis_snapshot = caData
-      if (includeSummary) payload.summary_snapshot = summaryData
+      if (includeSummary)      payload.summary_snapshot       = summaryData
 
       const { data: project, error } = await insForge.from("commercial_projects").insert(payload).select().single()
       if (error) throw error
 
-      // 3. Update lead status
+      // Post-create: contacts, checklist, payment terms (parallel)
+      const postOps: Promise<any>[] = []
+
+      // 1. Auto-create primary contact from lead
+      if (lead.contact_name) {
+        postOps.push(
+          (insForge as any).from("project_contacts").insert({
+            project_id: project.id,
+            full_name:  lead.contact_name,
+            phone:      lead.contact_phone || null,
+            email:      lead.contact_email || null,
+            role:       "PIC Client",
+            is_primary: true,
+            sort_order: 0,
+          })
+        )
+      }
+
+      // 2. Auto-create 16 default checklist items
+      postOps.push(
+        (insForge as any).from("project_checklist_items").insert(
+          DEFAULT_CHECKLIST.map(item => ({ project_id: project.id, ...item, status: "pending" }))
+        )
+      )
+
+      // 3. Insert payment terms if set
+      if (paymentTerms.length > 0) {
+        postOps.push(
+          (insForge as any).from("project_payment_terms").insert(
+            paymentTerms.map((t, i) => ({
+              project_id: project.id,
+              term_name:  t.term_name,
+              percentage: t.percentage || null,
+              nominal:    t.nominal || 0,
+              due_date:   t.due_date || null,
+              status:     "pending",
+              sort_order: i,
+            }))
+          )
+        )
+      }
+
+      await Promise.all(postOps)
+
+      // 4. Update lead status → closed_won
       await insForge.from("crm_leads").update({ status: "closed_won" }).eq("id", lead.id)
 
       onOpenChange(false)
       if (project?.id) router.push(`/projects/${project.id}`)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to convert to commercial project:", err)
+      setConvertError(err?.message || "Gagal membuat proyek")
     } finally {
       setConverting(false)
     }
   }
 
-  const TERM_OPTIONS = [
-    "DP 30% - Pelunasan 70%",
-    "DP 50% - Pelunasan 50%",
-    "100% di awal",
-    "100% di akhir",
-    "Bertahap (Monthly)",
-    "Bertahap (Milestone)",
-  ]
+  const fmtRp = (n: number) => n > 0 ? `Rp ${n.toLocaleString("id-ID")}` : "—"
+  const step1Valid = projectName.trim().length > 0
+  const step2Valid = step1Valid && kickoffDate && endDate && picCommercialId && pmId
+  const STEPS = ["Info Proyek", "Tim & Jadwal", "Payment Terms", "Konfirmasi"]
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
-            <Building2 className="w-5 h-5 text-blue-500" /> Convert Lead ke Commercial Project
+            <Building2 className="w-5 h-5 text-blue-500" />
+            Convert Lead ke Commercial Project
           </DialogTitle>
+          {/* Step indicator */}
+          <div className="flex items-center gap-0 mt-3">
+            {STEPS.map((s, i) => (
+              <div key={s} className="flex items-center">
+                <button
+                  onClick={() => { if (i + 1 < step || (i + 1 === 2 && step1Valid) || (i + 1 === 3 && step2Valid)) setStep(i + 1) }}
+                  className={`flex items-center gap-1.5 text-[0.6rem] font-medium px-2 py-0.5 rounded transition-colors ${
+                    step === i + 1 ? "text-blue-500" : step > i + 1 ? "text-emerald-500" : "text-muted-foreground/50"
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[0.5rem] font-bold ${
+                    step > i + 1 ? "bg-emerald-500 text-white" : step === i + 1 ? "bg-blue-500 text-white" : "bg-muted text-muted-foreground"
+                  }`}>{step > i + 1 ? "✓" : i + 1}</span>
+                  {s}
+                </button>
+                {i < STEPS.length - 1 && <div className="w-4 h-px bg-border mx-0.5" />}
+              </div>
+            ))}
+          </div>
         </DialogHeader>
-        <div className="space-y-5 py-2">
 
-          {/* ════════════════════════════════════════
-              SECTION 1: Lead Reference Info
-              ════════════════════════════════════════ */}
-          <div className="rounded-lg border border-blue-500/20 bg-blue-50/10 dark:bg-blue-950/10 p-3">
-            <p className="text-[0.55rem] text-blue-500 font-semibold tracking-wider mb-2">REFERENSI LEAD</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <span className="text-muted-foreground">Lead Number:</span>
-                <span className="ml-1.5 font-mono font-medium text-foreground">{leadNumber || "—"}</span>
+        <div className="space-y-4 py-2">
+
+          {/* ═══ STEP 1: Info Proyek ═══ */}
+          {step === 1 && (
+            <div className="space-y-4">
+              {/* Lead reference card */}
+              <div className="rounded-lg border border-blue-500/20 bg-blue-50/5 p-3 space-y-2">
+                <p className="text-[0.55rem] text-blue-500 font-semibold tracking-wider">DARI LEAD</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  {lead?.lead_number && <div><span className="text-muted-foreground">No:</span> <span className="font-mono font-medium">{lead.lead_number}</span></div>}
+                  <div><span className="text-muted-foreground">BANT:</span> <span className="font-medium">{bantScore}%</span></div>
+                  {lead?.title && <div className="col-span-2"><span className="text-muted-foreground">Lead:</span> <span>{lead.title}</span></div>}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {bantItems.map((item) => (
+                    <span key={item.key} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.5rem] font-medium border ${
+                      item.done ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                    }`}>
+                      {item.done ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Circle className="w-2.5 h-2.5" />}{item.label}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div>
-                <span className="text-muted-foreground">BANT Score:</span>
-                <span className="ml-1.5 font-medium text-foreground">{bantScore}%</span>
+
+              {/* Project code + name */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Kode Proyek</Label>
+                  <Input value={projectCode} readOnly className="bg-muted text-sm font-mono" />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <Label className="text-xs text-muted-foreground">Nama Proyek <span className="text-red-500">*</span></Label>
+                  <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} className="text-sm" placeholder="Nama proyek..." />
+                </div>
               </div>
-              {lead?.title && (
-                <div className="col-span-2">
-                  <span className="text-muted-foreground">Title:</span>
-                  <span className="ml-1.5 font-medium text-foreground">{lead.title}</span>
+
+              {/* Company + Client */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Perusahaan</Label>
+                  <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Nama Klien / PIC</Label>
+                  <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="text-sm" />
+                </div>
+              </div>
+
+              {/* PO Value */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">Nilai PO (Rp)</Label>
+                  {poValueSource && (
+                    <span className="text-[0.6rem] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium">
+                      ✓ Dari {poValueSource}
+                    </span>
+                  )}
+                </div>
+                <Input type="number" min={0} value={poValue || ""} onChange={(e) => { setPoValue(parseInt(e.target.value) || 0); setPoValueSource("") }} placeholder="0" className="text-sm font-mono" />
+                {(caActualDeal || caGrandTotal || caQuotationPublish) ? (
+                  <div className="flex gap-1.5 flex-wrap mt-1">
+                    {caActualDeal ? (
+                      <button type="button" onClick={() => { setPoValue(caActualDeal!); setPoValueSource("actual_deal") }}
+                        className="text-[0.6rem] px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
+                        Actual Deal: {fmtRp(caActualDeal)}
+                      </button>
+                    ) : null}
+                    {caGrandTotal && caGrandTotal !== caActualDeal ? (
+                      <button type="button" onClick={() => { setPoValue(caGrandTotal!); setPoValueSource("grand_total") }}
+                        className="text-[0.6rem] px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        Grand Total: {fmtRp(caGrandTotal)}
+                      </button>
+                    ) : null}
+                    {caQuotationPublish && caQuotationPublish !== caActualDeal ? (
+                      <button type="button" onClick={() => { setPoValue(caQuotationPublish!); setPoValueSource("quotation_publish") }}
+                        className="text-[0.6rem] px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        Quotation: {fmtRp(caQuotationPublish)}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Project URL */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Project URL (opsional)</Label>
+                <Input value={projectUrl} onChange={(e) => setProjectUrl(e.target.value)} placeholder="https://client.wit.id" className="text-sm font-mono" />
+              </div>
+
+              {/* Data snapshots */}
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-[0.55rem] text-muted-foreground font-semibold tracking-wider mb-2">DATA LEAD YANG DIBAWA (SNAPSHOT)</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { val: includeBant,         set: setIncludeBant,         label: "Lead Checklist (BANT)" },
+                    { val: includeMom,           set: setIncludeMom,          label: `MOM${momCount > 0 ? ` (${momCount})` : ""}` },
+                    { val: includeCostAnalysis,  set: setIncludeCostAnalysis, label: `Cost Analysis${caCount > 0 ? ` (${caCount})` : ""}` },
+                    { val: includeSummary,       set: setIncludeSummary,      label: "Quotation Summary" },
+                  ].map((item) => (
+                    <label key={item.label} className="flex items-center gap-2 cursor-pointer" onClick={() => item.set(!item.val)}>
+                      {item.val ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <Square className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                      <span className="text-xs text-foreground">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 2: Tim & Jadwal ═══ */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "PIC Commercial *", val: picCommercialId, set: setPicCommercialId },
+                  { label: "PIC Admin",         val: picAdmId,        set: setPicAdmId },
+                  { label: "Project Manager *", val: pmId,            set: setPmId },
+                ].map(({ label, val, set }) => (
+                  <div key={label} className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">{label}</Label>
+                    <Select value={val} onValueChange={set}>
+                      <SelectTrigger className="text-sm h-9"><SelectValue placeholder="Pilih..." /></SelectTrigger>
+                      <SelectContent>
+                        {users.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>{u.full_name}{u.employee_number ? ` (${u.employee_number})` : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Kick-off Date <span className="text-red-500">*</span></Label>
+                  <Input type="date" value={kickoffDate} onChange={(e) => setKickoffDate(e.target.value)} className="text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Start Development</Label>
+                  <Input type="date" value={startDevDate} onChange={(e) => setStartDevDate(e.target.value)} className="text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">End of Project <span className="text-red-500">*</span></Label>
+                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-sm" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Online Meeting URL (Zoom / GMeets)</Label>
+                <Input value={onlineMeetingUrl} onChange={(e) => setOnlineMeetingUrl(e.target.value)} placeholder="https://meet.google.com/..." className="text-sm font-mono" />
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 3: Payment Terms ═══ */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">PO Value: <span className="font-semibold text-foreground">{fmtRp(poValue)}</span></p>
+                <p className="text-[0.6rem] text-muted-foreground mb-3">Pilih template atau atur manual. Nominal akan otomatis dihitung dari PO.</p>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {[
+                    { id: "dp30",    label: "DP 30%\n+ Pelunasan 70%" },
+                    { id: "dp50",    label: "DP 50%\n+ Pelunasan 50%" },
+                    { id: "full_up", label: "100%\ndi Awal" },
+                    { id: "full_end",label: "100%\ndi Akhir" },
+                    { id: "4termin", label: "4 Termin\n(25% each)" },
+                  ].map((t) => (
+                    <button key={t.id} type="button"
+                      onClick={() => applyTermTemplate(t.id)}
+                      className={`text-[0.6rem] px-2 py-2 rounded-lg border text-center whitespace-pre-line leading-relaxed transition-colors ${
+                        termOfPayment === t.id
+                          ? "border-blue-500 bg-blue-500/10 text-blue-500 font-medium"
+                          : "border-border hover:border-zinc-400 text-muted-foreground hover:text-foreground"
+                      }`}>
+                      {t.label}
+                    </button>
+                  ))}
+                  <button type="button" onClick={addTerm}
+                    className="text-[0.6rem] px-2 py-2 rounded-lg border border-dashed border-border hover:border-zinc-400 text-muted-foreground hover:text-foreground transition-colors">
+                    + Custom
+                  </button>
+                </div>
+              </div>
+
+              {paymentTerms.length > 0 && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-12 gap-1 text-[0.55rem] text-muted-foreground font-medium uppercase tracking-wider px-1">
+                    <div className="col-span-4">Nama Termin</div>
+                    <div className="col-span-2 text-right">%</div>
+                    <div className="col-span-3 text-right">Nominal</div>
+                    <div className="col-span-2">Jatuh Tempo</div>
+                    <div className="col-span-1" />
+                  </div>
+                  {paymentTerms.map((t, i) => (
+                    <div key={i} className="grid grid-cols-12 gap-1 items-center">
+                      <Input value={t.term_name} onChange={(e) => updateTerm(i, "term_name", e.target.value)}
+                        className="col-span-4 text-xs h-7 px-2" placeholder="Nama termin..." />
+                      <Input type="number" min={0} max={100} value={t.percentage || ""}
+                        onChange={(e) => updateTerm(i, "percentage", parseFloat(e.target.value) || 0)}
+                        className="col-span-2 text-xs h-7 px-2 text-right" placeholder="%" />
+                      <Input type="number" min={0} value={t.nominal || ""}
+                        onChange={(e) => updateTerm(i, "nominal", parseInt(e.target.value) || 0)}
+                        className="col-span-3 text-xs h-7 px-2 text-right font-mono" />
+                      <Input type="date" value={t.due_date}
+                        onChange={(e) => updateTerm(i, "due_date", e.target.value)}
+                        className="col-span-2 text-xs h-7 px-2" />
+                      <button onClick={() => removeTerm(i)} className="col-span-1 flex justify-center text-muted-foreground hover:text-red-400">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="text-[0.6rem] text-muted-foreground text-right pt-1 border-t border-border">
+                    Total: <span className="font-semibold text-foreground">{fmtRp(paymentTerms.reduce((s, t) => s + (t.nominal || 0), 0))}</span>
+                    {" "}/{" "}{fmtRp(poValue)}
+                  </div>
+                </div>
+              )}
+              {paymentTerms.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                  Pilih template atau klik "+ Custom" untuk menambah termin
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ═══ STEP 4: Konfirmasi ═══ */}
+          {step === 4 && (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border divide-y divide-border text-xs">
+                {[
+                  ["Proyek",     projectName],
+                  ["Kode",       projectCode],
+                  ["Klien",      `${clientName || "—"} · ${companyName || "—"}`],
+                  ["Nilai PO",   fmtRp(poValue)],
+                  ["Project URL",projectUrl || "—"],
+                  ["Kick-off",   kickoffDate || "—"],
+                  ["Start Dev",  startDevDate || "—"],
+                  ["End",        endDate || "—"],
+                  ["Meeting URL",onlineMeetingUrl || "—"],
+                  ["PIC Commercial", users.find(u => u.id === picCommercialId)?.full_name || "—"],
+                  ["Project Manager",users.find(u => u.id === pmId)?.full_name || "—"],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center px-3 py-1.5 gap-3">
+                    <span className="text-muted-foreground w-32 shrink-0">{label}</span>
+                    <span className="text-foreground font-medium">{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {paymentTerms.length > 0 && (
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-[0.55rem] text-muted-foreground font-semibold tracking-wider mb-2">PAYMENT TERMS ({paymentTerms.length} termin)</p>
+                  {paymentTerms.map((t, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs py-1">
+                      <span className="text-foreground">{t.term_name}</span>
+                      <span className="font-mono text-muted-foreground">{fmtRp(t.nominal)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3 text-xs text-emerald-600 dark:text-emerald-400 space-y-1">
+                <p className="font-semibold">Yang akan otomatis dibuat:</p>
+                <ul className="space-y-0.5 text-[0.65rem]">
+                  {lead?.contact_name && <li>✓ Kontak klien: {lead.contact_name}</li>}
+                  <li>✓ 16 checklist dokumen (NDA, MOU, dll.) — status Pending</li>
+                  {paymentTerms.length > 0 && <li>✓ {paymentTerms.length} payment terms</li>}
+                  <li>✓ Status lead → Closed Won</li>
+                  <li>✓ Status proyek → Administration</li>
+                </ul>
+              </div>
+
+              {convertError && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-400">
+                  {convertError}
                 </div>
               )}
             </div>
-            {/* BANT Checklist */}
-            <div className="flex flex-wrap gap-2 mt-2">
-              {bantItems.map((item) => (
-                <div key={item.key} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.5rem] font-medium ${
-                  item.done
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                    : "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20"
-                }`}>
-                  {item.done ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Circle className="w-2.5 h-2.5" />}
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
-          {/* ════════════════════════════════════════
-              SECTION 2: Data Migration Checklist
-              ════════════════════════════════════════ */}
-          <div className="rounded-lg border border-border p-3">
-            <p className="text-[0.55rem] text-muted-foreground font-semibold tracking-wider mb-2">DATA YANG AKAN DIBAWA KE PROJECT (SNAPSHOT)</p>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-2 cursor-pointer">
-                {includeBant ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
-                <span className="text-xs text-foreground">Lead Checklist (BANT)</span>
-                <input type="checkbox" checked={includeBant} onChange={() => setIncludeBant(!includeBant)} className="sr-only" />
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                {includeMom ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
-                <span className="text-xs text-foreground">Minutes of Meeting {momCount > 0 ? <span className="text-muted-foreground">({momCount} item)</span> : null}</span>
-                <input type="checkbox" checked={includeMom} onChange={() => setIncludeMom(!includeMom)} className="sr-only" />
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                {includeCostAnalysis ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
-                <span className="text-xs text-foreground">Cost Analysis {caCount > 0 ? <span className="text-muted-foreground">({caCount} item)</span> : null}</span>
-                <input type="checkbox" checked={includeCostAnalysis} onChange={() => setIncludeCostAnalysis(!includeCostAnalysis)} className="sr-only" />
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                {includeSummary ? <CheckSquare className="w-3.5 h-3.5 text-emerald-500" /> : <Square className="w-3.5 h-3.5 text-muted-foreground" />}
-                <span className="text-xs text-foreground">Quotation Summary</span>
-                <input type="checkbox" checked={includeSummary} onChange={() => setIncludeSummary(!includeSummary)} className="sr-only" />
-              </label>
-            </div>
-          </div>
-
-          {/* ════════════════════════════════════════
-              SECTION 3: Project Details Form
-              ════════════════════════════════════════ */}
-          <div className="border-t border-border pt-4">
-            <p className="text-[0.55rem] text-muted-foreground font-semibold tracking-wider mb-3">DETAIL PROYEK</p>
-
-            {/* Project Code + Name */}
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Project Number <span className="text-red-500">*</span></Label>
-                <Input value={projectCode} readOnly className="bg-muted border-border text-foreground text-sm font-mono" />
-              </div>
-              <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs text-muted-foreground">Project Name <span className="text-red-500">*</span></Label>
-                <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} className="bg-background border-border text-foreground text-sm" />
-              </div>
-            </div>
-
-            {/* Company + Client */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Perusahaan / Company</Label>
-                <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-background border-border text-foreground text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Klien</Label>
-                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} className="bg-background border-border text-foreground text-sm" />
-              </div>
-            </div>
-
-            {/* PIC Commercial, PIC ADM, PM */}
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">PIC Commercial <span className="text-red-500">*</span></Label>
-                <Select value={picCommercialId} onValueChange={setPicCommercialId}>
-                  <SelectTrigger className="bg-background border-border text-sm h-9">
-                    <SelectValue placeholder="Pilih PIC" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.full_name}{u.employee_number ? ` (${u.employee_number})` : ""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">PIC ADM</Label>
-                <Select value={picAdmId} onValueChange={setPicAdmId}>
-                  <SelectTrigger className="bg-background border-border text-sm h-9">
-                    <SelectValue placeholder="Pilih PIC" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.full_name}{u.employee_number ? ` (${u.employee_number})` : ""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Project Manager <span className="text-red-500">*</span></Label>
-                <Select value={pmId} onValueChange={setPmId}>
-                  <SelectTrigger className="bg-background border-border text-sm h-9">
-                    <SelectValue placeholder="Pilih PM" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.full_name}{u.employee_number ? ` (${u.employee_number})` : ""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* PO Value */}
-            <div className="space-y-1.5 mb-3">
-              <Label className="text-xs text-muted-foreground">Nilai PO (Rp)</Label>
-              <Input type="number" min={0} value={poValue} onChange={(e) => setPoValue(parseInt(e.target.value) || 0)} placeholder="0" className="bg-background border-border text-foreground text-sm font-mono" />
-            </div>
-
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Start Kick Off <span className="text-red-500">*</span></Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-background border-border text-foreground text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">End of Project <span className="text-red-500">*</span></Label>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-background border-border text-foreground text-sm" />
-              </div>
-            </div>
-
-            {/* Term of Payment */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Term of Payment</Label>
-              <Select value={termOfPayment} onValueChange={setTermOfPayment}>
-                <SelectTrigger className="bg-background border-border text-sm h-9">
-                  <SelectValue placeholder="Pilih Term of Payment" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TERM_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* ════════════════════════════════════════
-              FOOTER: Actions
-              ════════════════════════════════════════ */}
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-xs h-9">Batal</Button>
-            <Button
-              onClick={handleConvert}
-              disabled={!projectName.trim() || !startDate || !endDate || converting || !picCommercialId || !pmId}
-              className="bg-blue-600 hover:bg-blue-700 text-xs h-9 gap-1.5"
-            >
-              {converting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Converting...</> : <><Building2 className="w-3.5 h-3.5" /> Convert to Project</>}
+          {/* ═══ Navigation ═══ */}
+          <div className="flex justify-between gap-2 pt-3 border-t border-border">
+            <Button variant="ghost" onClick={() => step === 1 ? onOpenChange(false) : setStep(s => s - 1)}
+              className="text-xs h-9 text-muted-foreground">
+              {step === 1 ? "Batal" : "← Kembali"}
             </Button>
+            <div className="flex gap-2">
+              {step < 4 && (
+                <Button onClick={() => setStep(s => s + 1)}
+                  disabled={step === 1 ? !step1Valid : step === 2 ? !step2Valid : false}
+                  className="bg-blue-600 hover:bg-blue-700 text-xs h-9 gap-1.5">
+                  Lanjut →
+                </Button>
+              )}
+              {step === 4 && (
+                <Button onClick={handleConvert} disabled={converting}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-xs h-9 gap-1.5">
+                  {converting
+                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Membuat Proyek...</>
+                    : <><Building2 className="w-3.5 h-3.5" /> Buat Proyek</>}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -1619,18 +1921,27 @@ function CostAnalysisTab({ leadId, onStatusChange }: { leadId: string; onStatusC
 // ============================================================
 // Summary Quotation Tab
 // ============================================================
-function SummaryQuotationTab({ leadId }: { leadId: string }) {
+function SummaryQuotationTab({ leadId, lead }: { leadId: string; lead: any }) {
   const [summary, setSummary] = useState<QuotationSummary | null>(null); const [quotations, setQuotations] = useState<Quotation[]>([])
   const [loading, setLoading] = useState(true); const [notes, setNotes] = useState(""); const [saving, setSaving] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const [projectTypeName, setProjectTypeName] = useState<string>("")
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!insForge) return
     const { data: q } = await insForge.from("lead_quotations").select("*").eq("lead_id", leadId).is("deleted_at", null)
     if (q) setQuotations(q)
     const { data: s } = await insForge.from("lead_quotation_summaries").select("*").eq("lead_id", leadId).is("deleted_at", null).limit(1)
     if (s && s.length > 0) { setSummary(s[0]); setNotes(s[0].notes || "") }; setLoading(false)
   }, [leadId])
-  useEffect(() => { fetch() }, [fetch])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  useEffect(() => {
+    if (!insForge || !lead?.project_type_id) return
+    insForge.from("commercial_project_types").select("name").eq("id", lead.project_type_id).single()
+      .then(({ data }: any) => { if (data) setProjectTypeName(data.name) })
+  }, [lead?.project_type_id])
 
   const total = quotations.reduce((s, q) => s + (q.amount || 0), 0)
   const approved = quotations.filter(q => q.status === "approved").reduce((s, q) => s + (q.amount || 0), 0)
@@ -1640,13 +1951,71 @@ function SummaryQuotationTab({ leadId }: { leadId: string }) {
     try {
       const p = { tenant_id: getTenantId(), lead_id: leadId, total_amount: total, notes: notes || null }
       if (summary?.id) await insForge.from("lead_quotation_summaries").update(p).eq("id", summary.id); else await insForge.from("lead_quotation_summaries").insert(p)
-      fetch()
+      fetchData()
     } catch (err) { console.error(err) } finally { setSaving(false) }
+  }
+
+  const handleDownloadPDF = async () => {
+    if (!insForge) return
+    setDownloading(true)
+    try {
+      // Fetch latest cost analysis for manpower rows
+      const { data: caList } = await insForge
+        .from("lead_cost_analyses")
+        .select("*")
+        .eq("lead_id", leadId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+
+      const ca = caList?.[0]
+      const manpowerRows = (ca?.manpower_data ?? []).map((m: any) => ({
+        role_name: m.role || m.nama || "Resource",
+        work_mode: m.work_mode || "Remote",
+        qty: m.qty ?? 1,
+        months: m.months ?? 1,
+        publish_rate: m.publishRate ?? 0,
+      }))
+
+      const quotationData = {
+        client_name: lead.contact_name || "—",
+        company_name: lead.company_name || "—",
+        company_address: lead.company_address ?? null,
+        contact_phone: lead.contact_phone ?? null,
+        quotation_number: lead.lead_number ?? `QTS-${String(lead.id).substring(0, 8).toUpperCase()}`,
+        project_type: projectTypeName || "Manpower as a Services",
+        date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+        valid_days: lead.quotation_valid_days ?? 30,
+        scope_of_work: lead.scope_of_work ?? null,
+        manpower_rows: manpowerRows,
+        terms_and_conditions: lead.terms_and_conditions ?? null,
+      }
+
+      const { downloadQuotationPDF } = await import("@/lib/download-quotation-pdf")
+      const filename = `Summary-Quotation-${quotationData.quotation_number}.pdf`
+      await downloadQuotationPDF(quotationData, filename)
+    } catch (err) {
+      console.error("Failed to generate PDF:", err)
+    } finally {
+      setDownloading(false)
+    }
   }
 
   if (loading) return <div className="text-center py-8 text-sm text-muted-foreground">Memuat...</div>
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">Summary Quotation</h3>
+        <Button
+          size="sm"
+          onClick={handleDownloadPDF}
+          disabled={downloading}
+          className="bg-blue-600 hover:bg-blue-700 h-8 text-xs gap-1.5"
+        >
+          {downloading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+          {downloading ? "Generating..." : "Download PDF"}
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Total Quotations</p><p className="text-2xl font-bold text-foreground mt-1">{quotations.length}</p></CardContent></Card>
         <Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Total Nilai</p><p className="text-2xl font-bold text-emerald-400 mt-1">{fmtCurrency(total)}</p></CardContent></Card>
@@ -1682,6 +2051,7 @@ export function EditLeadDialog({ leadId, lead, open, onOpenChange }: {
     notes: "", project_type_id: "", pic_sales_id: "",
     budget_confirmed: false, authority_confirmed: false, need_confirmed: false, timeline_confirmed: false,
     budget_value: "", authority_detail: "", need_detail: "", timeline_detail: "",
+    company_address: "", scope_of_work: "", terms_and_conditions: "", quotation_valid_days: "30",
   })
 
   useEffect(() => {
@@ -1730,6 +2100,10 @@ export function EditLeadDialog({ leadId, lead, open, onOpenChange }: {
         authority_detail: lead.authority_detail || "",
         need_detail: lead.need_detail || "",
         timeline_detail: lead.timeline_detail || "",
+        company_address: lead.company_address || "",
+        scope_of_work: lead.scope_of_work || "",
+        terms_and_conditions: lead.terms_and_conditions || "",
+        quotation_valid_days: lead.quotation_valid_days != null ? String(lead.quotation_valid_days) : "30",
       })
       setShowNewClient(false)
       setShowNewCompany(false)
@@ -1763,6 +2137,10 @@ export function EditLeadDialog({ leadId, lead, open, onOpenChange }: {
         authority_detail: editForm.authority_detail || null,
         need_detail: editForm.need_detail || null,
         timeline_detail: editForm.timeline_detail || null,
+        company_address: editForm.company_address || null,
+        scope_of_work: editForm.scope_of_work || null,
+        terms_and_conditions: editForm.terms_and_conditions || null,
+        quotation_valid_days: editForm.quotation_valid_days ? parseInt(editForm.quotation_valid_days) : 30,
       }).eq("id", leadId)
       onOpenChange(false)
       window.location.reload()
@@ -1937,7 +2315,7 @@ export function EditLeadDialog({ leadId, lead, open, onOpenChange }: {
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Estimasi Nilai (Rp)</Label>
-            <Input type="number" value={editForm.estimated_value} onChange={(e) => setEditForm({...editForm, estimated_value: e.target.value})} className="bg-background border-border text-sm h-9" />
+            <Input type="text" value={editForm.estimated_value} onChange={(e) => setEditForm({...editForm, estimated_value: e.target.value, budget_value: e.target.value})} className="bg-background border-border text-sm h-9" />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">PIC Sales</Label>
@@ -1951,6 +2329,28 @@ export function EditLeadDialog({ leadId, lead, open, onOpenChange }: {
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Catatan / Brief Awal</Label>
             <Textarea value={editForm.notes} onChange={(e) => setEditForm({...editForm, notes: e.target.value})} rows={3} className="bg-background border-border text-sm" />
+          </div>
+          {/* Quotation PDF fields */}
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Data Quotation PDF</h4>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Alamat Perusahaan</Label>
+                <Input value={editForm.company_address} onChange={(e) => setEditForm({...editForm, company_address: e.target.value})} placeholder="Alamat lengkap perusahaan klien" className="bg-background border-border text-sm h-9" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Scope of Work <span className="text-muted-foreground/60">(satu baris per item)</span></Label>
+                <Textarea value={editForm.scope_of_work} onChange={(e) => setEditForm({...editForm, scope_of_work: e.target.value})} rows={4} placeholder={"Develop backend API\nIntegrate payment gateway\nDeploy to cloud"} className="bg-background border-border text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Terms & Conditions <span className="text-muted-foreground/60">(satu baris per item)</span></Label>
+                <Textarea value={editForm.terms_and_conditions} onChange={(e) => setEditForm({...editForm, terms_and_conditions: e.target.value})} rows={4} placeholder={"Pembayaran dilakukan di muka\nHarga belum termasuk PPN 11%\nBerlaku 30 hari"} className="bg-background border-border text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Masa Berlaku Quotation (hari)</Label>
+                <Input type="number" min={1} value={editForm.quotation_valid_days} onChange={(e) => setEditForm({...editForm, quotation_valid_days: e.target.value})} className="bg-background border-border text-sm h-9 w-32" />
+              </div>
+            </div>
           </div>
           <div>
             <h4 className="text-xs font-semibold text-muted-foreground mb-3">BANT Qualification</h4>
@@ -1966,7 +2366,7 @@ export function EditLeadDialog({ leadId, lead, open, onOpenChange }: {
                 {editForm.budget_confirmed && (
                   <div className="relative mt-2">
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">Rp</span>
-                    <input type="text" value={editForm.budget_value} onChange={(e) => setEditForm({...editForm, budget_value: e.target.value})} placeholder="Estimasi nilai proyek..." className="w-full h-8 pl-8 pr-3 text-xs bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
+                    <input type="text" value={editForm.budget_value} onChange={(e) => setEditForm({...editForm, budget_value: e.target.value, estimated_value: e.target.value})} placeholder="Estimasi nilai proyek..." className="w-full h-8 pl-8 pr-3 text-xs bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
                   </div>
                 )}
               </div>
@@ -2066,7 +2466,7 @@ export default function LeadTabs({ lead, onRefresh }: { lead: any; onRefresh: ()
       <TabsContent value="cost"><CostAnalysisTab leadId={lead.id} onStatusChange={setHasCost} /></TabsContent>
       <TabsContent value="brief"><ProjectBriefTab leadId={lead.id} onStatusChange={setHasBrief} /></TabsContent>
       <TabsContent value="quotation"><QuotationTab leadId={lead.id} onStatusChange={setHasQuotation} /></TabsContent>
-      <TabsContent value="summary"><SummaryQuotationTab leadId={lead.id} /></TabsContent>
+      <TabsContent value="summary"><SummaryQuotationTab leadId={lead.id} lead={lead} /></TabsContent>
     </Tabs>
   )
 }

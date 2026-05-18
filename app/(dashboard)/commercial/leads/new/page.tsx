@@ -243,7 +243,7 @@ export default function NewLeadPage() {
         })
       }
 
-      router.push("/crm/pipeline")
+      router.push("/commercial/leads")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create lead")
     }
@@ -253,7 +253,7 @@ export default function NewLeadPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/crm/pipeline">
+        <Link href="/commercial/leads">
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -786,7 +786,7 @@ export default function NewLeadPage() {
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-3">
-              <Link href="/crm/pipeline">
+              <Link href="/commercial/leads">
                 <Button type="button" variant="ghost" className="text-muted-foreground">
                   Batal
                 </Button>

@@ -283,7 +283,7 @@ export default function DashboardPage() {
           ) : (
             <p className="text-sm text-muted-foreground">Belum ada aktivitas terbaru.</p>
           )}
-          <Link href="/crm/activities" className="inline-flex text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-500">
+          <Link href="/commercial/activities" className="inline-flex text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-500">
             View all activities
           </Link>
         </CardContent>

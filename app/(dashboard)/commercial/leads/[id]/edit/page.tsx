@@ -8,5 +8,5 @@ export default async function LeadEditRedirect({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  redirect(`/crm/leads/${id}`)
+  redirect(`/commercial/leads/${id}`)
 }

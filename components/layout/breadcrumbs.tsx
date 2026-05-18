@@ -28,6 +28,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   invoices: "Invoices",
   bopp: "BOPP",
   calculator: "Calculator",
+  "cost-analysis": "Cost Analysis",
   projects: "Projects",
   tasks: "Tasks",
   kanban: "Kanban",

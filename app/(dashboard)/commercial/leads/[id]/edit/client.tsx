@@ -93,7 +93,7 @@ export default function LeadEditClient({ id }: { id: string }) {
         timeline_confirmed: formData.timeline_confirmed,
         project_type_id: formData.project_type_id || null,
       })
-      router.push("/crm/pipeline")
+      router.push("/commercial/leads")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update lead")
     } finally {
@@ -109,7 +109,7 @@ export default function LeadEditClient({ id }: { id: string }) {
       await insForge.from("crm_leads")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", id)
-      router.push("/crm/pipeline")
+      router.push("/commercial/leads")
     } catch (err) {
       console.error("Failed to delete lead:", err)
       setDeleting(false)
@@ -124,7 +124,7 @@ export default function LeadEditClient({ id }: { id: string }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/crm/pipeline"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
+        <Link href="/commercial/leads"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Button></Link>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-foreground">Edit Lead</h1>
           <p className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
@@ -136,7 +136,7 @@ export default function LeadEditClient({ id }: { id: string }) {
             {formData.contact_name || formData.company_name || "-"}
           </p>
         </div>
-        <Link href={`/crm/leads/${id}`}>
+        <Link href={`/commercial/leads/${id}`}>
           <Button variant="outline" size="sm" className="border-border gap-1.5">
             <Eye className="w-4 h-4" /> Lihat
           </Button>
@@ -241,7 +241,7 @@ export default function LeadEditClient({ id }: { id: string }) {
                 Hapus
               </Button>
               <div className="flex items-center gap-3">
-                <Link href="/crm/pipeline"><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
+                <Link href="/commercial/leads"><Button type="button" variant="ghost" className="text-muted-foreground">Batal</Button></Link>
                 <Button type="submit" disabled={saving || deleting} className="bg-emerald-600 hover:bg-emerald-700">{saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</> : <><Save className="w-4 h-4 mr-2" />Simpan Perubahan</>}</Button>
               </div>
             </div>

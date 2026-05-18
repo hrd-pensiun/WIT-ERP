@@ -386,7 +386,7 @@ export default function CRMPipelinePage() {
             {activeLeads.length} lead aktif · {wonLeads.length} closed won
           </p>
         </div>
-        <Link href="/crm/leads/new">
+        <Link href="/commercial/leads/new">
           <button className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition-colors font-medium">
             <Plus className="w-3.5 h-3.5" /> Tambah Lead
           </button>
@@ -497,7 +497,7 @@ export default function CRMPipelinePage() {
                   {displayed.map((lead) => (
                     <tr key={lead.id} className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors">
                       <td className="py-3 px-4">
-                        <Link href={`/crm/leads/${lead.id}`} className="text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                        <Link href={`/commercial/leads/${lead.id}`} className="text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                           {lead.title || `${lead.contact_name}${lead.company_name ? ` - ${lead.company_name}` : ""}`}
                         </Link>
                       </td>
@@ -527,10 +527,10 @@ export default function CRMPipelinePage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-0.5">
-                          <Link href={`/crm/leads/${lead.id}`} className="p-1.5 rounded text-zinc-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors" title="Detail">
+                          <Link href={`/commercial/leads/${lead.id}`} className="p-1.5 rounded text-zinc-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors" title="Detail">
                             <Eye className="w-3.5 h-3.5" />
                           </Link>
-                          <Link href={`/crm/leads/${lead.id}`} className="p-1.5 rounded text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors" title="Edit">
+                          <Link href={`/commercial/leads/${lead.id}`} className="p-1.5 rounded text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors" title="Edit">
                             <Edit3 className="w-3.5 h-3.5" />
                           </Link>
                           <button onClick={() => handleDelete(lead.id)} className="p-1.5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors" title="Hapus">
@@ -566,7 +566,7 @@ export default function CRMPipelinePage() {
                   {colLeads.length === 0 ? (
                     <p className="text-[0.6rem] text-zinc-400 text-center py-4">Kosong</p>
                   ) : colLeads.map((lead) => (
-                    <Link key={lead.id} href={`/crm/leads/${lead.id}`} className="block">
+                    <Link key={lead.id} href={`/commercial/leads/${lead.id}`} className="block">
                       <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-2.5 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors">
                         <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-tight">
                           {lead.title || lead.contact_name}
