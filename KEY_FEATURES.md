@@ -1,6 +1,6 @@
 # WIT-ERP — Fitur Utama (HRIS)
 
-Sistem HRIS terpadu yang membantu perusahaan mengelola seluruh siklus kepegawaian — dari data karyawan, absensi, cuti, hingga penggajian — dalam satu platform.
+Sistem HRIS terpadu yang membantu perusahaan mengelola seluruh siklus kepegawaian — dari data karyawan, absensi, cuti, hingga penggajian — dalam satu platform **berbasis web**. Diakses langsung lewat browser (Chrome, Safari, dll) di laptop maupun HP — tanpa perlu instal aplikasi apapun.
 
 ---
 
@@ -11,7 +11,7 @@ Sistem HRIS terpadu yang membantu perusahaan mengelola seluruh siklus kepegawaia
 
 ## 2. Absensi Digital
 
-- Karyawan clock-in/clock-out lewat aplikasi, lengkap dengan foto dan lokasi — tidak perlu mesin fingerprint.
+- Karyawan clock-in/clock-out lewat browser di HP, lengkap dengan foto dan lokasi — tidak perlu mesin fingerprint atau instal aplikasi.
 - Keterlambatan terdeteksi otomatis.
 - Rekap kehadiran per periode tersedia instan, tanpa rekap manual.
 

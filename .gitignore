@@ -37,6 +37,9 @@ yarn-error.log*
 # InsForge CLI local project (may contain api_key — do not commit)
 .insforge/
 
+# Demo login credentials — never commit to this public repo
+CREDENTIALS.md
+
 # vercel
 .vercel
 

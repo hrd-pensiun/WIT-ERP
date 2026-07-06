@@ -2,6 +2,8 @@
 
 Panduan alur presentasi produk WIT-ERP (versi HRIS) ke calon klien. Susunan ini bercerita dari kebutuhan dasar HR → penggajian → penilaian kinerja, supaya audiens melihat gambaran end-to-end.
 
+**Catatan:** WIT-ERP adalah aplikasi **berbasis web** — dibuka lewat browser di laptop maupun HP, tanpa perlu instal apapun dari Play Store/App Store.
+
 ---
 
 ## Pembukaan — Dashboard (1 menit)
@@ -25,14 +27,14 @@ Panduan alur presentasi produk WIT-ERP (versi HRIS) ke calon klien. Susunan ini 
 **Yang ditunjukkan:**
 - Rekap kehadiran karyawan lengkap dengan status hadir/telat.
 
-**Pesan ke audiens:** "Karyawan absen lewat HP dengan foto dan lokasi — perusahaan tidak perlu lagi investasi mesin fingerprint, dan rekap kehadiran langsung otomatis."
+**Pesan ke audiens:** "Karyawan absen lewat browser di HP dengan foto dan lokasi — perusahaan tidak perlu lagi investasi mesin fingerprint, dan rekap kehadiran langsung otomatis."
 
 ## 3. Cuti Online (1–2 menit)
 
 **Yang ditunjukkan:**
 - Pengajuan cuti dan saldo cuti karyawan.
 
-**Pesan ke audiens:** "Karyawan ajukan cuti dari HP, atasan approve dari HP juga — tidak ada lagi form kertas atau email yang hilang."
+**Pesan ke audiens:** "Karyawan ajukan cuti lewat browser di HP, atasan approve dari browser juga — tidak ada lagi form kertas atau email yang hilang."
 
 ## 4. Penggajian — Bagian Paling Menarik (5–7 menit)
 
