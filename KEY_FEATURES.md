@@ -1,55 +1,57 @@
-# WIT-ERP — Key Features (HRIS)
+# WIT-ERP — Fitur Utama (HRIS)
 
-Sistem informasi HR terpadu, dibangun di atas Next.js + InsForge (PostgreSQL). Dokumen ini merangkum fitur yang tampil di menu utama (mode HRIS — modul non-HRIS seperti Workforce, Commercial, Projects, dan Finance disembunyikan secara default lewat **Settings → Visibilitas Modul**).
-
----
-
-## 1. HR (Human Resources)
-
-- **Data Karyawan** — profil lengkap: jabatan, divisi, departemen, grade, riwayat kerja, pendidikan, keluarga.
-- **Absensi** — clock-in/clock-out dengan foto & lokasi, deteksi keterlambatan, rekap kehadiran per periode.
-- **Cuti (Leave)** — pengajuan cuti, saldo cuti otomatis per tipe, approval workflow, kuota tahunan.
-
-## 2. Payroll (Penggajian)
-
-- **Kompensasi Karyawan** — gaji pokok (matrix per grade + override per individu), tunjangan (fixed/variabel), potongan.
-- **Proses Penggajian** — generate slip gaji otomatis dari data absensi + kompensasi + konfigurasi BPJS/PPh21 per entity.
-- **Approval Payroll** — alur draft → approved → paid.
-- **Slip Gaji & Pembayaran** — slip per karyawan per periode.
-- **Analitik & Laporan Payroll** — ringkasan biaya gaji, tren bulanan, breakdown BPJS/pajak.
-- **Pajak & Potongan** — konfigurasi PPh21 (metode gross/TER), BPJS Ketenagakerjaan & Kesehatan.
-
-## 3. Performance (360 Feedback)
-
-- **Template Penilaian** — kustomisasi pertanyaan penilaian.
-- **Mapping Penilaian** — penentuan siapa menilai siapa (atasan/rekan/bawahan).
-- **Dashboard 360** — hasil agregat penilaian per karyawan.
-- **My Performance** — tampilan self-service untuk staff/manager (role staff/manager otomatis diarahkan ke sini saja).
-
-## 4. Master Data
-
-- **Organisasi** — entity, departemen, divisi, jabatan, job grade.
-- **Payroll Config** — komponen gaji, matrix gaji per grade, konfigurasi entity (BPJS/PPh21/UMR).
-- **HR Config (Kalender & Shift)** — kalender kerja, shift, hari libur.
-
-## 5. Reports & Dashboard
-
-- **Laporan Karyawan** — rekap data HR.
-- **Dashboard Executive & HR** — ringkasan metrik perusahaan dan HR.
-
-## 6. Settings
-
-- **Profil & Akun** — informasi login dan data karyawan yang terhubung.
-- **Visibilitas Modul** — admin bisa menyembunyikan/menampilkan modul non-HRIS (Workforce, Commercial, Projects, Finance) sesuai kebutuhan tampilan (tersimpan per browser).
-
-## 7. Autentikasi & Keamanan
-
-- Login email/password via InsForge Auth.
-- Role-based access (employee, manager, admin, dst) — membatasi menu Performance untuk staff/manager ke tampilan self-service saja.
-- Row Level Security (RLS) aktif di seluruh tabel database.
+Sistem HRIS terpadu yang membantu perusahaan mengelola seluruh siklus kepegawaian — dari data karyawan, absensi, cuti, hingga penggajian — dalam satu platform.
 
 ---
 
-*Catatan: Workforce, Commercial/CRM, Projects, dan Finance tetap ada di codebase dan bisa dinyalakan kapan saja lewat Settings → Visibilitas Modul, tapi di luar cakupan dokumen ini karena fokus HRIS.*
+## 1. Manajemen Data Karyawan
 
-*Dibuat otomatis sebagai bagian dari audit kesiapan demo — Juli 2026.*
+- Database karyawan terpusat: jabatan, divisi, departemen, grade, riwayat kerja, pendidikan, hingga data keluarga.
+- Semua informasi karyawan tersimpan rapi dan mudah diakses kapan saja.
+
+## 2. Absensi Digital
+
+- Karyawan clock-in/clock-out lewat aplikasi, lengkap dengan foto dan lokasi — tidak perlu mesin fingerprint.
+- Keterlambatan terdeteksi otomatis.
+- Rekap kehadiran per periode tersedia instan, tanpa rekap manual.
+
+## 3. Cuti Online
+
+- Pengajuan cuti dilakukan langsung dari sistem, tanpa kertas atau email bolak-balik.
+- Saldo cuti terhitung otomatis sesuai kebijakan perusahaan.
+- Approval berjenjang yang jelas dan terlacak.
+
+## 4. Penggajian Otomatis
+
+- Slip gaji dihitung otomatis dari data absensi, kompensasi, tunjangan, dan potongan — bukan Excel manual.
+- Perhitungan pajak dan iuran jaminan sosial karyawan sudah terintegrasi sesuai aturan yang berlaku.
+- Alur persetujuan gaji yang jelas: diajukan → disetujui → dibayarkan.
+- Slip gaji digital untuk setiap karyawan, setiap periode.
+- Laporan dan analisis biaya gaji perusahaan tersedia real-time — tren bulanan, breakdown biaya, dan lainnya.
+
+## 5. Penilaian Kinerja 360°
+
+- Penilaian kinerja karyawan dari berbagai sudut pandang (atasan, rekan kerja, bawahan).
+- Template penilaian bisa disesuaikan dengan kebutuhan perusahaan.
+- Setiap karyawan dapat melihat hasil penilaiannya secara mandiri.
+
+## 6. Data Master Perusahaan
+
+- Struktur organisasi lengkap: unit bisnis, departemen, divisi, jabatan, dan grading karyawan.
+- Konfigurasi kebijakan gaji per jenjang/grade.
+- Kalender kerja, jadwal shift, dan hari libur perusahaan.
+
+## 7. Laporan & Dashboard
+
+- Rekap data karyawan siap pakai.
+- Dashboard ringkasan untuk level manajemen dan tim HR.
+
+## 8. Keamanan & Kontrol Akses
+
+- Login aman dengan email dan password.
+- Hak akses berbeda sesuai peran (karyawan, manajer, admin) — setiap orang hanya melihat apa yang relevan untuknya.
+- Tampilan bisa disesuaikan sesuai kebutuhan perusahaan (modul yang tidak dipakai bisa disembunyikan).
+
+---
+
+*Catatan: WIT-ERP juga tersedia dalam versi lebih lengkap dengan modul tambahan (manajemen proyek, CRM/sales, keuangan) di luar cakupan HRIS ini.*
