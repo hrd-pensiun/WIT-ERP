@@ -154,7 +154,7 @@ export function Header() {
               <p className="text-xs text-muted-foreground truncate">{displayPosition}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer gap-2">
+            <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer gap-2">
               <User className="w-4 h-4" strokeWidth={1.5} />
               Profile
             </DropdownMenuItem>

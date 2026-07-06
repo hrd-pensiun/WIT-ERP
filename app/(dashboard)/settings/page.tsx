@@ -274,26 +274,36 @@ export default function SettingsPage() {
                 <p>{profile.app_role || "-"}</p>
               </div>
               <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
-                <p className="text-xs text-muted-foreground mb-1">Link ke Auth User</p>
-                <p>{profile.user_id || "Belum ter-link"}</p>
+                <p className="text-xs text-muted-foreground mb-1">Status Akun Login</p>
+                <p>{profile.user_id ? "Terhubung" : "Belum terhubung"}</p>
               </div>
               <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
                 <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5" />
-                  Departemen / Divisi
+                  Departemen
                 </p>
-                <p>
-                  {profile.departments?.name || "-"} / {profile.divisions?.name || "-"}
+                <p>{profile.departments?.name || "Belum diisi"}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5" />
+                  Divisi
                 </p>
+                <p>{profile.divisions?.name || "Belum diisi"}</p>
               </div>
               <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
                 <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                   <Briefcase className="w-3.5 h-3.5" />
-                  Jabatan / Grade
+                  Jabatan
                 </p>
-                <p>
-                  {profile.hr_positions?.name || "-"} / {profile.hr_job_grades?.name || "-"}
+                <p>{profile.hr_positions?.name || "Belum diisi"}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                  <Briefcase className="w-3.5 h-3.5" />
+                  Grade
                 </p>
+                <p>{profile.hr_job_grades?.name || "Belum diisi"}</p>
               </div>
               <div className="rounded-lg border border-border bg-background/60 px-4 py-3">
                 <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
