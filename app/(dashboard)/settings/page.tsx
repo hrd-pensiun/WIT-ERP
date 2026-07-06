@@ -1,13 +1,20 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { ShieldCheck, User, Mail, Building2, Briefcase, CalendarDays } from "lucide-react"
+import { ShieldCheck, User, Mail, Building2, Briefcase, CalendarDays, LayoutGrid } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { useAuth } from "@/hooks/useAuth"
 import { insForge } from "@/lib/insforge"
 import { getTenantId } from "@/lib/tenant"
+import {
+  MODULE_TOGGLES,
+  getModuleVisibility,
+  setModuleVisibility,
+  type ModuleVisibility,
+} from "@/lib/module-visibility"
 
 type EmployeeProfile = {
   id: string
@@ -32,6 +39,15 @@ export default function SettingsPage() {
   const [profileError, setProfileError] = useState<string | null>(null)
   const [relinkLoading, setRelinkLoading] = useState(false)
   const [relinkMessage, setRelinkMessage] = useState<string | null>(null)
+  const [moduleVisibility, setModuleVisibilityState] = useState<ModuleVisibility | null>(() =>
+    typeof window === "undefined" ? null : getModuleVisibility()
+  )
+
+  const handleModuleToggle = (key: keyof ModuleVisibility, checked: boolean) => {
+    const next = { ...(moduleVisibility ?? getModuleVisibility()), [key]: checked }
+    setModuleVisibilityState(next)
+    setModuleVisibility(next)
+  }
 
   const effectiveRole = useMemo(() => {
     const metadataRole = user?.metadata?.role
@@ -145,6 +161,35 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-foreground">Settings</h1>
         <p className="text-muted-foreground mt-1">Informasi akun login dan profil karyawan.</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <LayoutGrid className="w-5 h-5 text-violet-500" />
+            Visibilitas Modul
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-muted-foreground text-sm">
+            Modul di luar HRIS disembunyikan secara default. Aktifkan di sini bila dibutuhkan lagi.
+          </p>
+          {MODULE_TOGGLES.map((module) => (
+            <div
+              key={module.key}
+              className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-4 py-3"
+            >
+              <div>
+                <p className="text-foreground text-sm font-medium">{module.label}</p>
+                <p className="text-muted-foreground text-xs">{module.description}</p>
+              </div>
+              <Switch
+                checked={moduleVisibility?.[module.key] ?? false}
+                onCheckedChange={(checked) => handleModuleToggle(module.key, checked)}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

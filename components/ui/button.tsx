@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm shadow-emerald-900/30 hover:from-emerald-400 hover:to-emerald-500 border-emerald-700/30",
+          "bg-primary text-primary-foreground hover:bg-primary/90 border-transparent",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground text-foreground aria-expanded:bg-muted",
         secondary:

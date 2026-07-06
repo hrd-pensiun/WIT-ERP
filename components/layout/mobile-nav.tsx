@@ -37,7 +37,7 @@ export function MobileNav() {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-50">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">W</span>
           </div>
           <span className="text-lg font-semibold text-slate-100">WeWok.dtk</span>

@@ -20,7 +20,7 @@ function FilterBar({ className, children, ...props }: React.ComponentProps<"div"
     <div
       data-slot="filter-bar"
       className={cn(
-        "flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm",
+        "flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2",
         className
       )}
       {...props}

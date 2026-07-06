@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { getModuleVisibility, subscribeModuleVisibility, type ModuleVisibility } from "@/lib/module-visibility"
 import {
   LayoutDashboard,
   Building2,
@@ -148,16 +149,43 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const router = useRouter()
   const { signOut, user } = useAuth()
   const [expanded, setExpanded] = useState<string[]>([])
+  const [moduleVisibility, setModuleVisibilityState] = useState<ModuleVisibility | null>(() =>
+    typeof window === "undefined" ? null : getModuleVisibility()
+  )
+
+  useEffect(() => subscribeModuleVisibility(setModuleVisibilityState), [])
 
   const normalizedRole = (user?.profileRole ?? "").trim().toLowerCase()
   const isStaffOrManager = normalizedRole === "employee" || normalizedRole === "manager"
-  const navItems = navigation.map((item) => {
-    if (item.name !== "Performance" || !item.children || !isStaffOrManager) return item
-    return {
-      ...item,
-      children: item.children.filter((child) => child.href === "/performance/360-feedback"),
-    }
-  })
+  const HIDDEN_BY_MODULE_KEY: Record<string, keyof ModuleVisibility> = {
+    Workforce: "workforce",
+    Commercial: "commercial",
+    Projects: "projects",
+    Finance: "finance",
+  }
+  const navItems = navigation
+    .filter((item) => {
+      const moduleKey = HIDDEN_BY_MODULE_KEY[item.name]
+      if (!moduleKey) return true
+      return moduleVisibility?.[moduleKey] ?? false
+    })
+    .map((item) => {
+      if (item.name === "Performance" && item.children && isStaffOrManager) {
+        return {
+          ...item,
+          children: item.children.filter((child) => child.href === "/performance/360-feedback"),
+        }
+      }
+      if (item.name === "Reports" && item.children && !(moduleVisibility?.reportsNonHris ?? false)) {
+        return {
+          ...item,
+          children: item.children.filter(
+            (child) => child.href !== "/reports/sales" && child.href !== "/reports/projects"
+          ),
+        }
+      }
+      return item
+    })
 
   const toggleExpand = (name: string) => {
     setExpanded((prev) =>
@@ -179,9 +207,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         "h-screen flex flex-col fixed left-0 top-0 z-40 transition-all duration-300",
         collapsed ? "w-[60px]" : "w-64"
       )}
-      style={{
-        background: "linear-gradient(160deg, #0d3535 0%, #0a2a2a 50%, #061e1e 100%)",
-      }}
+      style={{ background: "#0a2a2a" }}
     >
       {/* Logo + collapse */}
       <div className="h-14 flex items-center justify-between px-4 shrink-0 border-b border-white/10">
